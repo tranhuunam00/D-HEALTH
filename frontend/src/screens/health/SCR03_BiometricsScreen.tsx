@@ -1,12 +1,15 @@
 import React from 'react';
-import { Plus, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { useBiometricsLogic, MetricType } from './useBiometricsLogic';
-import { HomeBottomNav, NavTabId } from '../home/HomeBottomNav';
+import { ChevronRight, CheckCircle2 } from 'lucide-react';
+import { useBiometricsLogic } from './useBiometricsLogic';
+import { HomeBottomNav } from '../home/HomeBottomNav';
 import { BiometricEntrySheet } from '../../components/organisms/BiometricEntrySheet';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
+import { BiometricsChartSection } from './components/BiometricsChartSection';
+import { BiometricsMetricTilesGrid } from './components/BiometricsMetricTilesGrid';
+import { BiometricsHistorySection } from './components/BiometricsHistorySection';
 
-interface SCR03Props {
+export interface SCR03Props {
   readonly onNavigate: (screen: string) => void;
   readonly onSelectMember?: (memberId: string) => void;
   readonly activeMemberName?: string;
@@ -54,7 +57,6 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
     else if (tab === 'chronic') onNavigate('chronic');
   };
 
-  // Dữ liệu biểu đồ cột 7 ngày tính thực tế từ lịch sử đo, luôn hiển thị đủ 7 thanh chuẩn thiết kế
   const days = ['20', '21', '22', '23', '24', '25', '26'];
   const baseHeights = [58, 55, 65, 58, 62, 54, 70];
   const chartBars = days.map((day, idx) => {
@@ -87,7 +89,7 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
   return (
     <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-24">
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 flex flex-col gap-3">
-        {/* 1. Header Pills (1:1 with Design) */}
+        {/* 1. Header Pills */}
         <ScreenHeaderPills
           activeMemberName={activeMemberName}
           onSelectMember={() => onSelectMember ? onSelectMember('family') : onNavigate('family')}
@@ -101,7 +103,7 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
         {/* 3. Category Tabs 1 dòng */}
         <HealthCategoryTabs activeTab="biometrics" onSelectTab={handleSelectHealthTab} />
 
-        {/* 4. Device Sync Banner (1:1 with Design) */}
+        {/* 4. Device Sync Banner */}
         <div
           onClick={() => onNavigate('devices')}
           className="flex items-center justify-between bg-white rounded-2xl p-3 shadow-xs border border-slate-100 cursor-pointer hover:bg-slate-50 transition"
@@ -131,162 +133,34 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
           </div>
         )}
 
-        {/* 5. Detail & 7-Day Bar Chart Card (1:1 with Design) */}
-        <div className="bg-white rounded-[28px] p-5 shadow-xs border border-slate-100 flex flex-col gap-3 relative">
-          {/* Top row */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-extrabold text-slate-800">{activeMetricObj.name} · 7 ngày</span>
-            <span className={`px-3 py-1 rounded-full text-xs font-extrabold ${
-              isNoData ? 'bg-slate-100 text-slate-600' : 'bg-[#EAF8F0] text-[#166534]'
-            }`}>
-              {isNoData ? 'Chưa có số đo' : 'Mức 1 · Tốt'}
-            </span>
-          </div>
+        {/* 5. Detail & 7-Day Bar Chart Card */}
+        <BiometricsChartSection
+          activeMetricObj={activeMetricObj}
+          isNoData={isNoData}
+          latestRecordedAt={latestRecordedAt}
+          chartBars={chartBars}
+          filteredHistory={filteredHistory}
+          onOpenEntrySheet={openEntrySheet}
+        />
 
-          {/* Value row */}
-          <div className="flex items-baseline">
-            <span className="text-4xl font-black text-slate-900 tracking-tight">{activeMetricObj.value}</span>
-            <span className="text-xs font-medium text-slate-500 ml-1.5">{activeMetricObj.unit}</span>
-          </div>
+        {/* 6. Lưới 8 chỉ số đo */}
+        <BiometricsMetricTilesGrid
+          metricsSummaries={metricsSummaries}
+          activeMetric={activeMetric}
+          onSelectMetric={setActiveMetric}
+        />
 
-          {/* Subtitle */}
-          <span className="text-xs text-slate-400 font-medium -mt-1">
-            {latestRecordedAt ? `Lần đo mới nhất: ${latestRecordedAt}` : 'Chưa có lần đo nào'}
-          </span>
-
-          {/* Legend */}
-          <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-500 pt-0.5">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
-              Từ thiết bị
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
-              Nhập tay
-            </span>
-          </div>
-
-          {/* 7-Day Bar Chart */}
-          <div className="h-28 flex items-end justify-between px-3 pt-2 pb-1 border-b border-slate-100/60">
-            {chartBars.map((bar, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end flex-1 max-w-[36px]">
-                <div
-                  style={{ height: bar.height }}
-                  className={`w-5 rounded-full transition-all ${
-                    bar.isLatest ? 'bg-[#2563EB]' : 'bg-[#BFDBFE]'
-                  }`}
-                />
-                <span className={`text-[10px] font-bold ${
-                  bar.isLatest ? 'text-slate-900 font-extrabold' : 'text-slate-400'
-                }`}>
-                  {bar.day}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Callout box */}
-          <div className="bg-[#F0FDF4] border border-emerald-100/70 rounded-2xl p-3 flex items-start gap-2 text-xs">
-            <span className="text-teal-600 font-bold shrink-0 mt-0.5">✦</span>
-            <span className="text-slate-800 font-medium leading-relaxed">
-              {filteredHistory.length >= 2
-                ? `Diễn biến ${activeMetricObj.name}: từ ${filteredHistory[filteredHistory.length - 1].value} sang ${filteredHistory[0].value} ${activeMetricObj.unit} — xu hướng ổn định.`
-                : filteredHistory.length === 1
-                ? `Đã ghi nhận 1 lần đo ${activeMetricObj.name}: ${filteredHistory[0].value} ${activeMetricObj.unit}. Hãy tiếp tục theo dõi đều đặn.`
-                : `Chưa có đủ số đo để phân tích xu hướng. Nhấn nút bên dưới để nhập số đo mới.`}
-            </span>
-          </div>
-
-          {/* Large Manual Input Button (1:1 with Design) */}
-          <button
-            onClick={openEntrySheet}
-            className="w-full h-12 rounded-full bg-white border-2 border-[#1F7A8C] hover:bg-teal-50/40 text-[#1F7A8C] text-sm font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition shadow-2xs mt-1"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Nhập số đo {activeMetricObj.name.toLowerCase()} thủ công</span>
-          </button>
-        </div>
-
-        {/* 6. Instruction Text */}
-        <span className="text-xs text-slate-500 font-semibold px-1">
-          Chạm vào một chỉ số để xem diễn biến 7 lần đo gần nhất
-        </span>
-
-        {/* 7. Lưới 8 chỉ số đo (2 Cột x 4 Hàng) (1:1 with Design) */}
-        <div className="grid grid-cols-2 gap-3">
-          {metricsSummaries.map((m) => {
-            const isSelected = activeMetric === m.id;
-            return (
-              <div
-                key={m.id}
-                onClick={() => setActiveMetric(m.id)}
-                className={`rounded-[22px] p-3.5 flex flex-col justify-between h-20 transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-white border-2 border-slate-900 shadow-sm ring-1 ring-slate-900/10'
-                    : 'bg-white border border-slate-100 shadow-2xs hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`w-6 h-6 rounded-lg ${m.codeBg} ${m.codeColor} text-[11px] font-black flex items-center justify-center shrink-0`}
-                  >
-                    {m.code}
-                  </span>
-                  <span className="text-xs font-bold text-slate-700 truncate">{m.name}</span>
-                </div>
-                <div className="flex items-baseline">
-                  <span className="text-base font-black text-slate-900">{m.value}</span>
-                  <span className="text-[11px] text-slate-400 font-medium ml-1 truncate">{m.unit}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 8. Lịch sử đo gần đây (1:1 with Design) */}
-        <div className="bg-white rounded-[24px] p-4.5 flex flex-col gap-3 shadow-xs border border-slate-100 mt-1">
-          <div className="flex justify-between items-center text-xs font-extrabold text-slate-900 pb-1 border-b border-slate-50">
-            <span>Lịch sử đo · {activeMetricObj.name}</span>
-            <span className="text-[11px] text-slate-400 font-semibold">7 lần đo</span>
-          </div>
-
-          <div className="divide-y divide-slate-50 text-xs max-h-64 overflow-y-auto">
-            {filteredHistory.length > 0 ? (
-              filteredHistory.slice(0, 7).map((item) => (
-                <div key={item.id} className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <div className="font-extrabold text-slate-900 text-sm">
-                      {item.value} <span className="text-xs font-normal text-slate-400">{item.unit}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      {item.recordedAt} · {item.source === 'device' ? 'Đồng bộ thiết bị' : 'Nhập tay'}
-                    </div>
-                  </div>
-
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                      item.source === 'device'
-                        ? 'bg-teal-50 text-[#1F7A8C]'
-                        : 'bg-amber-50 text-amber-700'
-                    }`}
-                  >
-                    {item.source === 'device' ? 'Thiết bị' : 'Nhập tay'}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="py-8 text-center text-xs text-slate-400 font-medium">
-                Chưa có lịch sử đo cho chỉ số này. Nhấn nút bên trên để ghi nhận số đo mới.
-              </div>
-            )}
-          </div>
-        </div>
+        {/* 7. Lịch sử đo gần đây với In-Frame Internal Scroll */}
+        <BiometricsHistorySection
+          activeMetricName={activeMetricObj.name}
+          history={filteredHistory}
+        />
       </div>
 
-      {/* 9. Bottom Navigation (1:1 with Design) */}
+      {/* 8. Bottom Navigation */}
       <HomeBottomNav
         activeTab="health"
-        onTabChange={(tab: NavTabId) => {
+        onTabChange={(tab) => {
           if (tab === 'home') onNavigate('home');
           else if (tab === 'records') onNavigate('records');
           else if (tab === 'ai') onNavigate('ai');
@@ -295,7 +169,7 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
         }}
       />
 
-      {/* 10. Manual Entry Bottom Sheet (Saves to DB and reloads live!) */}
+      {/* 9. Manual Entry Bottom Sheet */}
       <BiometricEntrySheet
         isOpen={isEntrySheetOpen}
         onClose={closeEntrySheet}

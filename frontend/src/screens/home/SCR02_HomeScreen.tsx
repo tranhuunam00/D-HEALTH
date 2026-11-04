@@ -1,8 +1,14 @@
 import React from 'react';
-import { Bell, Pill, Plus, Check, AlertTriangle, FlaskConical, Scan } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useHomeLogic } from './useHomeLogic';
 import { BiometricEntrySheet } from '../../components/organisms/BiometricEntrySheet';
 import { HomeBottomNav } from './HomeBottomNav';
+import { HomeHeader } from './components/HomeHeader';
+import { HomeHealthScoreCard } from './components/HomeHealthScoreCard';
+import { HomeMedicationCard } from './components/HomeMedicationCard';
+import { HomeVitalsGrid } from './components/HomeVitalsGrid';
+import { HomeAiInsightCard } from './components/HomeAiInsightCard';
+import { HomeTimelineCard } from './components/HomeTimelineCard';
 
 export interface SCR02Props {
   onOpenEmergency: () => void;
@@ -22,9 +28,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
   const {
     members,
     activeMemberId,
-    setActiveMemberId,
     healthScore,
-    vitals,
     latestBp,
     latestHr,
     latestWeight,
@@ -43,341 +47,59 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     full_name: propMemberName || user?.fullName || 'Trần Hữu Nam',
   };
 
-  const displayBp = latestBp;
-  const displayHr = latestHr;
-  const displayWeight = latestWeight;
-  const displayGlucose = latestGlucose;
-  const displayScore = healthScore.total > 0 ? healthScore.total : '--';
-
-  const scoreNum = typeof displayScore === 'number' ? displayScore : parseFloat(String(displayScore));
-  const hasScore = !isNaN(scoreNum) && scoreNum > 0;
-  const clampedScore = hasScore ? Math.min(100, Math.max(0, scoreNum)) : 50;
-  const angleRad = Math.PI * (1 - clampedScore / 100);
-  const indicatorX = Math.round(150 + 116 * Math.cos(angleRad));
-  const indicatorY = Math.round(150 - 116 * Math.sin(angleRad));
-
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] pb-24 relative flex flex-col font-sans select-none">
-      {/* Scrollable Content (1:1 with Design) */}
       <div className="flex-1 px-4 pt-4 pb-32 flex flex-col gap-3">
-        {/* 1. Top Header: Avatar + Xin chào + SOS + Bell */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onNavigate?.('profile')}
-            className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center font-black text-base shadow-sm hover:opacity-90 transition-all shrink-0"
-          >
-            {activeMember.full_name.charAt(0)}
-          </button>
-          <div
-            onClick={() => onNavigate?.('profile')}
-            className="flex-1 flex flex-col cursor-pointer min-w-0"
-          >
-            <span className="text-xs text-slate-500 font-medium">Xin chào,</span>
-            <span className="text-base font-extrabold text-slate-900 truncate">{activeMember.full_name}</span>
-          </div>
-          <button
-            onClick={onOpenEmergency}
-            className="h-9 px-3.5 rounded-full bg-[#FEE2E2] text-[#DC2626] text-xs font-black tracking-wider shadow-2xs active:scale-95 transition-all shrink-0 flex items-center justify-center"
-          >
-            SOS
-          </button>
-          <button
-            onClick={() => alert('Chưa có thông báo khẩn cấp mới.')}
-            className="w-9 h-9 rounded-full bg-white text-slate-700 flex items-center justify-center shadow-2xs border border-slate-100 shrink-0 hover:bg-slate-50 transition"
-          >
-            <Bell className="w-4 h-4" />
-          </button>
-        </div>
+        {/* 1. Header with Avatar & Greeting */}
+        <HomeHeader
+          fullName={activeMember.full_name}
+          onOpenProfile={() => onNavigate?.('profile')}
+          onOpenEmergency={onOpenEmergency}
+        />
 
-        {/* 2. Title & Date Tag (1:1 with Design) */}
-        <div className="flex flex-col gap-1 pt-1">
-          <h1 className="text-2xl font-black text-slate-900 leading-tight">Hôm nay bạn thế nào?</h1>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200/70 text-slate-700 text-xs font-semibold shadow-2xs w-fit">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-        </div>
+        {/* 2. Health Score Arc Card */}
+        <HomeHealthScoreCard
+          healthScore={healthScore}
+          onNavigateBiometrics={() => onNavigate?.('biometrics')}
+        />
 
-        {/* 3. Health Score Arc Card (1:1 with Design) */}
-        <div
-          onClick={() => onNavigate?.('biometrics')}
-          className="bg-white rounded-[28px] p-5 shadow-xs border border-slate-100 relative flex flex-col items-center cursor-pointer hover:shadow-md transition-shadow"
-        >
-          {/* Top-Right Status Badge (Black pill) */}
-          <span className="absolute right-4 top-4 bg-slate-900 text-white rounded-full px-3 py-1 text-xs font-bold shadow-2xs">
-            {healthScore.status || 'Chưa có số đo'}
-          </span>
+        {/* 3. Next Dose Medication Card */}
+        <HomeMedicationCard
+          todayDose={todayDose}
+          todayDosesSummary={todayDosesSummary}
+          isDoseTaken={isDoseTaken}
+          onTakeDose={handleTakeDose}
+          onNavigateMeds={() => onNavigate?.('meds')}
+        />
 
-          <div className="relative w-[260px] h-[142px] flex items-center justify-center mt-1">
-            <svg width="260" height="142" viewBox="0 0 300 168" className="overflow-visible">
-              <defs>
-                <linearGradient id="gauge" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0" stopColor="#EF4444" />
-                  <stop offset="0.45" stopColor="#F59E0B" />
-                  <stop offset="0.75" stopColor="#EAB308" />
-                  <stop offset="1" stopColor="#22C55E" />
-                </linearGradient>
-              </defs>
-              <path d="M 34 150 A 116 116 0 0 1 266 150" fill="none" stroke="#F1F5F9" strokeWidth="20" strokeLinecap="round" />
-              <path d="M 34 150 A 116 116 0 0 1 266 150" fill="none" stroke="url(#gauge)" strokeWidth="20" strokeLinecap="round" />
-              {hasScore && (
-                <circle cx={indicatorX} cy={indicatorY} r="8.5" fill="#FFFFFF" stroke="#0F172A" strokeWidth="3.5" className="drop-shadow-xs" />
-              )}
-            </svg>
+        {/* 4. 2x2 Vitals Cards */}
+        <HomeVitalsGrid
+          displayBp={latestBp}
+          displayHr={latestHr}
+          displayWeight={latestWeight}
+          displayGlucose={latestGlucose}
+          onNavigateBiometrics={() => onNavigate?.('biometrics')}
+          onNavigateLabs={() => onNavigate?.('labs')}
+        />
 
-            {/* Score & Label positioned completely inside the arc without overlapping */}
-            <div className="absolute bottom-2 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">
-                Điểm sức khoẻ
-              </span>
-              <div className="flex items-baseline leading-none">
-                <span className="text-4xl font-black text-slate-900 tracking-tight">
-                  {displayScore}
-                </span>
-                {hasScore && (
-                  <span className="text-emerald-500 text-xs font-black ml-1">▲</span>
-                )}
-              </div>
-            </div>
-          </div>
+        {/* 5. AI Insight Highlight Card */}
+        <HomeAiInsightCard onNavigateAi={() => onNavigate?.('ai')} />
 
-          {/* Two Pills below Arc (1:1 with Design) */}
-          <div className="flex items-center gap-2 mt-3 w-full justify-center">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/70 text-amber-900 text-xs font-bold">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              2 vấn đề cần theo dõi
-            </span>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/70 text-slate-700 text-xs font-bold">
-              9 nhóm dữ liệu
-            </span>
-          </div>
-        </div>
-
-        {/* 4. Nhắc uống thuốc Card (1:1 with Design) */}
-        <div
-          onClick={() => onNavigate?.('meds')}
-          className={`bg-white rounded-[24px] p-4 flex items-center justify-between shadow-xs cursor-pointer hover:shadow-sm transition-all border-2 ${
-            todayDose ? 'border-amber-300' : 'border-slate-200'
-          }`}
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-              todayDose ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'
-            }`}>
-              <Pill className="w-5 h-5 rotate-45" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className={`text-[11px] font-black uppercase tracking-wide ${
-                todayDose ? 'text-amber-800' : 'text-slate-400'
-              }`}>
-                {todayDose
-                  ? `NHẮC UỐNG THUỐC · ${todayDose?.scheduled_time ? todayDose.scheduled_time.substring(0, 5) : '20:00'}`
-                  : 'ĐƠN THUỐC & NHẮC THUỐC'}
-              </span>
-              <span className="text-sm font-black text-slate-900 truncate">
-                {todayDose
-                  ? `${todayDose.name} ${todayDose.dosage || ''}`.trim()
-                  : 'Không có lịch uống thuốc hôm nay'}
-              </span>
-              <span className="text-xs text-slate-500 font-medium truncate">
-                {todayDose
-                  ? `${todayDose.instructions || '1 viên sau ăn'} · hôm nay ${todayDosesSummary.taken}/${todayDosesSummary.total} liều`
-                  : 'Nhấn để xem hoặc thêm đơn thuốc mới'}
-              </span>
-            </div>
-          </div>
-          {todayDose ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleTakeDose();
-              }}
-              className={`h-9 px-4 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 shadow-xs ${
-                isDoseTaken
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-95'
-              }`}
-            >
-              {isDoseTaken ? <><Check className="w-3.5 h-3.5" /> Đã uống</> : 'Đã uống'}
-            </button>
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onNavigate?.('meds');
-              }}
-              className="h-8 px-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs active:scale-95 transition shrink-0"
-            >
-              + Thêm
-            </button>
-          )}
-        </div>
-
-        {/* 5. Vitals Cards 2x2 Grid (1:1 with Design) */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Card 1: Huyết áp */}
-          <div
-            onClick={() => onNavigate?.('biometrics')}
-            className="bg-[#2563EB] text-white rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-white/90">Huyết áp</span>
-              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2.5 py-0.5">
-                {displayBp !== '--/--' ? 'Tốt' : 'Chưa đo'}
-              </span>
-            </div>
-            <div>
-              <span className="text-3xl font-black">{displayBp}</span>
-              <span className="text-xs font-normal text-white/80 ml-1">mmHg</span>
-            </div>
-          </div>
-
-          {/* Card 2: Nhịp tim with ECG line */}
-          <div
-            onClick={() => onNavigate?.('biometrics')}
-            className="bg-white text-slate-900 rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-xs border border-slate-100 cursor-pointer hover:shadow-sm active:scale-[0.98] transition-all"
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-600">Nhịp tim</span>
-              <span className={`text-[10px] font-bold rounded-full px-2.5 py-0.5 ${
-                displayHr !== '--' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-              }`}>
-                {displayHr !== '--' ? 'Tốt' : 'Chưa đo'}
-              </span>
-            </div>
-            <div>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-black">{displayHr}</span>
-                <span className="text-xs font-normal text-slate-400 ml-1">bpm</span>
-              </div>
-              <svg className={`w-full h-3.5 mt-0.5 ${displayHr !== '--' ? 'text-rose-500' : 'text-slate-300'}`} viewBox="0 0 100 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                {displayHr !== '--' ? (
-                  <path d="M0 10 L25 10 L32 10 L37 4 L43 17 L49 2 L55 18 L59 10 L65 10 L100 10" />
-                ) : (
-                  <line x1="0" y1="10" x2="100" y2="10" strokeDasharray="3 3" />
-                )}
-              </svg>
-            </div>
-          </div>
-
-          {/* Card 3: Cân nặng */}
-          <div
-            onClick={() => onNavigate?.('biometrics')}
-            className="bg-[#D84A1B] text-white rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-white/90">Cân nặng</span>
-              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2.5 py-0.5">
-                {displayWeight !== '--' ? 'Theo dõi' : 'Chưa cân'}
-              </span>
-            </div>
-            <div>
-              <span className="text-3xl font-black">{displayWeight}</span>
-              <span className="text-xs font-normal text-white/80 ml-1">kg</span>
-            </div>
-          </div>
-
-          {/* Card 4: HbA1c */}
-          <div
-            onClick={() => onNavigate?.('labs')}
-            className="bg-white text-slate-900 rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-xs border border-slate-100 cursor-pointer hover:shadow-sm active:scale-[0.98] transition-all"
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-600">HbA1c</span>
-              <span className={`text-[10px] font-bold rounded-full px-2.5 py-0.5 ${
-                displayGlucose !== '--' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-              }`}>
-                {displayGlucose !== '--' ? 'Tốt' : 'Chưa đo'}
-              </span>
-            </div>
-            <div>
-              <span className="text-3xl font-black">{displayGlucose}</span>
-              <span className="text-xs font-normal text-slate-400 ml-1">%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 6. AI INSIGHT Card (1:1 with Design) */}
-        <div
-          onClick={() => onNavigate?.('ai')}
-          className="bg-gradient-to-r from-[#E6F5F2] via-[#EDF3FC] to-[#FCEEE7] rounded-[24px] p-4 flex items-center justify-between border border-teal-100/60 shadow-xs cursor-pointer hover:opacity-95 transition-all"
-        >
-          <div className="flex items-center gap-3 min-w-0 pr-2">
-            <div className="w-11 h-11 rounded-full bg-[#1F7A8C] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-                <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="3" />
-                <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="3" />
-              </svg>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[11px] font-black text-[#1F7A8C] uppercase tracking-wider block">AI INSIGHT</span>
-              <span className="text-xs font-bold text-slate-900 leading-snug mt-0.5">
-                LDL–C tăng trong 3 lần xét nghiệm gần nhất.
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigate?.('ai');
-            }}
-            className="px-3.5 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 transition"
-          >
-            Xem phân tích
-          </button>
-        </div>
-
-        {/* 7. Health Timeline Card (1:1 with Design) */}
-        <div className="bg-white rounded-[24px] p-4.5 border border-slate-100 shadow-xs flex flex-col gap-3.5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-extrabold text-slate-900">Health Timeline</span>
-            <button
-              onClick={() => onNavigate?.('records')}
-              className="text-xs font-bold text-[#1F7A8C] hover:underline"
-            >
-              Xem tất cả
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-2.5">
-            {/* Timeline Item 1: Xét nghiệm máu */}
-            <div
-              onClick={() => onNavigate?.('labs')}
-              className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-                  <FlaskConical className="w-4.5 h-4.5" />
-                </div>
-                <span className="text-xs font-bold text-slate-900">Xét nghiệm máu</span>
-              </div>
-              <span className="text-xs font-semibold text-slate-400">20/10</span>
-            </div>
-
-            {/* Timeline Item 2: CT ngực */}
-            <div
-              onClick={() => onNavigate?.('imaging')}
-              className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                  <Scan className="w-4.5 h-4.5" />
-                </div>
-                <span className="text-xs font-bold text-slate-900">CT ngực</span>
-              </div>
-              <span className="text-xs font-semibold text-slate-400">08/10</span>
-            </div>
-          </div>
-        </div>
+        {/* 6. Health Timeline */}
+        <HomeTimelineCard
+          onNavigateRecords={() => onNavigate?.('records')}
+          onNavigateLabs={() => onNavigate?.('labs')}
+          onNavigateImaging={() => onNavigate?.('imaging')}
+        />
       </div>
 
       {/* Floating Action Button (+) Nhập số đo */}
       <button
+        type="button"
         onClick={() => setIsVitalsSheetOpen(true)}
-        className="fixed bottom-20 right-6 w-13 h-13 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center shadow-2xl active:scale-90 transition-all z-20"
+        className="fixed bottom-20 right-6 w-13 h-13 min-w-[52px] min-h-[52px] rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center shadow-2xl active:scale-90 transition-all z-20"
         title="Nhập số đo nhanh"
+        aria-label="Nhập số đo nhanh"
       >
         <Plus className="w-6 h-6" />
       </button>

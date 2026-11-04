@@ -4,8 +4,9 @@ import { useLabsLogic, LabSpecialtyCode, TRACKED_METRICS_CONFIG } from './useLab
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
+import { LabTrendChart } from './components/LabTrendChart';
 
-interface SCR05Props {
+export interface SCR05Props {
   readonly onNavigate: (screen: string, reportId?: string) => void;
   readonly activeMemberName?: string;
   readonly activeMemberId?: string;
@@ -45,48 +46,6 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
     }
   };
 
-  const renderTrendChart = (points: readonly number[], isAmber: boolean) => {
-    const min = Math.min(...points) * 0.9;
-    const max = Math.max(...points) * 1.1;
-    const range = max - min || 1;
-    const strokeColor = isAmber ? '#D97706' : '#0D9488';
-    const fillColor = isAmber ? 'url(#amberGrad)' : 'url(#tealGrad)';
-
-    const coords = points.map((val, idx) => {
-      const x = 20 + idx * 60;
-      const y = 70 - ((val - min) / range) * 50;
-      return { x, y };
-    });
-
-    const pathD = coords.reduce((acc, c, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`, '');
-    const areaD = `${pathD} L ${coords[coords.length - 1].x} 80 L ${coords[0].x} 80 Z`;
-
-    return (
-      <svg className="w-full h-20 overflow-visible" viewBox="0 0 280 85">
-        <defs>
-          <linearGradient id="tealGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0D9488" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#D97706" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#D97706" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {/* Reference Dashed Line */}
-        <line x1="10" y1="42" x2="270" y2="42" stroke="#CBD5E1" strokeDasharray="3 3" strokeWidth="1" />
-        {/* Area fill */}
-        <path d={areaD} fill={fillColor} />
-        {/* Line */}
-        <path d={pathD} fill="none" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Points */}
-        {coords.map((c, i) => (
-          <circle key={i} cx={c.x} cy={c.y} r="3.5" fill="#FFFFFF" stroke={strokeColor} strokeWidth="2" />
-        ))}
-      </svg>
-    );
-  };
-
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-24">
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 flex flex-col gap-3.5">
@@ -120,6 +79,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
             {SPECIALTY_PILLS.map((p) => (
               <button
                 key={p.id}
+                type="button"
                 onClick={() => setSelectedCategory(p.id)}
                 className={`px-3.5 py-1.5 rounded-full text-xs transition ${
                   selectedCategory === p.id
@@ -185,6 +145,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
               return (
                 <button
                   key={metric.id}
+                  type="button"
                   onClick={() => toggleTrackedMetric(metric.id)}
                   className={`px-3 py-1.5 rounded-full text-xs transition flex items-center gap-1 shrink-0 ${
                     isTracked
@@ -226,7 +187,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
                 </div>
 
                 {/* Trend Chart */}
-                {renderTrendChart(m.points, isWarning)}
+                <LabTrendChart points={m.points} isAmber={isWarning} />
 
                 {/* Callout Insight */}
                 <div className="bg-[#EAF8F0] border border-teal-100/70 rounded-2xl p-3 flex items-start gap-2">

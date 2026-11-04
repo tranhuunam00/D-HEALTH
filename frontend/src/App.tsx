@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Smartphone, Monitor, LogOut, HeartPulse } from 'lucide-react';
 import { SCR01_LoginScreen } from './screens/auth/SCR01_LoginScreen';
 import { SCR02_HomeScreen } from './screens/home/SCR02_HomeScreen';
@@ -14,8 +14,8 @@ import { SCR11_MedsScreen } from './screens/meds/SCR11_MedsScreen';
 import { SCR12_CameraInputScreen } from './screens/camera/SCR12_CameraInputScreen';
 import { SCR13_AIAssistantScreen } from './screens/ai/SCR13_AIAssistantScreen';
 import { SCR14_CareScreen } from './screens/care/SCR14_CareScreen';
-import { SCR16_UserProfileScreen } from './screens/profile/SCR16_UserProfileScreen';
-import { SCR17_FamilyProfilesScreen } from './screens/family/SCR17_FamilyProfilesScreen';
+import { SCR15_UserProfileScreen } from './screens/profile/SCR15_UserProfileScreen';
+import { SCR16_FamilyProfilesScreen } from './screens/family/SCR16_FamilyProfilesScreen';
 import { SCR17_EmergencyScreen } from './screens/emergency/SCR17_EmergencyScreen';
 import { AdminDashboard } from './screens/admin/AdminDashboard';
 import { User } from './types/auth.types';
@@ -208,7 +208,7 @@ export default function App() {
         );
       case 'profile':
         return (
-          <SCR16_UserProfileScreen
+          <SCR15_UserProfileScreen
             user={currentUser}
             activeMemberId={activeMemberId}
             onBack={() => setCurrentScreen('home')}
@@ -216,7 +216,7 @@ export default function App() {
           />
         );
       case 'family':
-        return <SCR17_FamilyProfilesScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return <SCR16_FamilyProfilesScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'emergency':
         return (
           <SCR17_EmergencyScreen
@@ -277,6 +277,7 @@ export default function App() {
               onChange={(e) => setCurrentScreen(e.target.value as any)}
               className="bg-slate-900 border border-slate-700 text-slate-200 rounded-md px-2 py-0.5 text-[11px] font-medium focus:outline-none"
             >
+              <option value="login">SCR-01: Đăng nhập</option>
               <option value="home">SCR-02: Trang chủ</option>
               <option value="biometrics">SCR-03: Sinh trắc học</option>
               <option value="devices">SCR-04: Kết nối thiết bị</option>
@@ -290,10 +291,9 @@ export default function App() {
               <option value="camera-ocr">SCR-12: Nhập KQ / Camera</option>
               <option value="ai">SCR-13: Trợ lý AI</option>
               <option value="care">SCR-14: Chăm sóc</option>
-              <option value="emergency">SCR-15: Thẻ cấp cứu SOS</option>
-              <option value="profile">SCR-16: Thông tin cá nhân</option>
-              <option value="family">SCR-17: Hồ sơ gia đình</option>
-              <option value="login">SCR-01: Đăng nhập</option>
+              <option value="profile">SCR-15: Thông tin người dùng</option>
+              <option value="family">SCR-16: Hồ sơ gia đình</option>
+              <option value="emergency">SCR-17: Thẻ khẩn cấp SOS</option>
             </select>
           </div>
         )}

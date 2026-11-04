@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
+import { LabAnalytesTable, AnalyteRow } from './components/LabAnalytesTable';
+import { LabMetadataCard } from './components/LabMetadataCard';
 
 interface SCR06Props {
   readonly onNavigate: (screen: string) => void;
   readonly activeMemberName?: string;
   readonly activeMemberId?: string;
   readonly reportId?: string | null;
-}
-
-interface AnalyteRow {
-  readonly name: string;
-  readonly value: string;
-  readonly unit: string;
-  readonly refRange: string;
 }
 
 const DEFAULT_ANALYTES: readonly AnalyteRow[] = Object.freeze([
@@ -98,7 +93,7 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
             <button
               onClick={() => onNavigate('labs')}
               aria-label="Quay lại"
-              className="w-10 h-10 rounded-full bg-white text-slate-800 flex items-center justify-center shadow-xs active:scale-95 transition shrink-0"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white text-slate-800 flex items-center justify-center shadow-xs active:scale-95 transition shrink-0"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -115,58 +110,10 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
         </div>
 
         {/* 3. Metadata Card */}
-        <div className="bg-white rounded-[24px] p-4 shadow-xs border border-slate-100 grid grid-cols-2 gap-y-3.5 gap-x-4 text-xs">
-          <div>
-            <span className="text-slate-400 block font-medium">Ngày lấy mẫu</span>
-            <span className="text-slate-900 font-bold mt-0.5 block">20/10/2026 · 07:30</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block font-medium">Ngày trả kết quả</span>
-            <span className="text-slate-900 font-bold mt-0.5 block">20/10/2026 · 11:00</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block font-medium">Nơi thực hiện</span>
-            <span className="text-slate-900 font-bold mt-0.5 block truncate">{facility}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block font-medium">Bác sĩ chỉ định</span>
-            <span className="text-slate-900 font-bold mt-0.5 block truncate">{doctor}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block font-medium">Loại mẫu</span>
-            <span className="text-slate-900 font-bold mt-0.5 block">Huyết thanh · lúc đói</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block font-medium">Mã phiếu</span>
-            <span className="text-slate-900 font-bold mt-0.5 block">XN-2026-8891</span>
-          </div>
-        </div>
+        <LabMetadataCard facility={facility} doctor={doctor} />
 
         {/* 4. Table Card: Chỉ số, Kết quả, Tham chiếu */}
-        <div className="bg-white rounded-[24px] p-4 shadow-xs border border-slate-100 flex flex-col gap-2">
-          <div className="grid grid-cols-[1.4fr_1fr_1.2fr] text-xs font-bold text-slate-400 border-b border-slate-100 pb-2 px-1">
-            <span>Chỉ số</span>
-            <span className="text-center">Kết quả</span>
-            <span className="text-right">Tham chiếu</span>
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {analytes.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-[1.4fr_1fr_1.2fr] items-center py-2.5 px-1 text-xs">
-                <div>
-                  <span className="font-bold text-slate-900 block leading-tight">{item.name}</span>
-                  <span className="text-[11px] text-slate-400 block">{item.unit}</span>
-                </div>
-                <div className="text-center font-black text-sm text-slate-900">
-                  {item.value}
-                </div>
-                <div className="text-right text-slate-500 font-medium">
-                  {item.refRange}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <LabAnalytesTable analytes={analytes} />
 
         {/* 5. AI Insight Callout */}
         <div className="bg-[#EAF8F0] border border-teal-100/80 rounded-[22px] p-3.5 flex items-start gap-2.5">
@@ -188,7 +135,7 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
         <button
           type="button"
           onClick={() => alert('Xem file PDF gốc phiếu xét nghiệm')}
-          className="bg-white rounded-[22px] p-3.5 shadow-xs border border-slate-100 flex items-center justify-between hover:bg-slate-50 transition"
+          className="bg-white rounded-[22px] p-3.5 shadow-xs border border-slate-100 flex items-center justify-between hover:bg-slate-50 min-h-[44px] transition"
         >
           <div className="flex items-center gap-2.5">
             <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-black text-[11px]">
@@ -215,14 +162,14 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
           <button
             type="button"
             onClick={() => onNavigate('ai')}
-            className="flex-1 h-12 rounded-full bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-xs active:scale-95 transition"
+            className="flex-1 h-12 min-h-[44px] rounded-full bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-xs active:scale-95 transition"
           >
             Hỏi trợ lý AI
           </button>
           <button
             type="button"
             onClick={() => alert('Đã gửi phiếu xét nghiệm cho bác sĩ điều trị')}
-            className="flex-1 h-12 rounded-full bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-extrabold shadow-md active:scale-95 transition"
+            className="flex-1 h-12 min-h-[44px] rounded-full bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-extrabold shadow-md active:scale-95 transition"
           >
             Gửi cho bác sĩ
           </button>
