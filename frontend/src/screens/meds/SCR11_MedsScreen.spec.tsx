@@ -1,25 +1,47 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { SCR11_MedsScreen } from './SCR11_MedsScreen';
 
 describe('SCR11_MedsScreen Mobile View TDD', () => {
-  it('render đầy đủ Quản lý dùng thuốc, tỷ lệ tuân thủ và danh sách liều thuốc hôm nay', () => {
-    render(<SCR11_MedsScreen onNavigate={vi.fn()} />);
+  it('render 100% chuẩn giao diện: Quản lý dùng thuốc, 3 Tabs, Banner tuân thủ 91%, Calendar và 4 cữ thuốc hôm nay', async () => {
+    const handleNav = vi.fn();
+
+    await act(async () => {
+      render(<SCR11_MedsScreen onNavigate={handleNav} />);
+    });
 
     expect(screen.getByText('Quản lý dùng thuốc')).toBeDefined();
-    expect(screen.getByText(/Tuân thủ/)).toBeDefined();
-    expect(screen.getByText('Amlodipine 5mg')).toBeDefined();
-    expect(screen.getByText('Metformin 500mg')).toBeDefined();
-    expect(screen.getByText('Atorvastatin 20mg')).toBeDefined();
-    expect(screen.getByText(/Thêm liều thuốc/)).toBeDefined();
+    expect(screen.getByText('Lịch thuốc')).toBeDefined();
+    expect(screen.getByText('Đang dùng')).toBeDefined();
+    expect(screen.getByText('Tiền sử')).toBeDefined();
+
+    expect(screen.getByText('TUÂN THỦ 30 NGÀY')).toBeDefined();
+    expect(screen.getByText('91%')).toBeDefined();
+    expect(screen.getByText('HÔM NAY')).toBeDefined();
+
+    expect(screen.getByText('Tháng 10/2026')).toBeDefined();
+    expect(screen.getByText('Hôm nay · 26/10')).toBeDefined();
+    expect(screen.getByText('Losartan 50 mg')).toBeDefined();
+    expect(screen.getByText('Atorvastatin 20 mg')).toBeDefined();
+
+    expect(screen.getByText('Thêm thuốc')).toBeDefined();
+    expect(screen.getByText('Nhập thủ công')).toBeDefined();
+    expect(screen.getByText('AI Camera')).toBeDefined();
+    expect(screen.getByText('Gửi tiền sử dùng thuốc cho bác sĩ')).toBeDefined();
   });
 
-  it('gọi onNavigate khi bấm nút quay lại', () => {
-    const handleNavigate = vi.fn();
-    render(<SCR11_MedsScreen onNavigate={handleNavigate} />);
+  it('gọi onNavigate khi bấm AI Camera hoặc nút Quay lại', async () => {
+    const handleNav = vi.fn();
 
-    fireEvent.click(screen.getByLabelText('Quay lại'));
-    expect(handleNavigate).toHaveBeenCalledWith('home');
+    await act(async () => {
+      render(<SCR11_MedsScreen onNavigate={handleNav} />);
+    });
+
+    fireEvent.click(screen.getByText('AI Camera'));
+    expect(handleNav).toHaveBeenCalledWith('camera-ocr');
+
+    fireEvent.click(screen.getByRole('button', { name: /Quay lại/i }));
+    expect(handleNav).toHaveBeenCalledWith('home');
   });
 });
