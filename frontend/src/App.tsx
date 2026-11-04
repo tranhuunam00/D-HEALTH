@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Activity, ShieldCheck, HeartPulse, User, Database, HardDrive, Smartphone, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface HealthData {
