@@ -11,12 +11,20 @@ if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
-# 2. Build & Khởi động Docker containers
-echo "Starting PostgreSQL, MinIO, Backend API and Frontend..."
-docker compose up -d --build
+# 2. Clear toàn bộ container cũ
+echo "Stopping and clearing old containers..."
+docker compose down --remove-orphans || true
+docker rm -f dhealth-frontend dhealth-backend dhealth-postgres dhealth-minio dhealth-minio-init 2>/dev/null || true
 
-# 3. Chờ cơ sở dữ liệu và MinIO sẵn sàng
-echo "Waiting for services to become healthy..."
+# 3. Build & Khởi động Docker containers mới
+echo "Starting PostgreSQL, MinIO, Backend API and Frontend..."
+docker compose up -d --build --force-recreate
+
+# 4. Dọn dẹp images rác
+docker image prune -f || true
+
+# 5. Chờ và kiểm tra trạng thái
+echo "Checking live status of services..."
 docker compose ps
 
 echo "=========================================================="
