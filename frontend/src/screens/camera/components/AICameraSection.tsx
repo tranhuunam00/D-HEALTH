@@ -1,6 +1,5 @@
 import React from 'react';
-import { FileText } from 'lucide-react';
-import { ClinicalDocKind, CAM_READINGS } from '../camera-input.types';
+import { ClinicalDocKind, CAM_READINGS, CamField } from '../camera-input.types';
 
 interface AICameraSectionProps {
   kind: ClinicalDocKind;
@@ -38,7 +37,7 @@ export const AICameraSection: React.FC<AICameraSectionProps> = ({ kind }) => {
 
       {/* 2. Danh sách các trường dữ liệu AI trích xuất */}
       <div className="bg-white rounded-2xl px-4 py-1 shadow-sm border border-slate-100 flex flex-col divide-y divide-slate-100">
-        {currentDoc.fields.map((f, idx) => (
+        {currentDoc.fields.map((f: CamField, idx: number) => (
           <div key={idx} className="flex items-center gap-2 py-3">
             <span className="w-24 text-xs font-bold text-slate-500 shrink-0">{f.key}</span>
             <span className="flex-1 text-xs font-extrabold text-slate-900">{f.value}</span>

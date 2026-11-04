@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface CalendarDayItem {
   readonly day: number;
-  readonly status: 'full' | 'missed' | 'skipped' | 'scheduled' | 'today';
+  readonly status: 'full' | 'missed' | 'skipped' | 'scheduled' | 'today' | 'partial' | 'empty';
 }
 
 interface MedMonthCalendarProps {
@@ -28,10 +28,14 @@ export const MedMonthCalendar: React.FC<MedMonthCalendarProps> = ({
         return <span className="w-1.5 h-1.5 rounded-full bg-white mt-0.5 inline-block" />;
       case 'full':
         return <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-0.5 inline-block" />;
+      case 'partial':
+        return <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5 inline-block" />;
       case 'missed':
         return <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-0.5 inline-block" />;
       case 'skipped':
         return <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-0.5 inline-block" />;
+      case 'empty':
+        return null;
       case 'scheduled':
       default:
         return <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-0.5 inline-block" />;
@@ -49,9 +53,7 @@ export const MedMonthCalendar: React.FC<MedMonthCalendarProps> = ({
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <h2 className="text-sm font-extrabold text-slate-900">
-          Tháng 10/2026
-        </h2>
+        <span className="text-sm font-black text-slate-900 tracking-tight">Tháng 10/2026</span>
         <button
           type="button"
           aria-label="Tháng sau"
@@ -61,58 +63,50 @@ export const MedMonthCalendar: React.FC<MedMonthCalendarProps> = ({
         </button>
       </div>
 
-      {/* Weekday Headers */}
-      <div className="grid grid-cols-7 text-center">
+      {/* Weekday Labels */}
+      <div className="grid grid-cols-7 gap-1 text-center">
         {WEEKDAYS.map((wd) => (
-          <span key={wd} className="text-xs font-semibold text-slate-500">
+          <span key={wd} className="text-[11px] font-bold text-slate-400 py-0.5">
             {wd}
           </span>
         ))}
       </div>
 
-      {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-y-1 text-center items-center">
-        {Array.from({ length: prefixBlanks }).map((_, idx) => (
-          <div key={`blank-${idx}`} className="h-10" />
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: prefixBlanks }).map((_, i) => (
+          <div key={`blank-${i}`} className="h-10" />
         ))}
-
         {days.map((item) => {
           const isSelected = item.day === selectedDay;
           return (
             <button
-              key={item.day}
+              key={`day-${item.day}`}
               type="button"
               onClick={() => onSelectDay?.(item.day)}
-              className={`h-11 rounded-2xl flex flex-col items-center justify-center transition-all ${
+              className={`h-10 rounded-2xl flex flex-col items-center justify-center text-xs font-bold transition-all relative ${
                 isSelected
-                  ? 'bg-[#111827] text-white font-black shadow-sm'
-                  : 'text-slate-800 font-semibold hover:bg-slate-50'
+                  ? 'bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white shadow-xs font-black'
+                  : 'text-slate-800 hover:bg-slate-50'
               }`}
             >
-              <span className="text-xs leading-none">{item.day}</span>
-              {renderDot(isSelected ? 'today' : item.status)}
+              <span>{item.day}</span>
+              {renderDot(item.status)}
             </button>
           );
         })}
       </div>
 
-      {/* Bottom Legend */}
-      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 pt-2 border-t border-slate-50 px-1">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          Đủ liều
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-3 pt-1 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Đầy đủ
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-amber-500" />
-          Quên
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-amber-500" /> Bỏ lỡ
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-500" />
-          Bỏ liều
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-slate-300" />
-          Đã lên lịch
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-rose-500" /> Bỏ qua
         </span>
       </div>
     </div>

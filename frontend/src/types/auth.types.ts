@@ -1,8 +1,10 @@
 export interface User {
   id: string;
   phoneNumber?: string | null;
+  phone_number?: string | null;
   email?: string;
   fullName?: string;
+  full_name?: string;
   avatarUrl?: string;
   role?: string;
   activeMemberId?: string;
@@ -35,5 +37,6 @@ export interface AuthResponse {
   error?: {
     code: string;
     message: string;
+    details?: any;
   };
 }

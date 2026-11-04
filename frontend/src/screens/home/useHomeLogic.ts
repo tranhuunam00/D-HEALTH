@@ -179,6 +179,47 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
     ? `${(glucoseRec as any).value_numeric}`.replace('.00', '').replace('.', ',')
     : '--';
 
+  const issuesCount = (() => {
+    let count = 0;
+    if (bpRec) {
+      const sys = Number((bpRec as any).systolic || (bpRec as any).value_systolic || 0);
+      const dia = Number((bpRec as any).diastolic || (bpRec as any).value_diastolic || 0);
+      if (sys >= 135 || dia >= 85) count++;
+    }
+    if (hrRec) {
+      const val = Number((hrRec as any).value_numeric || 0);
+      if (val > 100 || (val > 0 && val < 55)) count++;
+    }
+    if (todayDose && !isDoseTaken) count++;
+    return count;
+  })();
+
+  const dataGroupsCount = (() => {
+    let groups = 0;
+    if (vitals.length > 0) groups++;
+    if (todayDosesSummary.total > 0) groups++;
+    if (recentReports.length > 0) groups++;
+    return groups;
+  })();
+
+  const aiInsight = (() => {
+    if (bpRec) {
+      const sys = Number((bpRec as any).systolic || (bpRec as any).value_systolic || 0);
+      const dia = Number((bpRec as any).diastolic || (bpRec as any).value_diastolic || 0);
+      if (sys >= 135 || dia >= 85) {
+        return `Huyết áp gần nhất (${sys}/${dia} mmHg) cao hơn mục tiêu lâm sàng.`;
+      }
+    }
+    if (hrRec) {
+      const val = Number((hrRec as any).value_numeric || 0);
+      if (val > 100) return `Nhịp tim khi nghỉ ${val} bpm cao hơn mức bình thường.`;
+    }
+    if (recentReports.length > 0) {
+      return `Đã cập nhật ${recentReports[0].title || 'kết quả khám mới'} trong hồ sơ.`;
+    }
+    return 'Chưa ghi nhận bất thường mới trong hồ sơ sinh trắc và xét nghiệm.';
+  })();
+
   return {
     members,
     activeMemberId,
@@ -189,6 +230,9 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
     latestHr,
     latestWeight,
     latestGlucose,
+    issuesCount,
+    dataGroupsCount,
+    aiInsight,
     isDoseTaken,
     loading,
     errorMsg,

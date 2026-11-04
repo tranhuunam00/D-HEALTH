@@ -102,7 +102,7 @@ export function useImagingLogic(memberId = 'nam') {
     setLoading(true);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
       const [res, evalRes] = await Promise.all([
         fetch(`/api/clinical-reports/${memberId}?kind=imaging`, { headers }).catch(() => null),

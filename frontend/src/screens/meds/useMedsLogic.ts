@@ -12,7 +12,7 @@ export interface DoseItem {
 
 export interface AdherenceDay {
   day: number;
-  status: 'full' | 'partial' | 'missed' | 'empty';
+  status: 'full' | 'partial' | 'missed' | 'empty' | 'skipped' | 'scheduled' | 'today';
 }
 
 export interface AdherenceData {
@@ -151,6 +151,10 @@ export function useMedsLogic(memberId = 'nam') {
     }
   };
 
+  const handleSendHistory = () => {
+    alert('Đã gửi báo cáo lịch sử dùng thuốc cho Bác sĩ phụ trách!');
+  };
+
   return {
     activeTab,
     setActiveTab,
@@ -165,5 +169,6 @@ export function useMedsLogic(memberId = 'nam') {
     handleSkipDose,
     handleSnoozeDose,
     handleAddMedication,
+    handleSendHistory,
   };
 }

@@ -1,4 +1,5 @@
 export type ClinicalDocKind = 'lab' | 'img' | 'gpb';
+export type ClsKind = ClinicalDocKind;
 export type InputMethod = 'manual' | 'link' | 'cam';
 export type ClassificationCategory = 'HH' | 'SH' | 'VS' | 'PT' | 'DT';
 
@@ -48,7 +49,27 @@ export const ORGAN_OPTIONS = [
   'Mạch máu', 'Sọ não', 'other'
 ] as const;
 
-export const CAM_READINGS = {
+export const MODALITY_OPTIONS = [
+  'CT', 'MRI', 'X-quang', 'Siêu âm', 'Nội soi', 'PET/CT', 'DEXA', 'Khác'
+] as const;
+
+export const CONTRAST_OPTIONS = [
+  'none', 'with_contrast', 'without_contrast', 'both', 'other'
+] as const;
+
+export interface CamField {
+  key: string;
+  value: string;
+  conf: string;
+  normal: boolean;
+}
+
+export interface CamDoc {
+  doc: string;
+  fields: CamField[];
+}
+
+export const CAM_READINGS: Record<ClinicalDocKind, CamDoc> = {
   lab: {
     doc: 'Phiếu xét nghiệm · 20/10/2026',
     fields: [

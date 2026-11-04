@@ -39,8 +39,8 @@ describe('useCareLogic Hook TDD', () => {
       await result.current.fetchCareSummary();
     });
 
-    expect(result.current.upcomingAppointment.month).toBe('TH 11');
-    expect(result.current.upcomingAppointment.date).toBe('12');
+    expect(result.current.upcomingAppointment?.month).toBe('TH 11');
+    expect(result.current.upcomingAppointment?.date).toBe('12');
     expect(result.current.careTeam.length).toBe(3);
     expect(result.current.selectedMember?.name).toBe('BS Trần Văn B');
     expect(result.current.sharingStats.activeCount).toBe(3);

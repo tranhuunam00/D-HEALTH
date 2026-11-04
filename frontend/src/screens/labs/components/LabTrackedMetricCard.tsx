@@ -5,7 +5,7 @@ export interface TrackedMetricCardData {
   readonly id: string;
   readonly label: string;
   readonly level: string;
-  readonly levelType: 'warning' | 'normal';
+  readonly levelType: 'warning' | 'normal' | 'info';
   readonly value: string;
   readonly unit: string;
   readonly insight: string;
@@ -25,7 +25,11 @@ export const LabTrackedMetricCard: React.FC<LabTrackedMetricCardProps> = ({ metr
         <span className="text-base font-black text-slate-900">{metric.label}</span>
         <span
           className={`px-3 py-1 rounded-full text-xs font-bold ${
-            isWarning ? 'bg-[#FEF3C7] text-[#D97706]' : 'bg-[#EAF8F0] text-[#166534]'
+            isWarning
+              ? 'bg-[#FEF3C7] text-[#D97706]'
+              : metric.levelType === 'info'
+              ? 'bg-sky-100 text-sky-800'
+              : 'bg-[#EAF8F0] text-[#166534]'
           }`}
         >
           {metric.level}
@@ -48,4 +52,3 @@ export const LabTrackedMetricCard: React.FC<LabTrackedMetricCardProps> = ({ metr
     </div>
   );
 };
-

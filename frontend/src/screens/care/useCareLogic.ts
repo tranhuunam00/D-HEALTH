@@ -56,7 +56,7 @@ export function useCareLogic(memberId = 'nam') {
           const team = Array.isArray(json.data.careTeam) ? json.data.careTeam : [];
           setCareTeam(team);
           if (team.length > 0 && !selectedMemberId) {
-            const defaultDoc = team.find((m) => m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')) || team[0];
+            const defaultDoc = team.find((m: CareTeamMember) => m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')) || team[0];
             setSelectedMemberId(defaultDoc.id);
           }
           if (json.data.sharingStats) {

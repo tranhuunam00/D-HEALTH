@@ -2,19 +2,19 @@ import React from 'react';
 import { MetricType } from '../useBiometricsLogic';
 
 export interface MetricSummaryItem {
-  id: MetricType;
-  name: string;
-  code: string;
-  codeBg: string;
-  codeColor: string;
-  value: string;
-  unit: string;
+  readonly id: MetricType;
+  readonly name: string;
+  readonly code: string;
+  readonly codeBg: string;
+  readonly codeColor: string;
+  readonly value: string;
+  readonly unit: string;
 }
 
 export interface BiometricsMetricTilesGridProps {
-  metricsSummaries: MetricSummaryItem[];
-  activeMetric: MetricType;
-  onSelectMetric: (metric: MetricType) => void;
+  readonly metricsSummaries: readonly MetricSummaryItem[];
+  readonly activeMetric: MetricType;
+  readonly onSelectMetric: (metric: MetricType) => void;
 }
 
 export const BiometricsMetricTilesGrid: React.FC<BiometricsMetricTilesGridProps> = ({
@@ -28,36 +28,50 @@ export const BiometricsMetricTilesGrid: React.FC<BiometricsMetricTilesGridProps>
         Chạm vào một chỉ số để xem diễn biến 7 lần đo gần nhất
       </span>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-4 gap-2">
         {metricsSummaries.map((m) => {
-          const isSelected = activeMetric === m.id;
+          const isSelected = m.id === activeMetric;
           return (
-            <div
+            <button
               key={m.id}
+              type="button"
               onClick={() => onSelectMetric(m.id)}
-              className={`rounded-[22px] p-3.5 flex flex-col justify-between h-20 transition-all cursor-pointer min-h-[44px] ${
+              className={`p-2.5 rounded-2xl flex flex-col items-center justify-between text-center transition-all cursor-pointer min-h-[96px] ${
                 isSelected
-                  ? 'bg-white border-2 border-slate-900 shadow-sm ring-1 ring-slate-900/10'
-                  : 'bg-white border border-slate-100 shadow-2xs hover:border-slate-300'
+                  ? 'bg-slate-900 text-white shadow-md ring-2 ring-slate-900 ring-offset-2'
+                  : 'bg-white text-slate-900 shadow-2xs border border-slate-100 hover:border-slate-300'
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
+                  isSelected ? 'bg-white/20 text-white' : `${m.codeBg} ${m.codeColor}`
+                }`}
+              >
+                {m.code}
+              </div>
+
+              <div className="flex flex-col items-center w-full my-1">
+                <span className="text-base font-black leading-none">{m.value}</span>
                 <span
-                  className={`w-6 h-6 rounded-lg ${m.codeBg} ${m.codeColor} text-[11px] font-black flex items-center justify-center shrink-0`}
+                  className={`text-[10px] mt-0.5 font-medium truncate w-full ${
+                    isSelected ? 'text-slate-300' : 'text-slate-400'
+                  }`}
                 >
-                  {m.code}
+                  {m.unit}
                 </span>
-                <span className="text-xs font-bold text-slate-700 truncate">{m.name}</span>
               </div>
-              <div className="flex items-baseline">
-                <span className="text-base font-black text-slate-900">{m.value}</span>
-                <span className="text-[11px] text-slate-400 font-medium ml-1 truncate">{m.unit}</span>
-              </div>
-            </div>
+
+              <span
+                className={`text-[11px] font-bold truncate w-full ${
+                  isSelected ? 'text-white' : 'text-slate-600'
+                }`}
+              >
+                {m.name}
+              </span>
+            </button>
           );
         })}
       </div>
     </div>
   );
 };
-
