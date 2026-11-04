@@ -4,13 +4,22 @@ import { useProfileLogic } from './useProfileLogic';
 import { EditProfileBottomSheet } from './EditProfileBottomSheet';
 import { Button } from '../../components/atoms/Button';
 
+import { User as UserType } from '../../types/auth.types';
+
 export interface UserProfileScreenProps {
   onBack: () => void;
   onNavigateToAdmin?: () => void;
+  user?: UserType | null;
+  activeMemberId?: string;
 }
 
-export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({ onBack, onNavigateToAdmin }) => {
-  const { user, activeMember, isEditOpen, setIsEditOpen, successMsg, bmi, handleUpdateProfile } = useProfileLogic();
+export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
+  onBack,
+  onNavigateToAdmin,
+  user: propUser,
+  activeMemberId,
+}) => {
+  const { user, activeMember, isEditOpen, setIsEditOpen, successMsg, bmi, handleUpdateProfile } = useProfileLogic(propUser, activeMemberId);
 
   return (
     <div className="w-full min-h-screen bg-[#0B132B] text-white flex flex-col pb-12">

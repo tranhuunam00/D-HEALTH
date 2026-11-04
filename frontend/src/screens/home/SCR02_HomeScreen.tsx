@@ -9,12 +9,16 @@ export interface SCR02Props {
   onOpenEmergency: () => void;
   onNavigate?: (screen: string) => void;
   user?: any;
+  activeMemberId?: string;
+  activeMemberName?: string;
 }
 
 export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
   onOpenEmergency,
   onNavigate,
   user,
+  activeMemberId: propMemberId,
+  activeMemberName: propMemberName,
 }) => {
   const {
     members,
@@ -29,14 +33,16 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     checkinStatus,
     isVitalsSheetOpen,
     setIsVitalsSheetOpen,
+    todayDose,
+    todayDosesSummary,
     handleRecordVitals,
     handleTakeDose,
     handleQuickCheckin,
-  } = useHomeLogic();
+  } = useHomeLogic(propMemberId || user?.activeMemberId || 'me', user);
 
   const activeMember = members.find((m) => m.id === activeMemberId) || {
-    id: 'me',
-    full_name: user?.fullName || 'Trần Minh Khang',
+    id: activeMemberId,
+    full_name: propMemberName || user?.fullName || 'Trần Minh Khang',
   };
 
   return (
@@ -145,10 +151,14 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
             <Pill className="w-5 h-5" />
           </div>
           <div className="flex-1 flex flex-col min-w-0">
-            <span className="text-[10px] font-black text-amber-700 uppercase">NHẮC UỐNG THUỐC · 20:00</span>
-            <span className="text-sm font-extrabold text-slate-900 truncate">Metformin 500 mg</span>
+            <span className="text-[10px] font-black text-amber-700 uppercase">
+              NHẮC UỐNG THUỐC · {todayDose?.scheduled_time ? todayDose.scheduled_time.substring(0, 5) : '20:00'}
+            </span>
+            <span className="text-sm font-extrabold text-slate-900 truncate">
+              {todayDose ? `${todayDose.name} ${todayDose.dosage}` : 'Metformin 500 mg'}
+            </span>
             <span className="text-[11px] text-slate-500">
-              1 viên sau ăn tối · hôm nay {isDoseTaken ? '3/4 liều' : '2/4 liều'}
+              {todayDose?.meal_relation === 'after_meal' ? '1 viên sau ăn tối' : (todayDose?.dose_per_intake || '1 viên')} · hôm nay {todayDosesSummary.taken}/{todayDosesSummary.total} liều
             </span>
           </div>
           <button

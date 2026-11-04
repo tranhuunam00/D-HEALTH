@@ -7,6 +7,7 @@ import { HomeBottomNav } from '../home/HomeBottomNav';
 interface SCR05Props {
   readonly onNavigate: (screen: string, reportId?: string) => void;
   readonly activeMemberName?: string;
+  readonly activeMemberId?: string;
 }
 
 const CATEGORY_CHIPS: readonly { id: LabCategory; label: string }[] = Object.freeze([
@@ -19,8 +20,9 @@ const CATEGORY_CHIPS: readonly { id: LabCategory; label: string }[] = Object.fre
 export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
+  activeMemberId = 'me',
 }) => {
-  const { selectedCategory, setSelectedCategory, filteredReports } = useLabsLogic();
+  const { selectedCategory, setSelectedCategory, filteredReports } = useLabsLogic(activeMemberId);
 
   const handleSelectHealthTab = (tab: HealthTabId) => {
     if (tab === 'biometrics') onNavigate('biometrics');

@@ -94,8 +94,13 @@ app.get('/api/health', async (req: Request, res: Response) => {
 
 // Lấy danh sách thành viên gia đình (SCR-10 / SCR-17)
 app.get('/api/members', async (req: Request, res: Response) => {
+  const { userId } = req.query;
   try {
-    const result = await pool.query('SELECT * FROM family_members ORDER BY created_at ASC');
+    const query = userId
+      ? 'SELECT * FROM family_members WHERE user_id = $1 ORDER BY created_at ASC'
+      : 'SELECT * FROM family_members ORDER BY created_at ASC';
+    const params = userId ? [userId] : [];
+    const result = await pool.query(query, params);
     res.json({ data: result.rows });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

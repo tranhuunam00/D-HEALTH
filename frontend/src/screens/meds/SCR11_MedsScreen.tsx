@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Pill, Check, Clock, Plus, AlertCircle, FileText } from 'lucide-react';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 
 interface SCR11Props {
   readonly onNavigate: (screen: string) => void;
   readonly activeMemberName?: string;
+  readonly activeMemberId?: string;
 }
 
 interface DoseItem {
@@ -46,13 +47,49 @@ const INITIAL_DOSES: readonly DoseItem[] = Object.freeze([
 export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
+  activeMemberId = 'nam',
 }) => {
   const [doses, setDoses] = useState<readonly DoseItem[]>(INITIAL_DOSES);
 
-  const toggleTake = (id: string) => {
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDoses = async () => {
+      try {
+        const res = await fetch(`/api/prescriptions/${activeMemberId}/today-doses`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (Array.isArray(json?.data) && json.data.length > 0 && isMounted) {
+          const mapped: DoseItem[] = json.data.map((d: any) => ({
+            id: d.id,
+            name: `${d.name} ${d.dosage}`,
+            dosage: d.dose_per_intake || '1 viên',
+            scheduledTime: `${(d.scheduled_time || '08:00').substring(0, 5)} (${d.meal_relation === 'after_meal' ? 'Sau ăn' : 'Trước ăn'})`,
+            instruction: d.meal_relation === 'after_meal' ? 'Uống sau bữa ăn' : 'Uống trước bữa ăn',
+            taken: !!d.taken,
+          }));
+          setDoses(mapped);
+        }
+      } catch {
+        // Fallback
+      }
+    };
+    fetchDoses();
+    return () => { isMounted = false; };
+  }, [activeMemberId]);
+
+  const toggleTake = async (id: string) => {
+    const target = doses.find((d) => d.id === id);
+    const newTaken = !target?.taken;
     setDoses((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, taken: !d.taken } : d))
+      prev.map((d) => (d.id === id ? { ...d, taken: newTaken } : d))
     );
+    try {
+      await fetch(`/api/prescriptions/doses/${id}/log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newTaken ? 'taken' : 'pending' }),
+      });
+    } catch {}
   };
 
   return (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, AlertCircle } from 'lucide-react';
+import { Phone, AlertCircle, UserCheck } from 'lucide-react';
 import { Input } from '../../components/atoms/Input';
 import { useLoginLogic } from './useLoginLogic';
 import { User } from '../../types/auth.types';
@@ -21,6 +21,7 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
     setFullName,
     loading,
     errorMsg,
+    fillQuickAccount,
     handleLogin,
     handleRegister,
     handleGoogleLogin,
@@ -35,18 +36,18 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
       className="w-full min-h-screen relative box-border p-6 flex flex-col justify-between text-[#111827]"
     >
       {/* 1. Header & Brand Logo */}
-      <div className="pt-6 flex flex-col items-center gap-3 text-center">
+      <div className="pt-4 flex flex-col items-center gap-2.5 text-center">
         <div
           style={{
-            width: '84px',
-            height: '84px',
+            width: '76px',
+            height: '76px',
             borderRadius: DesignTokens.radius.card,
             background: DesignTokens.colors.gradientBrand145,
-            boxShadow: '0 14px 30px rgba(59, 102, 214, 0.35)',
+            boxShadow: '0 12px 28px rgba(59, 102, 214, 0.35)',
           }}
           className="flex items-center justify-center"
         >
-          <svg width="52" height="52" viewBox="0 0 48 48" role="img" aria-label="Logo D-Health">
+          <svg width="46" height="46" viewBox="0 0 48 48" role="img" aria-label="Logo D-Health">
             <path
               d="M24 40 L9.5 26 A8.5 8.5 0 0 1 21.5 14 L24 16.5 L26.5 14 A8.5 8.5 0 0 1 38.5 26 Z"
               fill={DesignTokens.colors.textWhite}
@@ -61,11 +62,11 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
             />
           </svg>
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-3xl font-extrabold tracking-tight text-[#111827]">D-HEALTH</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-2xl font-extrabold tracking-tight text-[#111827]">D-HEALTH</span>
           <span
             style={{ color: DesignTokens.colors.brandTealDark }}
-            className="text-xs font-extrabold tracking-wider uppercase"
+            className="text-[11px] font-extrabold tracking-wider uppercase"
           >
             Trợ lý sức khoẻ thông minh
           </span>
@@ -78,10 +79,10 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
           borderRadius: DesignTokens.radius.card,
           boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
         }}
-        className="bg-white p-5 flex flex-col gap-3.5"
+        className="bg-white p-5 flex flex-col gap-3"
       >
         <div className="flex items-center justify-between">
-          <span className="text-lg font-extrabold text-[#111827]">
+          <span className="text-base font-extrabold text-[#111827]">
             {mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản'}
           </span>
           <button
@@ -94,11 +95,45 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
           </button>
         </div>
 
-        <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="flex flex-col gap-3">
+        {/* Quick Account Chips (Tài khoản mẫu có sẵn trong CSDL PostgreSQL) */}
+        {mode === 'login' && (
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col gap-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+              <UserCheck className="w-3.5 h-3.5 text-[#1F7A8C]" />
+              Chọn tài khoản thực tế trong CSDL:
+            </span>
+            <div className="flex gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => fillQuickAccount('0987654321', 'Nam@2026')}
+                className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                  identifier === '0987654321'
+                    ? 'bg-[#1F7A8C] text-white border-[#1F7A8C] shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                Trần Hữu Nam (0987654321)
+              </button>
+              <button
+                type="button"
+                onClick={() => fillQuickAccount('0909123456', 'Khang@2026')}
+                className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                  identifier === '0909123456'
+                    ? 'bg-[#1F7A8C] text-white border-[#1F7A8C] shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                Trần Minh Khang (0909123456)
+              </button>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="flex flex-col gap-2.5">
           {mode === 'register' && (
             <Input
               label="Họ và tên bệnh nhân"
-              placeholder="Ví dụ: Nguyễn Văn A"
+              placeholder="Ví dụ: Trần Hữu Nam"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -106,7 +141,7 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
 
           <Input
             label={mode === 'login' ? 'Số điện thoại hoặc Email' : 'Số điện thoại'}
-            placeholder="0912345678"
+            placeholder="0987654321"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
           />
@@ -120,7 +155,7 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
           />
 
           {errorMsg && (
-            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -130,13 +165,13 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
             type="submit"
             disabled={loading}
             style={{
-              height: DesignTokens.touch.largeButtonHeight,
+              height: DesignTokens.touch.standardButtonHeight,
               borderRadius: DesignTokens.radius.button,
               background: DesignTokens.colors.gradientBrand,
             }}
-            className="w-full text-white font-extrabold text-sm flex items-center justify-center shadow-lg shadow-[#1F7A8C]/20 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="w-full text-white font-extrabold text-sm flex items-center justify-center shadow-md shadow-[#1F7A8C]/20 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            {loading ? 'Đang xử lý...' : mode === 'login' ? 'Đăng Nhập An Toàn' : 'Đăng Ký Hồ Sơ Sức Khỏe'}
+            {loading ? 'Đang xác thực...' : mode === 'login' ? 'Đăng Nhập An Toàn' : 'Đăng Ký Hồ Sơ Sức Khỏe'}
           </button>
         </form>
 
@@ -165,15 +200,15 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
       </div>
 
       {/* 3. Footer Hotline & Copyright */}
-      <div className="pb-4 flex flex-col items-center gap-2">
+      <div className="pb-3 flex flex-col items-center gap-1.5">
         <a
           href="tel:19001234"
-          className="h-11 px-4 rounded-full bg-white/80 hover:bg-white text-[#111827] text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+          className="h-9 px-3.5 rounded-full bg-white/80 hover:bg-white text-[#111827] text-xs font-bold flex items-center gap-2 shadow-xs transition-all"
         >
           <Phone style={{ color: DesignTokens.colors.brandTeal }} className="w-3.5 h-3.5" />
           <span>Hỗ trợ: 1900 1234</span>
         </a>
-        <span className="text-[11px] font-semibold text-slate-500">
+        <span className="text-[10px] font-semibold text-slate-500">
           Copyright © 2026 DAOGROUP · Nghị định 13/2023/NĐ-CP
         </span>
       </div>

@@ -45,7 +45,18 @@ export function createAuthRouter(pool: Pool): Router {
 
       return res.status(201).json({
         success: true,
-        data: { user: newUser, token, activeMemberId: memberId },
+        data: {
+          user: {
+            ...newUser,
+            phone_number: newUser.phone_number,
+            phoneNumber: newUser.phone_number,
+            fullName,
+            activeMemberId: memberId,
+            role: 'patient',
+          },
+          token,
+          activeMemberId: memberId,
+        },
       });
     } catch (err: any) {
       if (err.code === '23505') {
@@ -70,7 +81,11 @@ export function createAuthRouter(pool: Pool): Router {
 
     try {
       const result = await pool.query(
-        `SELECT * FROM users WHERE phone_number = $1 OR email = $1 LIMIT 1`,
+        `SELECT u.*, fm.id as member_id, fm.full_name, fm.blood_type, fm.height_cm, fm.weight_kg
+         FROM users u
+         LEFT JOIN family_members fm ON u.id = fm.user_id AND fm.relationship = 'owner'
+         WHERE u.phone_number = $1 OR u.email = $1 
+         LIMIT 1`,
         [identifier]
       );
       const user = result.rows[0];
@@ -108,7 +123,19 @@ export function createAuthRouter(pool: Pool): Router {
       return res.json({
         success: true,
         data: {
-          user: { id: user.id, phoneNumber: user.phone_number, email: user.email },
+          user: {
+            ...user,
+            id: user.id,
+            phone_number: user.phone_number,
+            phoneNumber: user.phone_number,
+            email: user.email,
+            fullName: user.full_name || 'Bệnh Nhân',
+            activeMemberId: user.member_id || 'me',
+            bloodType: user.blood_type || 'O+',
+            heightCm: user.height_cm || 172,
+            weightKg: user.weight_kg || 68,
+            role: 'patient',
+          },
           token,
         },
       });
@@ -153,7 +180,7 @@ export function createAuthRouter(pool: Pool): Router {
       return res.json({
         success: true,
         data: {
-          user: { id: user.id, email: user.email, fullName: profile.fullName, avatarUrl: profile.avatarUrl },
+          user: { id: user.id, email: user.email, fullName: profile.fullName, avatarUrl: profile.avatarUrl, role: 'patient' },
           token,
         },
       });
@@ -166,13 +193,34 @@ export function createAuthRouter(pool: Pool): Router {
   router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const result = await pool.query(
-        `SELECT id, phone_number, email, is_ekyc_verified, created_at FROM users WHERE id = $1`,
+        `SELECT u.id, u.phone_number, u.email, u.is_ekyc_verified, u.created_at,
+                fm.id as member_id, fm.full_name, fm.blood_type, fm.height_cm, fm.weight_kg 
+         FROM users u
+         LEFT JOIN family_members fm ON u.id = fm.user_id AND fm.relationship = 'owner'
+         WHERE u.id = $1`,
         [req.user?.userId]
       );
       if (!result.rows[0]) {
         return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Không tìm thấy tài khoản.' } });
       }
-      return res.json({ success: true, data: result.rows[0] });
+      const row = result.rows[0];
+      return res.json({
+        success: true,
+        data: {
+          ...row,
+          id: row.id,
+          phone_number: row.phone_number,
+          phoneNumber: row.phone_number,
+          email: row.email,
+          fullName: row.full_name || 'Bệnh Nhân',
+          activeMemberId: row.member_id || 'me',
+          bloodType: row.blood_type || 'O+',
+          heightCm: row.height_cm || 172,
+          weightKg: row.weight_kg || 68,
+          isEkycVerified: row.is_ekyc_verified,
+          role: 'patient',
+        },
+      });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
     }

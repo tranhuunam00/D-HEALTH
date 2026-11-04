@@ -5,6 +5,10 @@ export interface User {
   fullName?: string;
   avatarUrl?: string;
   role?: string;
+  activeMemberId?: string;
+  bloodType?: string;
+  heightCm?: number;
+  weightKg?: number;
 }
 
 export interface LoginCredentials {

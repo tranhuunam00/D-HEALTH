@@ -10,19 +10,21 @@ interface SCR03Props {
   readonly onNavigate: (screen: string) => void;
   readonly onSelectMember?: (memberId: string) => void;
   readonly activeMemberName?: string;
+  readonly activeMemberId?: string;
 }
 
 export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
   onNavigate,
   onSelectMember,
   activeMemberName = 'Trần Hữu Nam',
+  activeMemberId = 'nam',
 }) => {
   const {
     history,
     isEntrySheetOpen,
     openEntrySheet,
     closeEntrySheet,
-  } = useBiometricsLogic();
+  } = useBiometricsLogic(activeMemberId);
 
   const handleSelectTab = (tab: HealthTabId) => {
     if (tab === 'labs') onNavigate('labs');

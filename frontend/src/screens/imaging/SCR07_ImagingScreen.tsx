@@ -7,6 +7,7 @@ import { HomeBottomNav } from '../home/HomeBottomNav';
 interface SCR07Props {
   readonly onNavigate: (screen: string, studyId?: string) => void;
   readonly activeMemberName?: string;
+  readonly activeMemberId?: string;
 }
 
 const MODALITY_CHIPS: readonly { id: ModalityType; label: string }[] = Object.freeze([
@@ -20,8 +21,9 @@ const MODALITY_CHIPS: readonly { id: ModalityType; label: string }[] = Object.fr
 export const SCR07_ImagingScreen: React.FC<SCR07Props> = ({
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
+  activeMemberId = 'me',
 }) => {
-  const { selectedModality, setSelectedModality, filteredStudies } = useImagingLogic();
+  const { selectedModality, setSelectedModality, filteredStudies } = useImagingLogic(activeMemberId);
 
   const handleSelectHealthTab = (tab: HealthTabId) => {
     if (tab === 'biometrics') onNavigate('biometrics');

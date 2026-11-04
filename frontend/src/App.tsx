@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Smartphone, Monitor, LogOut, HeartPulse } from 'lucide-react';
 import { SCR01_LoginScreen } from './screens/auth/SCR01_LoginScreen';
 import { SCR02_HomeScreen } from './screens/home/SCR02_HomeScreen';
@@ -35,65 +35,166 @@ export default function App() {
     }
     return 'mobile_patient';
   });
-  const [currentScreen, setCurrentScreen] = useState<MobileScreenId>('home');
-  const [currentUser, setCurrentUser] = useState<User | null>({
-    id: 'user-default',
-    phoneNumber: '0988777666',
-    fullName: 'Trần Minh Khang',
-    role: 'patient',
+
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('dhealth_user');
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return null;
   });
+
+  const [currentScreen, setCurrentScreen] = useState<MobileScreenId>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('dhealth_user');
+      if (!stored) return 'login';
+    }
+    return 'home';
+  });
+
+  useEffect(() => {
+    const verifySession = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data) {
+            setCurrentUser(json.data);
+            localStorage.setItem('dhealth_user', JSON.stringify(json.data));
+          }
+        } else if (!currentUser) {
+          setCurrentScreen('login');
+        }
+      } catch {
+        // network or server error: maintain local state
+      }
+    };
+    verifySession();
+  }, []);
 
   const handleLogout = async () => {
     try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('dhealth_user');
+      localStorage.removeItem('dhealth_token');
+    }
     setCurrentUser(null);
     setCurrentScreen('login');
   };
 
+  const activeMemberId = currentUser?.activeMemberId || (currentUser?.phoneNumber === '0987654321' ? 'nam' : 'me');
+  const activeMemberName = currentUser?.fullName || (currentUser?.phoneNumber === '0987654321' ? 'Trần Hữu Nam' : 'Trần Minh Khang');
+
   const renderMobileScreen = () => {
-    if (!currentUser && currentScreen === 'login') {
-      return <SCR01_LoginScreen onLoginSuccess={(u) => { setCurrentUser(u); setCurrentScreen('home'); }} />;
+    if (!currentUser || currentScreen === 'login') {
+      return (
+        <SCR01_LoginScreen
+          onLoginSuccess={(u) => {
+            setCurrentUser(u);
+            setCurrentScreen('home');
+          }}
+        />
+      );
     }
+
     switch (currentScreen) {
       case 'home':
         return (
           <SCR02_HomeScreen
+            user={currentUser}
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
             onOpenEmergency={() => setCurrentScreen('emergency')}
             onNavigate={(s) => setCurrentScreen(s as any)}
           />
         );
       case 'biometrics':
-        return <SCR03_BiometricsScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return (
+          <SCR03_BiometricsScreen
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
+            onNavigate={(s) => setCurrentScreen(s as any)}
+          />
+        );
       case 'devices':
         return <SCR04_DevicesScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'labs':
-        return <SCR05_LabsScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return (
+          <SCR05_LabsScreen
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
+            onNavigate={(s) => setCurrentScreen(s as any)}
+          />
+        );
       case 'lab-detail':
-        return <SCR06_LabDetailScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return <SCR06_LabDetailScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
       case 'imaging':
-        return <SCR07_ImagingScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return (
+          <SCR07_ImagingScreen
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
+            onNavigate={(s) => setCurrentScreen(s as any)}
+          />
+        );
       case 'imaging-detail':
-        return <SCR08_ImagingDetailScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return <SCR08_ImagingDetailScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
       case 'chronic':
-        return <SCR09_ChronicScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return <SCR09_ChronicScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
       case 'records':
-        return <SCR10_RecordsScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return (
+          <SCR10_RecordsScreen
+            onNavigate={(s) => setCurrentScreen(s as any)}
+            activeMemberName={activeMemberName}
+            onSelectMember={() => setCurrentScreen('family')}
+          />
+        );
       case 'meds':
-        return <SCR11_MedsScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return (
+          <SCR11_MedsScreen
+            onNavigate={(s) => setCurrentScreen(s as any)}
+            activeMemberName={activeMemberName}
+            activeMemberId={activeMemberId}
+          />
+        );
       case 'camera-ocr':
-        return <SCR12_CameraInputScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return (
+          <SCR12_CameraInputScreen
+            onNavigate={(s) => setCurrentScreen(s as any)}
+            activeMemberName={activeMemberName}
+            activeMemberId={activeMemberId}
+          />
+        );
       case 'ai':
         return <SCR13_AIAssistantScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'care':
         return <SCR14_CareScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'profile':
-        return <SCR16_UserProfileScreen onBack={() => setCurrentScreen('home')} onNavigateToAdmin={() => setViewMode('pc_admin')} />;
+        return (
+          <SCR16_UserProfileScreen
+            user={currentUser}
+            activeMemberId={activeMemberId}
+            onBack={() => setCurrentScreen('home')}
+            onNavigateToAdmin={() => setViewMode('pc_admin')}
+          />
+        );
       case 'family':
         return <SCR17_FamilyProfilesScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'emergency':
-        return <SCR17_EmergencyScreen onNavigate={() => setCurrentScreen('home')} />;
+        return (
+          <SCR17_EmergencyScreen
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
+            onNavigate={() => setCurrentScreen('home')}
+          />
+        );
       default:
         return (
           <SCR02_HomeScreen
+            user={currentUser}
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
             onOpenEmergency={() => setCurrentScreen('emergency')}
             onNavigate={(s) => setCurrentScreen(s as any)}
           />

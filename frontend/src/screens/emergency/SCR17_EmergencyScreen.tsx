@@ -4,10 +4,16 @@ import { useEmergencyLogic } from './useEmergencyLogic';
 
 interface SCR17Props {
   readonly onNavigate: (screen: string) => void;
+  readonly activeMemberId?: string;
+  readonly activeMemberName?: string;
 }
 
-export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({ onNavigate }) => {
-  const { emergencyData } = useEmergencyLogic();
+export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({
+  onNavigate,
+  activeMemberId = 'nam',
+  activeMemberName,
+}) => {
+  const { emergencyData } = useEmergencyLogic(activeMemberId, activeMemberName);
 
   return (
     <div className="w-full min-h-screen relative bg-gradient-to-b from-[#3B0D12] via-[#200A0D] to-[#111827] text-white flex flex-col font-sans select-none pb-6">

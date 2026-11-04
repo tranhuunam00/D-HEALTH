@@ -2,20 +2,37 @@ import { useState, useEffect } from 'react';
 import { FamilyMember } from '../../types/member.types';
 import { User } from '../../types/auth.types';
 
-export function useProfileLogic() {
-  const [user, setUser] = useState<User | null>(null);
-  const [activeMember, setActiveMember] = useState<FamilyMember>({
-    id: 'mem_me',
-    user_id: 'usr_default',
-    full_name: 'Trần Hữu Nam',
-    relationship: 'owner',
-    gender: 'Nam',
-    birth_date: '1992-08-15',
-    blood_type: 'O+',
-    height_cm: 172,
-    weight_kg: 68,
-    is_above_18: true,
-    consent_approved: true,
+export function useProfileLogic(initialUser?: User | null, initialMemberId?: string) {
+  const [user, setUser] = useState<User | null>(initialUser || null);
+  const [activeMember, setActiveMember] = useState<FamilyMember>(() => {
+    if (initialUser) {
+      return {
+        id: initialUser.activeMemberId || initialMemberId || 'nam',
+        user_id: initialUser.id,
+        full_name: initialUser.fullName || 'Trần Hữu Nam',
+        relationship: 'owner',
+        gender: 'Nam',
+        birth_date: '1985-06-20',
+        blood_type: initialUser.bloodType || 'O+',
+        height_cm: initialUser.heightCm || 172,
+        weight_kg: initialUser.weightKg || 68,
+        is_above_18: true,
+        consent_approved: true,
+      };
+    }
+    return {
+      id: 'mem_me',
+      user_id: 'usr_default',
+      full_name: 'Trần Hữu Nam',
+      relationship: 'owner',
+      gender: 'Nam',
+      birth_date: '1985-06-20',
+      blood_type: 'O+',
+      height_cm: 172,
+      weight_kg: 68,
+      is_above_18: true,
+      consent_approved: true,
+    };
   });
   const [loading, setLoading] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -43,7 +60,7 @@ export function useProfileLogic() {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [initialMemberId]);
 
   const handleUpdateProfile = async (payload: Partial<FamilyMember>) => {
     setLoading(true);
@@ -69,7 +86,7 @@ export function useProfileLogic() {
 
   // Tính toán BMI tự động
   const bmi = activeMember.height_cm && activeMember.weight_kg
-    ? (activeMember.weight_kg / Math.pow(activeMember.height_cm / 100, 2)).toFixed(1)
+    ? (Number(activeMember.weight_kg) / Math.pow(Number(activeMember.height_cm) / 100, 2)).toFixed(1)
     : '--';
 
   return {

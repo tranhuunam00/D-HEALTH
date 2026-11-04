@@ -10,6 +10,12 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const fillQuickAccount = (phone: string, pass: string) => {
+    setIdentifier(phone);
+    setPassword(pass);
+    setErrorMsg(null);
+  };
+
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!identifier || !password) {
@@ -31,10 +37,14 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         return;
       }
       if (data.data?.user && onSuccess) {
+        if (data.data.token) {
+          localStorage.setItem('dhealth_token', data.data.token);
+        }
+        localStorage.setItem('dhealth_user', JSON.stringify(data.data.user));
         onSuccess(data.data.user);
       }
-    } catch (err: any) {
-      setErrorMsg('Lỗi kết nối máy chủ y tế. Vui lòng thử lại.');
+    } catch {
+      setErrorMsg('Lỗi kết nối máy chủ y tế. Vui lòng kiểm tra mạng.');
     } finally {
       setLoading(false);
     }
@@ -61,9 +71,13 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         return;
       }
       if (data.data?.user && onSuccess) {
+        if (data.data.token) {
+          localStorage.setItem('dhealth_token', data.data.token);
+        }
+        localStorage.setItem('dhealth_user', JSON.stringify(data.data.user));
         onSuccess(data.data.user);
       }
-    } catch (err: any) {
+    } catch {
       setErrorMsg('Lỗi kết nối máy chủ y tế. Vui lòng thử lại.');
     } finally {
       setLoading(false);
@@ -74,11 +88,10 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      // Giả lập nhận Google payload từ Google One Tap / OAuth SDK
       const googlePayload = {
         sub: `gg_${Date.now()}`,
         email: email || 'patient.google@dhealth.vn',
-        name: fullName || 'Bệnh Nhân Google',
+        name: fullName || 'Trần Hữu Nam',
         picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150',
       };
 
@@ -93,9 +106,13 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         return;
       }
       if (data.data?.user && onSuccess) {
+        if (data.data.token) {
+          localStorage.setItem('dhealth_token', data.data.token);
+        }
+        localStorage.setItem('dhealth_user', JSON.stringify(data.data.user));
         onSuccess(data.data.user);
       }
-    } catch (err: any) {
+    } catch {
       setErrorMsg('Lỗi kết nối xác thực Google.');
     } finally {
       setLoading(false);
@@ -115,6 +132,7 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
     setEmail,
     loading,
     errorMsg,
+    fillQuickAccount,
     handleLogin,
     handleRegister,
     handleGoogleLogin,
