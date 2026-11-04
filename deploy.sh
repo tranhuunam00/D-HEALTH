@@ -43,6 +43,10 @@ docker rm -f dhealth-frontend dhealth-backend dhealth-postgres dhealth-minio dhe
 echo -e "${YELLOW}[4/5] Build & Khởi động Docker stack mới (PostgreSQL, MinIO, Backend, Frontend)...${NC}"
 docker compose up -d --build --force-recreate
 
+# Chờ 3 giây và kiểm tra trạng thái container
+sleep 3
+docker compose ps
+
 # 6. Dọn dẹp images rác
 docker image prune -f || true
 
