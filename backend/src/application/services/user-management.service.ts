@@ -60,3 +60,11 @@ export function isValidBloodType(bloodType: string): boolean {
   const VALID_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   return VALID_TYPES.includes(bloodType);
 }
+
+/**
+ * Thẩm định vai trò hệ thống hợp lệ
+ */
+export function isValidRole(role: string): boolean {
+  const VALID_ROLES = ['super_admin', 'clinical_admin', 'doctor', 'patient'];
+  return VALID_ROLES.includes(role);
+}

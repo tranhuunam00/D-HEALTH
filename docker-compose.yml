@@ -27,10 +27,9 @@ services:
   # 2. Kho lưu trữ tệp y tế S3 (MinIO Object Storage)
   # -------------------------------------------------------------
   minio:
-    image: cleanstart/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: dhealth-minio
     restart: unless-stopped
-    user: "0:0"
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dhealth_minio_admin}
@@ -40,6 +39,11 @@ services:
       - "${MINIO_CONSOLE_PORT:-7105}:9001" # Web Admin Console
     volumes:
       - dhealth-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - dhealth-net
 
@@ -56,7 +60,7 @@ services:
       postgres:
         condition: service_healthy
       minio:
-        condition: service_started
+        condition: service_healthy
     environment:
       PORT: 5000
       NODE_ENV: production

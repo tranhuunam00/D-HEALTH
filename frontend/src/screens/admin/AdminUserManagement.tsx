@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserPlus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import { Users, UserPlus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Shield } from 'lucide-react';
 import { useAdminUsersLogic } from './useAdminUsersLogic';
 import { UserFormModal } from './UserFormModal';
 import { DeleteUserModal } from './DeleteUserModal';
@@ -22,6 +22,19 @@ export const AdminUserManagement: React.FC = () => {
     handleUpdateUser,
     handleDeleteUser,
   } = useAdminUsersLogic();
+
+  const renderRoleBadge = (role: string) => {
+    if (role === 'super_admin') {
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30">Super Admin</span>;
+    }
+    if (role === 'clinical_admin') {
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">Quản Trị Lâm Sàng</span>;
+    }
+    if (role === 'doctor') {
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">Bác Sĩ</span>;
+    }
+    return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30">Bệnh Nhân</span>;
+  };
 
   return (
     <div className="space-y-4">
@@ -78,9 +91,7 @@ export const AdminUserManagement: React.FC = () => {
                       <div className="text-[10px] text-slate-400">{u.email || 'Chưa liên kết email'}</div>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-[#1F7A8C]/20 text-cyan-300 font-semibold border border-[#1F7A8C]/30">
-                        {u.role}
-                      </span>
+                      {renderRoleBadge(u.role)}
                     </td>
                     <td className="px-5 py-3.5">
                       {u.is_active ? (

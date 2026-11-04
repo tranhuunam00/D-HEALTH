@@ -83,43 +83,29 @@ install_dependencies
 # 4. Sao chép và kích hoạt Virtual Host Nginx
 echo -e "${YELLOW}[2/4] Thiết lập cấu hình Nginx cho ${DOMAIN}...${NC}"
 
+# Luôn tạo và gắn vào /etc/nginx/conf.d/ (mọi phiên bản Nginx: nginx.org, Ubuntu, CentOS đều nạp conf.d/*.conf)
+mkdir -p /etc/nginx/conf.d
+DEST_CONF="/etc/nginx/conf.d/${CONF_NAME}"
+cp "$SOURCE_CONF" "$DEST_CONF"
+sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "$DEST_CONF"
+
+# Gỡ bỏ triệt để mọi trang mặc định "Welcome to nginx!" gây xung đột
+echo -e "${YELLOW}Gỡ bỏ default site Nginx để chuyển hướng hoàn toàn vào D-HEALTH...${NC}"
+rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
+rm -f /etc/nginx/conf.d/default.conf.bak 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/*default* 2>/dev/null || true
+rm -f /etc/nginx/sites-available/default 2>/dev/null || true
+
+# Nếu hệ thống sử dụng kiến trúc sites-available / sites-enabled (Debian/Ubuntu), gắn thêm symlink
 if [ -d "/etc/nginx/sites-available" ]; then
-  # Dành cho Debian / Ubuntu
-  DEST_CONF="/etc/nginx/sites-available/${CONF_NAME}"
-  cp "$SOURCE_CONF" "$DEST_CONF"
-  
-  # Cập nhật đúng cổng upstream từ biến TARGET_PORT
-  sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "$DEST_CONF"
-  
   mkdir -p /etc/nginx/sites-enabled
-  ln -sf "$DEST_CONF" "/etc/nginx/sites-enabled/${CONF_NAME}"
-  
-  # Xóa default site nếu tồn tại để tránh Nginx hiển thị trang "Welcome to nginx!"
-  echo -e "${YELLOW}Gỡ bỏ default site Nginx để tránh xung đột domain...${NC}"
-  rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
-  rm -f /etc/nginx/sites-enabled/*default* 2>/dev/null || true
-  rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
-  
-  echo -e "${GREEN}✓ Đã gắn cấu hình vào /etc/nginx/sites-available/ và sites-enabled/${NC}"
-elif [ -d "/etc/nginx/conf.d" ]; then
-  # Dành cho CentOS / RHEL / Alpine / Nginx mặc định
-  DEST_CONF="/etc/nginx/conf.d/${CONF_NAME}"
-  cp "$SOURCE_CONF" "$DEST_CONF"
-  sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "$DEST_CONF"
-  
-  # Vô hiệu hóa default.conf nếu có
-  if [ -f "/etc/nginx/conf.d/default.conf" ]; then
-    mv "/etc/nginx/conf.d/default.conf" "/etc/nginx/conf.d/default.conf.bak" || true
-  fi
-  
-  echo -e "${GREEN}✓ Đã gắn cấu hình vào /etc/nginx/conf.d/${NC}"
-else
-  mkdir -p /etc/nginx/conf.d
-  DEST_CONF="/etc/nginx/conf.d/${CONF_NAME}"
-  cp "$SOURCE_CONF" "$DEST_CONF"
-  sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "$DEST_CONF"
-  echo -e "${GREEN}✓ Đã tạo thư mục và gắn cấu hình vào /etc/nginx/conf.d/${NC}"
+  cp "$SOURCE_CONF" "/etc/nginx/sites-available/${CONF_NAME}"
+  sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "/etc/nginx/sites-available/${CONF_NAME}"
+  ln -sf "/etc/nginx/sites-available/${CONF_NAME}" "/etc/nginx/sites-enabled/${CONF_NAME}"
 fi
+
+echo -e "${GREEN}✓ Đã gắn cấu hình reverse proxy tới 127.0.0.1:${TARGET_PORT} thành công!${NC}"
 
 # 5. Kiểm tra cú pháp và khởi động lại Nginx
 echo -e "${YELLOW}[3/4] Kiểm tra cú pháp Nginx (nginx -t)...${NC}"

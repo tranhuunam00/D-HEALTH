@@ -7,7 +7,7 @@ describe('SCR02_HomeScreen Mobile View', () => {
   it('render đầy đủ điểm sức khỏe, nút SOS cấp cứu và nút FAB nhập số đo', () => {
     render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} />);
 
-    expect(screen.getByText('Chỉ Số Sức Khỏe Tổng Thể')).toBeDefined();
+    expect(screen.getByText('Điểm sức khoẻ')).toBeDefined();
     expect(screen.getByText('SOS')).toBeDefined();
     expect(screen.getByText('Huyết áp')).toBeDefined();
     expect(screen.getByText('Nhịp tim')).toBeDefined();

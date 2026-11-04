@@ -4,6 +4,7 @@ import {
   calculatePaginationMeta,
   isValidPhoneNumber,
   isValidBloodType,
+  isValidRole,
 } from './user-management.service';
 
 describe('UserManagementService Helper Functions', () => {
@@ -68,6 +69,21 @@ describe('UserManagementService Helper Functions', () => {
     it('từ chối nhóm máu không hợp lệ', () => {
       expect(isValidBloodType('C+')).toBe(false);
       expect(isValidBloodType('')).toBe(false);
+    });
+  });
+
+  describe('isValidRole', () => {
+    it('chấp nhận các vai trò hệ thống hợp lệ', () => {
+      expect(isValidRole('super_admin')).toBe(true);
+      expect(isValidRole('clinical_admin')).toBe(true);
+      expect(isValidRole('doctor')).toBe(true);
+      expect(isValidRole('patient')).toBe(true);
+    });
+
+    it('từ chối vai trò không xác định hoặc rỗng', () => {
+      expect(isValidRole('hacker')).toBe(false);
+      expect(isValidRole('')).toBe(false);
+      expect(isValidRole(null as any)).toBe(false);
     });
   });
 });

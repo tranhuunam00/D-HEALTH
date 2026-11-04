@@ -16,6 +16,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('patient');
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
@@ -23,6 +24,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
       setFullName(initialUser.full_name);
       setPhoneNumber(initialUser.phone_number);
       setEmail(initialUser.email || '');
+      setRole(initialUser.role || 'patient');
       setIsActive(initialUser.is_active);
       setPassword('');
     } else {
@@ -30,6 +32,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
       setPhoneNumber('');
       setEmail('');
       setPassword('');
+      setRole('patient');
       setIsActive(true);
     }
   }, [initialUser, isOpen]);
@@ -38,7 +41,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ fullName, phoneNumber, email, password, isActive });
+    onSubmit({ fullName, phoneNumber, email, password, role, isActive });
   };
 
   return (
@@ -57,6 +60,21 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
           <Input label="Họ và tên" placeholder="Nguyễn Văn A" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
           <Input label="Số điện thoại" placeholder="0912345678" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
           <Input label="Email liên hệ (tùy chọn)" placeholder="user@gmail.com" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-300">Vai trò / Phân quyền</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full h-11 px-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-[#1F7A8C]"
+            >
+              <option value="patient">Bệnh nhân / Người dùng gia đình</option>
+              <option value="doctor">Bác sĩ chuyên khoa</option>
+              <option value="clinical_admin">Quản trị lâm sàng</option>
+              <option value="super_admin">Quản trị viên tối cao (Super Admin)</option>
+            </select>
+          </div>
+
           {!initialUser && (
             <Input label="Mật khẩu khởi tạo" placeholder="Tối thiểu 8 ký tự" isPassword value={password} onChange={(e) => setPassword(e.target.value)} required />
           )}

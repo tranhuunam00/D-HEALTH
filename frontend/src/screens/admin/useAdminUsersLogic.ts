@@ -90,6 +90,21 @@ export function useAdminUsersLogic() {
     }
   };
 
+  const handleGrantRole = async (id: string, role: string, facilityId?: string) => {
+    try {
+      const res = await fetch(`/api/admin/users/${id}/grant-role`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, facilityId }),
+      });
+      if (res.ok) {
+        await fetchUsers(meta.page);
+      }
+    } catch (err) {
+      console.error('Lỗi cấp quyền vai trò:', err);
+    }
+  };
+
   return {
     users,
     meta,
@@ -106,5 +121,6 @@ export function useAdminUsersLogic() {
     handleCreateUser,
     handleUpdateUser,
     handleDeleteUser,
+    handleGrantRole,
   };
 }
