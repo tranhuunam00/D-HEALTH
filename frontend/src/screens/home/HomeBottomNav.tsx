@@ -18,7 +18,7 @@ export const HomeBottomNav: React.FC<HomeBottomNavProps> = ({
       : 'flex flex-col items-center text-slate-400 font-medium text-[10px]';
 
   return (
-    <nav className="absolute left-3 right-3 bottom-3 h-14 bg-white rounded-[22px] px-2 shadow-lg border border-slate-100 grid grid-cols-5 items-center z-10">
+    <nav className="fixed bottom-3 left-3 right-3 max-w-[456px] mx-auto h-14 bg-white/95 backdrop-blur-md rounded-[22px] px-2 shadow-xl border border-slate-100 grid grid-cols-5 items-center z-30">
       <button
         onClick={() => onTabChange?.('home')}
         className={getTabClass('home')}

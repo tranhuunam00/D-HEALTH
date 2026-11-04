@@ -31,8 +31,8 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
   };
 
   return (
-    <div className="w-[390px] h-[844px] relative overflow-hidden bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none">
-      <div className="flex-1 overflow-y-auto px-4 pt-12 pb-24 flex flex-col gap-3.5">
+    <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-20">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
         {/* 1. Header Pills */}
         <div className="flex gap-1.5 items-center flex-wrap shrink-0">
           <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">

@@ -29,12 +29,10 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
   return (
     <div
       style={{
-        width: '390px',
-        height: '844px',
         background: DesignTokens.colors.gradientScreenBg,
         fontFamily: DesignTokens.typography.fontFamily,
       }}
-      className="relative overflow-hidden box-border p-6 flex flex-col justify-between text-[#111827]"
+      className="w-full min-h-screen relative box-border p-6 flex flex-col justify-between text-[#111827]"
     >
       {/* 1. Header & Brand Logo */}
       <div className="pt-6 flex flex-col items-center gap-3 text-center">

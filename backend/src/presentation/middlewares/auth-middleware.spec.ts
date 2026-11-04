@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { authenticate, requireRole, AuthenticatedRequest } from './auth-middleware';
+import { authenticate, optionalAuthenticate, requireRole, AuthenticatedRequest } from './auth-middleware';
 import { generateToken } from '../../infrastructure/security/token-provider';
 import { Response } from 'express';
 
@@ -52,6 +52,39 @@ describe('AuthMiddleware', () => {
       authenticate(req as AuthenticatedRequest, res, next);
       expect(res.status).toHaveBeenCalledWith(401);
       expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('optionalAuthenticate', () => {
+    it('gắn req.user khi có token hợp lệ và gọi next()', () => {
+      const token = generateToken({ userId: 'u_opt', role: 'PATIENT' });
+      const req: any = { headers: { authorization: `Bearer ${token}` } };
+      const res = createMockRes();
+      const next = vi.fn();
+
+      optionalAuthenticate(req as AuthenticatedRequest, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(req.user?.userId).toBe('u_opt');
+    });
+
+    it('vẫn gọi next() và không chặn khi không có token', () => {
+      const req: any = { headers: {}, cookies: {} };
+      const res = createMockRes();
+      const next = vi.fn();
+
+      optionalAuthenticate(req as AuthenticatedRequest, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(req.user).toBeUndefined();
+    });
+
+    it('vẫn gọi next() và bỏ qua lỗi khi token không hợp lệ', () => {
+      const req: any = { headers: { authorization: 'Bearer garbage.token' } };
+      const res = createMockRes();
+      const next = vi.fn();
+
+      optionalAuthenticate(req as AuthenticatedRequest, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(req.user).toBeUndefined();
     });
   });
 

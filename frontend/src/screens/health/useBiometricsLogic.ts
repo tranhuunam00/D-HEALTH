@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export type MetricType = 'bp' | 'hr' | 'spo2' | 'weight' | 'glucose';
 
@@ -20,10 +20,35 @@ const INITIAL_HISTORY: readonly BiometricReading[] = Object.freeze([
   { id: '5', type: 'bp', value: '138/88', unit: 'mmHg', recordedAt: '22/10 07:10', source: 'manual', status: 'warning' },
 ]);
 
-export function useBiometricsLogic() {
+export function useBiometricsLogic(memberId = 'me') {
   const [activeMetric, setActiveMetric] = useState<MetricType>('bp');
-  const [history] = useState<readonly BiometricReading[]>(INITIAL_HISTORY);
+  const [history, setHistory] = useState<readonly BiometricReading[]>(INITIAL_HISTORY);
   const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/biometrics/${memberId}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && json.data.length > 0) {
+          const mapped: BiometricReading[] = json.data.map((r: any) => ({
+            id: r.id,
+            type: r.biometric_type,
+            value: r.biometric_type === 'bp' ? `${Math.round(r.systolic)}/${Math.round(r.diastolic)}` : `${r.value_numeric}`,
+            unit: r.unit,
+            recordedAt: new Date(r.measured_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            source: r.source === 'device_ble' ? 'device' : 'manual',
+            status: r.severity_level === 3 ? 'critical' : r.severity_level === 2 ? 'warning' : 'normal',
+          }));
+          setHistory(mapped);
+        }
+      }
+    } catch {}
+  }, [memberId]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const openEntrySheet = useCallback(() => setIsEntrySheetOpen(true), []);
   const closeEntrySheet = useCallback(() => setIsEntrySheetOpen(false), []);

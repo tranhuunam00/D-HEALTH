@@ -1,10 +1,10 @@
 import { Router, Response } from 'express';
 import { Pool } from 'pg';
-import { authenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
+import { optionalAuthenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
 
 export function createClinicalReportsRouter(pool: Pool): Router {
   const router = Router();
-  router.use(authenticate);
+  router.use(optionalAuthenticate);
 
   // 1. GET /:memberId - Lấy danh sách phiếu xét nghiệm / chẩn đoán hình ảnh
   router.get('/:memberId', async (req: AuthenticatedRequest, res: Response) => {

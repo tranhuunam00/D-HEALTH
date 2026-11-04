@@ -46,6 +46,22 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
 }
 
 /**
+ * Middleware xác thực tùy chọn (Không bắt buộc token, nhưng giải mã nếu có)
+ */
+export function optionalAuthenticate(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+  const cookieToken = req.cookies?.dhealth_token;
+  let token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.substring(7) : cookieToken;
+
+  if (token) {
+    try {
+      req.user = verifyToken(token);
+    } catch {}
+  }
+  next();
+}
+
+/**
  * Middleware phân quyền theo vai trò (RBAC)
  */
 export function requireRole(...roles: (string | string[])[]) {

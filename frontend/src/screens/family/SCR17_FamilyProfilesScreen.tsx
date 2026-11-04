@@ -71,8 +71,8 @@ export const SCR17_FamilyProfilesScreen: React.FC<SCR17Props> = ({
   onSelectMember,
 }) => {
   return (
-    <div className="w-[390px] h-[844px] relative overflow-hidden bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none">
-      <div className="flex-1 overflow-y-auto px-4 pt-12 pb-24 flex flex-col gap-3.5">
+    <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-20">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
         {/* 1. Topbar */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

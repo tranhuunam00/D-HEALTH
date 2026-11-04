@@ -29,7 +29,8 @@ export function useAdminUsersLogic() {
   const fetchUsers = async (page = 1, currentSearch = search) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/users?page=${page}&limit=${meta.limit}&search=${encodeURIComponent(currentSearch)}`);
+      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null') ? window.location.origin : 'http://localhost';
+      const res = await fetch(`${baseUrl}/api/admin/users?page=${page}&limit=${meta.limit}&search=${encodeURIComponent(currentSearch)}`);
       if (res.ok) {
         const json = await res.json();
         setUsers(json.data || []);

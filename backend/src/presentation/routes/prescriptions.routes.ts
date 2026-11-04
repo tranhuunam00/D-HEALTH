@@ -1,10 +1,10 @@
 import { Router, Response } from 'express';
 import { Pool } from 'pg';
-import { authenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
+import { optionalAuthenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
 
 export function createPrescriptionsRouter(pool: Pool): Router {
   const router = Router();
-  router.use(authenticate);
+  router.use(optionalAuthenticate);
 
   // 1. GET /:memberId - Lấy danh sách đơn thuốc của thành viên
   router.get('/:memberId', async (req: AuthenticatedRequest, res: Response) => {
@@ -31,7 +31,7 @@ export function createPrescriptionsRouter(pool: Pool): Router {
     const { status = 'taken', note } = req.body;
     try {
       const result = await pool.query(
-        `INSERT INTO dose_logs (dose_schedule_id, scheduled_time, taken_at, status, note)
+        `INSERT INTO dose_logs (schedule_id, scheduled_at, taken_at, status, reason_skipped)
          VALUES ($1, NOW(), NOW(), $2, $3)
          RETURNING *`,
         [doseId, status, note || null]

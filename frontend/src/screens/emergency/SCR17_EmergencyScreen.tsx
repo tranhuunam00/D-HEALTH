@@ -10,8 +10,8 @@ export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({ onNavigate }) => {
   const { emergencyData } = useEmergencyLogic();
 
   return (
-    <div className="w-[390px] h-[844px] relative overflow-hidden bg-gradient-to-b from-[#3B0D12] via-[#200A0D] to-[#111827] text-white flex flex-col font-sans select-none">
-      <div className="flex-1 overflow-y-auto px-4 pt-12 pb-8 flex flex-col gap-3.5">
+    <div className="w-full min-h-screen relative bg-gradient-to-b from-[#3B0D12] via-[#200A0D] to-[#111827] text-white flex flex-col font-sans select-none pb-6">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-8 flex flex-col gap-3.5">
         {/* 1. Topbar */}
         <div className="flex items-center gap-3">
           <button

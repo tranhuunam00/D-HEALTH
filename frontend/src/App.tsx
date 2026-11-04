@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Smartphone, Monitor, ShieldCheck, HeartPulse, LogOut, User as UserIcon } from 'lucide-react';
+import { Smartphone, Monitor, LogOut, HeartPulse } from 'lucide-react';
 import { SCR01_LoginScreen } from './screens/auth/SCR01_LoginScreen';
 import { SCR02_HomeScreen } from './screens/home/SCR02_HomeScreen';
 import { SCR03_BiometricsScreen } from './screens/health/SCR03_BiometricsScreen';
@@ -26,12 +26,20 @@ export type MobileScreenId =
   | 'camera-ocr' | 'ai' | 'care' | 'profile' | 'family' | 'emergency';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState<'mobile_patient' | 'pc_admin'>('mobile_patient');
+  const [viewMode, setViewMode] = useState<'mobile_patient' | 'pc_admin'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'admin' || window.location.pathname.startsWith('/admin')) {
+        return 'pc_admin';
+      }
+    }
+    return 'mobile_patient';
+  });
   const [currentScreen, setCurrentScreen] = useState<MobileScreenId>('home');
   const [currentUser, setCurrentUser] = useState<User | null>({
     id: 'user-default',
     phoneNumber: '0988777666',
-    fullName: 'Trần Hữu Nam',
+    fullName: 'Trần Minh Khang',
     role: 'patient',
   });
 
@@ -47,7 +55,12 @@ export default function App() {
     }
     switch (currentScreen) {
       case 'home':
-        return <SCR02_HomeScreen onOpenEmergency={() => setCurrentScreen('emergency')} />;
+        return (
+          <SCR02_HomeScreen
+            onOpenEmergency={() => setCurrentScreen('emergency')}
+            onNavigate={(s) => setCurrentScreen(s as any)}
+          />
+        );
       case 'biometrics':
         return <SCR03_BiometricsScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'devices':
@@ -73,56 +86,61 @@ export default function App() {
       case 'care':
         return <SCR14_CareScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'profile':
-        return <SCR16_UserProfileScreen onBack={() => setCurrentScreen('home')} />;
+        return <SCR16_UserProfileScreen onBack={() => setCurrentScreen('home')} onNavigateToAdmin={() => setViewMode('pc_admin')} />;
       case 'family':
         return <SCR17_FamilyProfilesScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'emergency':
         return <SCR17_EmergencyScreen onNavigate={() => setCurrentScreen('home')} />;
       default:
-        return <SCR02_HomeScreen onOpenEmergency={() => setCurrentScreen('emergency')} />;
+        return (
+          <SCR02_HomeScreen
+            onOpenEmergency={() => setCurrentScreen('emergency')}
+            onNavigate={(s) => setCurrentScreen(s as any)}
+          />
+        );
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#070D1E] text-slate-100 flex flex-col font-sans">
-      <header className="h-12 bg-slate-950/80 border-b border-slate-800/80 px-4 flex items-center justify-between z-50">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 flex flex-col font-sans">
+      {/* Ecosystem Top Header - Hidden on mobile viewports so mobile users experience a 100% native app */}
+      <header className="hidden md:flex h-11 bg-slate-950/95 border-b border-slate-800 px-3 items-center justify-between z-50 shrink-0 text-white">
         <div className="flex items-center gap-2">
-          <HeartPulse className="w-5 h-5 text-[#1F7A8C]" />
-          <span className="text-xs font-black tracking-wider text-white">D-HEALTH ECOSYSTEM</span>
+          <HeartPulse className="w-4 h-4 text-[#1F7A8C]" />
+          <span className="text-[11px] font-black tracking-wider uppercase">D-HEALTH ECOSYSTEM</span>
         </div>
 
         {/* View Switcher Pills */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-xl">
+        <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-lg">
           <button
             onClick={() => setViewMode('mobile_patient')}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-all ${
               viewMode === 'mobile_patient' ? 'bg-[#1F7A8C] text-white shadow' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>Mobile Bệnh Nhân (390×844)</span>
+            <Smartphone className="w-3 h-3" />
+            <span>Mobile Bệnh Nhân</span>
           </button>
           <button
             onClick={() => setViewMode('pc_admin')}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-all ${
               viewMode === 'pc_admin' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Monitor className="w-3.5 h-3.5" />
-            <span>PC Admin Tổng (≥1280px)</span>
+            <Monitor className="w-3 h-3" />
+            <span>PC Admin Tổng</span>
           </button>
         </div>
 
-        {/* Screen Quick Selector for Tester/User */}
+        {/* Screen Quick Selector for Quick Testing */}
         {viewMode === 'mobile_patient' && (
-          <div className="hidden lg:flex items-center gap-2 text-xs">
-            <span className="text-slate-400">Xem nhanh màn hình:</span>
+          <div className="hidden md:flex items-center gap-1.5 text-[11px]">
             <select
               value={currentScreen}
               onChange={(e) => setCurrentScreen(e.target.value as any)}
-              className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none"
+              className="bg-slate-900 border border-slate-700 text-slate-200 rounded-md px-2 py-0.5 text-[11px] font-medium focus:outline-none"
             >
-              <option value="home">SCR-02: Trang chủ (Main)</option>
+              <option value="home">SCR-02: Trang chủ</option>
               <option value="biometrics">SCR-03: Sinh trắc học</option>
               <option value="devices">SCR-04: Kết nối thiết bị</option>
               <option value="labs">SCR-05: Xét nghiệm</option>
@@ -143,26 +161,28 @@ export default function App() {
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {currentUser && (
-            <button onClick={handleLogout} className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800" title="Đăng xuất">
+            <button
+              onClick={handleLogout}
+              className="p-1 text-slate-400 hover:text-rose-400 rounded-md hover:bg-slate-800"
+              title="Đăng xuất"
+            >
               <LogOut className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center">
+      {/* Main View Area (Responsive Real Mobile / Real PC) */}
+      <main className="flex-1 flex justify-center bg-[#F1F5F9]">
         {viewMode === 'pc_admin' ? (
           <div className="w-full h-full">
             <AdminDashboard />
           </div>
         ) : (
-          <div className="py-6 px-2 flex justify-center w-full">
-            <div className="w-[390px] min-h-[844px] bg-[#0B132B] rounded-[40px] border-4 border-slate-700/80 shadow-2xl overflow-hidden relative flex flex-col">
-              <div className="w-28 h-5 bg-black rounded-full mx-auto mt-2 z-40" />
-              <div className="flex-1 flex flex-col">{renderMobileScreen()}</div>
-            </div>
+          <div className="w-full md:max-w-[480px] min-h-screen bg-[#F8FAFC] flex flex-col relative md:shadow-md">
+            {renderMobileScreen()}
           </div>
         )}
       </main>

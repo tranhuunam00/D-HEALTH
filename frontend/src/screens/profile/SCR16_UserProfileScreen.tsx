@@ -6,13 +6,14 @@ import { Button } from '../../components/atoms/Button';
 
 export interface UserProfileScreenProps {
   onBack: () => void;
+  onNavigateToAdmin?: () => void;
 }
 
-export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({ onBack }) => {
+export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({ onBack, onNavigateToAdmin }) => {
   const { user, activeMember, isEditOpen, setIsEditOpen, successMsg, bmi, handleUpdateProfile } = useProfileLogic();
 
   return (
-    <div className="w-full max-w-[390px] mx-auto min-h-[844px] bg-[#0B132B] text-white flex flex-col pb-12">
+    <div className="w-full min-h-screen bg-[#0B132B] text-white flex flex-col pb-12">
       {/* 1. Header */}
       <div className="p-4 flex items-center justify-between border-b border-slate-800 bg-[#0B132B]/90 sticky top-0 z-20">
         <button onClick={onBack} className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800" aria-label="Quay lại">
@@ -100,7 +101,17 @@ export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({ onBa
           </div>
         </div>
 
-        {/* 4. Decree 13 Compliance Card */}
+        {/* 4. Link to PC Admin Dashboard */}
+        {onNavigateToAdmin && (
+          <button
+            onClick={onNavigateToAdmin}
+            className="w-full p-3.5 rounded-2xl bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center justify-center gap-2 hover:bg-purple-900/50 transition-all active:scale-98"
+          >
+            <span>Chuyển sang Quản Trị Hệ Thống (PC Admin)</span>
+          </button>
+        )}
+
+        {/* 5. Decree 13 Compliance Card */}
         <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 text-xs space-y-2">
           <div className="flex items-center gap-2 text-emerald-400 font-bold">
             <ShieldCheck className="w-4 h-4" />

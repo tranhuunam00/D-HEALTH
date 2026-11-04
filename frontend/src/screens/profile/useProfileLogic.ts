@@ -24,7 +24,8 @@ export function useProfileLogic() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/user/profile');
+      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null') ? window.location.origin : 'http://localhost';
+      const res = await fetch(`${baseUrl}/api/user/profile`);
       if (res.ok) {
         const json = await res.json();
         if (json.data?.user) setUser(json.data.user);
