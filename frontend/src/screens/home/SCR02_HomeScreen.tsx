@@ -25,6 +25,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     activeMemberId,
     setActiveMemberId,
     healthScore,
+    vitals,
     latestBp,
     latestHr,
     latestWeight,
@@ -38,11 +39,11 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     handleRecordVitals,
     handleTakeDose,
     handleQuickCheckin,
-  } = useHomeLogic(propMemberId || user?.activeMemberId || 'me', user);
+  } = useHomeLogic(propMemberId || user?.activeMemberId || 'nam', user);
 
   const activeMember = members.find((m) => m.id === activeMemberId) || {
     id: activeMemberId,
-    full_name: propMemberName || user?.fullName || 'Trần Minh Khang',
+    full_name: propMemberName || user?.fullName || 'Trần Hữu Nam',
   };
 
   return (
@@ -135,7 +136,9 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           </svg>
           <div className="absolute top-14 flex flex-col items-center">
             <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Điểm sức khoẻ</span>
-            <span className="text-4xl font-black text-slate-900 tracking-tight">{healthScore.total}</span>
+            <span className="text-4xl font-black text-slate-900 tracking-tight">
+              {healthScore.total > 0 ? healthScore.total : '--'}
+            </span>
           </div>
           <span className="absolute right-3.5 top-3.5 bg-slate-900 text-white rounded-full px-2.5 py-0.5 text-[10px] font-bold">
             {healthScore.status}
@@ -152,13 +155,15 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           </div>
           <div className="flex-1 flex flex-col min-w-0">
             <span className="text-[10px] font-black text-amber-700 uppercase">
-              NHẮC UỐNG THUỐC · {todayDose?.scheduled_time ? todayDose.scheduled_time.substring(0, 5) : '20:00'}
+              {todayDose?.scheduled_time ? `NHẮC UỐNG THUỐC · ${todayDose.scheduled_time.substring(0, 5)}` : 'NHẮC UỐNG THUỐC'}
             </span>
             <span className="text-sm font-extrabold text-slate-900 truncate">
-              {todayDose ? `${todayDose.name} ${todayDose.dosage}` : 'Metformin 500 mg'}
+              {todayDose ? `${todayDose.name} ${todayDose.dosage}` : 'Chưa có đơn thuốc hôm nay'}
             </span>
             <span className="text-[11px] text-slate-500">
-              {todayDose?.meal_relation === 'after_meal' ? '1 viên sau ăn tối' : (todayDose?.dose_per_intake || '1 viên')} · hôm nay {todayDosesSummary.taken}/{todayDosesSummary.total} liều
+              {todayDose
+                ? `${todayDose.meal_relation === 'after_meal' ? '1 viên sau ăn tối' : (todayDose.dose_per_intake || '1 viên')} · hôm nay ${todayDosesSummary.taken}/${todayDosesSummary.total} liều`
+                : 'Chưa có lịch uống thuốc được chỉ định'}
             </span>
           </div>
           <button
@@ -184,7 +189,9 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           >
             <div className="flex justify-between items-center">
               <span className="text-xs font-semibold opacity-90">Huyết áp</span>
-              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2 py-0.5">Tốt</span>
+              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2 py-0.5">
+                {latestBp === '--/--' ? 'Chưa đo' : 'Tốt'}
+              </span>
             </div>
             <span className="text-2xl font-black">{latestBp} <span className="text-xs font-normal opacity-80">mmHg</span></span>
           </div>
@@ -195,7 +202,9 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           >
             <div className="flex justify-between items-center">
               <span className="text-xs font-semibold text-slate-600">Nhịp tim</span>
-              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">Tốt</span>
+              <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${latestHr === '--' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                {latestHr === '--' ? 'Chưa đo' : 'Tốt'}
+              </span>
             </div>
             <span className="text-2xl font-black">{latestHr} <span className="text-xs font-normal text-slate-500">bpm</span></span>
           </div>
@@ -206,7 +215,9 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           >
             <div className="flex justify-between items-center">
               <span className="text-xs font-semibold opacity-90">Cân nặng</span>
-              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2 py-0.5">Theo dõi</span>
+              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2 py-0.5">
+                {latestWeight === '--' ? 'Chưa cân' : 'Theo dõi'}
+              </span>
             </div>
             <span className="text-2xl font-black">{latestWeight} <span className="text-xs font-normal opacity-80">kg</span></span>
           </div>
@@ -217,9 +228,11 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           >
             <div className="flex justify-between items-center">
               <span className="text-xs font-semibold text-slate-600">HbA1c / Đường huyết</span>
-              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">Tốt</span>
+              <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${latestGlucose === '--' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                {latestGlucose === '--' ? 'Chưa XN' : 'Tốt'}
+              </span>
             </div>
-            <span className="text-2xl font-black">{latestGlucose} <span className="text-xs font-normal text-slate-500">%</span></span>
+            <span className="text-2xl font-black">{latestGlucose} <span className="text-xs font-normal text-slate-500">{latestGlucose === '--' ? '' : '%'}</span></span>
           </div>
         </div>
 
@@ -233,7 +246,11 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           </div>
           <div className="flex-1 text-xs">
             <span className="font-extrabold text-[#1F5F6C] block text-[10px] uppercase">AI INSIGHT</span>
-            <span className="font-semibold text-slate-800">Các chỉ số sinh trắc duy trì ở mức an toàn ổn định. Chạm để xem chi tiết.</span>
+            <span className="font-semibold text-slate-800">
+              {vitals.length > 0
+                ? 'Các chỉ số sinh trắc duy trì ở mức an toàn ổn định. Chạm để xem chi tiết.'
+                : 'Chưa ghi nhận dữ liệu đo mới. Hãy kết nối thiết bị hoặc nhập số đo đầu tiên.'}
+            </span>
           </div>
         </div>
       </div>

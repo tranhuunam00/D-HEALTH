@@ -20,7 +20,7 @@ const INITIAL_HISTORY: readonly BiometricReading[] = Object.freeze([
   { id: '5', type: 'bp', value: '138/88', unit: 'mmHg', recordedAt: '22/10 07:10', source: 'manual', status: 'warning' },
 ]);
 
-export function useBiometricsLogic(memberId = 'me') {
+export function useBiometricsLogic(memberId = 'nam') {
   const [activeMetric, setActiveMetric] = useState<MetricType>('bp');
   const [history, setHistory] = useState<readonly BiometricReading[]>(INITIAL_HISTORY);
   const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);

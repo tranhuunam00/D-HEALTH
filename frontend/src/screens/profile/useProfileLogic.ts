@@ -13,23 +13,24 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         relationship: 'owner',
         gender: 'Nam',
         birth_date: '1985-06-20',
-        blood_type: initialUser.bloodType || 'O+',
-        height_cm: initialUser.heightCm || 172,
-        weight_kg: initialUser.weightKg || 68,
+        avatar_url: initialUser.avatarUrl,
+        blood_type: initialUser.bloodType || '',
+        height_cm: initialUser.heightCm ? Number(initialUser.heightCm) : undefined,
+        weight_kg: initialUser.weightKg ? Number(initialUser.weightKg) : undefined,
         is_above_18: true,
         consent_approved: true,
       };
     }
     return {
-      id: 'mem_me',
+      id: 'nam',
       user_id: 'usr_default',
       full_name: 'Trần Hữu Nam',
       relationship: 'owner',
       gender: 'Nam',
       birth_date: '1985-06-20',
-      blood_type: 'O+',
-      height_cm: 172,
-      weight_kg: 68,
+      blood_type: '',
+      height_cm: undefined,
+      weight_kg: undefined,
       is_above_18: true,
       consent_approved: true,
     };
@@ -42,7 +43,12 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
     setLoading(true);
     try {
       const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null') ? window.location.origin : 'http://localhost';
-      const res = await fetch(`${baseUrl}/api/user/profile`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      const res = await fetch(`${baseUrl}/api/user/profile`, { headers });
       if (res.ok) {
         const json = await res.json();
         if (json.data?.user) setUser(json.data.user);
@@ -65,14 +71,33 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
   const handleUpdateProfile = async (payload: Partial<FamilyMember>) => {
     setLoading(true);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
       const res = await fetch(`/api/user/profile/members/${activeMember.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(payload),
       });
       if (res.ok) {
         const json = await res.json();
-        if (json.data) setActiveMember(json.data);
+        if (json.data) {
+          setActiveMember(json.data);
+          // Đồng bộ lại vào localStorage
+          try {
+            const stored = localStorage.getItem('dhealth_user');
+            if (stored) {
+              const u = JSON.parse(stored);
+              u.fullName = json.data.full_name;
+              u.bloodType = json.data.blood_type;
+              u.heightCm = json.data.height_cm;
+              u.weightKg = json.data.weight_kg;
+              localStorage.setItem('dhealth_user', JSON.stringify(u));
+            }
+          } catch {}
+        }
         setIsEditOpen(false);
         setSuccessMsg('Hồ sơ sức khỏe đã được cập nhật thành công!');
         setTimeout(() => setSuccessMsg(null), 3000);
@@ -84,7 +109,7 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
     }
   };
 
-  // Tính toán BMI tự động
+  // Tính toán BMI tự động nếu có đủ chiều cao và cân nặng
   const bmi = activeMember.height_cm && activeMember.weight_kg
     ? (Number(activeMember.weight_kg) / Math.pow(Number(activeMember.height_cm) / 100, 2)).toFixed(1)
     : '--';

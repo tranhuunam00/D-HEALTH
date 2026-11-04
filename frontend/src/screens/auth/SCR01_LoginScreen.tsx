@@ -106,24 +106,13 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
               <button
                 type="button"
                 onClick={() => fillQuickAccount('0987654321', 'Nam@2026')}
-                className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
                   identifier === '0987654321'
                     ? 'bg-[#1F7A8C] text-white border-[#1F7A8C] shadow-xs'
                     : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 Trần Hữu Nam (0987654321)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillQuickAccount('0909123456', 'Khang@2026')}
-                className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                  identifier === '0909123456'
-                    ? 'bg-[#1F7A8C] text-white border-[#1F7A8C] shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                Trần Minh Khang (0909123456)
               </button>
             </div>
           </div>
@@ -171,7 +160,7 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
             }}
             className="w-full text-white font-extrabold text-sm flex items-center justify-center shadow-md shadow-[#1F7A8C]/20 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            {loading ? 'Đang xác thực...' : mode === 'login' ? 'Đăng Nhập An Toàn' : 'Đăng Ký Hồ Sơ Sức Khỏe'}
+            {loading ? 'Đang xác thực...' : mode === 'login' ? 'Đăng nhập' : 'Đăng Ký Hồ Sơ Sức Khỏe'}
           </button>
         </form>
 

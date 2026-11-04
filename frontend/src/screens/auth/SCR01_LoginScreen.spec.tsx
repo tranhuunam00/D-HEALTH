@@ -9,7 +9,7 @@ describe('SCR01_LoginScreen Mobile View', () => {
 
     expect(screen.getByText('D-HEALTH')).toBeDefined();
     expect(screen.getByText('Tiếp tục với Google')).toBeDefined();
-    expect(screen.getByRole('button', { name: /Đăng Nhập An Toàn/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Đăng nhập/i })).toBeDefined();
   });
 
   it('chuyển đổi sang form Đăng ký khi click tab Đăng Ký Mới', () => {

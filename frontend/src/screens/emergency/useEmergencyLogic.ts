@@ -53,7 +53,7 @@ export function useEmergencyLogic(memberId = 'nam', activeMemberName?: string) {
             : 'Không có';
 
           setEmergencyData({
-            fullName: activeMemberName || (memberId === 'nam' ? 'Trần Hữu Nam' : 'Trần Minh Khang'),
+            fullName: activeMemberName || 'Trần Hữu Nam',
             birthYear: memberId === 'nam' ? 1985 : 1983,
             gender: 'Nam',
             bloodType: card.blood_group_snapshot || 'O+',

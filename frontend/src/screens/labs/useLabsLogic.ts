@@ -56,7 +56,7 @@ const INITIAL_REPORTS: readonly LabReportItem[] = Object.freeze([
   },
 ]);
 
-export function useLabsLogic(memberId = 'me') {
+export function useLabsLogic(memberId = 'nam') {
   const [selectedCategory, setSelectedCategory] = useState<LabCategory>('all');
   const [reports, setReports] = useState<readonly LabReportItem[]>(INITIAL_REPORTS);
   const [loading, setLoading] = useState(false);

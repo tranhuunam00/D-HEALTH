@@ -9,6 +9,8 @@ export interface User {
   bloodType?: string;
   heightCm?: number;
   weightKg?: number;
+  address?: string;
+  nationalId?: string;
 }
 
 export interface LoginCredentials {

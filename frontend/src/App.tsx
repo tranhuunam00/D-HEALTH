@@ -84,8 +84,8 @@ export default function App() {
     setCurrentScreen('login');
   };
 
-  const activeMemberId = currentUser?.activeMemberId || (currentUser?.phoneNumber === '0987654321' ? 'nam' : 'me');
-  const activeMemberName = currentUser?.fullName || (currentUser?.phoneNumber === '0987654321' ? 'Trần Hữu Nam' : 'Trần Minh Khang');
+  const activeMemberId = currentUser?.activeMemberId || 'nam';
+  const activeMemberName = currentUser?.fullName || 'Trần Hữu Nam';
 
   const renderMobileScreen = () => {
     if (!currentUser || currentScreen === 'login') {

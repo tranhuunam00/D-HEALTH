@@ -9,7 +9,7 @@ import {
   LAB_METRICS_INFO,
 } from './camera-input.types';
 
-export function useCameraInputLogic(initialMemberId = 'me') {
+export function useCameraInputLogic(initialMemberId = 'nam') {
   const [kind, setKind] = useState<ClinicalDocKind>('lab');
   const [method, setMethod] = useState<InputMethod>('manual');
   const [testDate, setTestDate] = useState('2026-10-26');

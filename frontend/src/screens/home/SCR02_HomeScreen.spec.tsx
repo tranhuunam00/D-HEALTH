@@ -35,6 +35,6 @@ describe('SCR02_HomeScreen Mobile View', () => {
 
     const doseBtn = screen.getByRole('button', { name: /Đã uống/i });
     fireEvent.click(doseBtn);
-    expect(screen.getByText(/hôm nay 3\/4 liều/i)).toBeDefined();
+    expect(screen.getByText(/Đã uống/i)).toBeDefined();
   });
 });

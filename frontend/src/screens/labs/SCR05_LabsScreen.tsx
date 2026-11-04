@@ -20,7 +20,7 @@ const CATEGORY_CHIPS: readonly { id: LabCategory; label: string }[] = Object.fre
 export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
-  activeMemberId = 'me',
+  activeMemberId = 'nam',
 }) => {
   const { selectedCategory, setSelectedCategory, filteredReports } = useLabsLogic(activeMemberId);
 

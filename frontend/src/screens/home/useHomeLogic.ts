@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react';
 import { FamilyMember, HealthScore } from '../../types/member.types';
 import { BiometricRecord, ManualVitalsInput } from '../../types/biometric.types';
 
-export function useHomeLogic(initialMemberId = 'me', user?: any) {
+export function useHomeLogic(initialMemberId = 'nam', user?: any) {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [activeMemberId, setActiveMemberId] = useState<string>(initialMemberId);
   const [healthScore, setHealthScore] = useState<HealthScore>({
-    total: 88,
-    biometrics: 36,
-    medications: 32,
-    clinical: 20,
-    status: 'Ổn định',
+    total: 0,
+    biometrics: 0,
+    medications: 0,
+    clinical: 0,
+    status: 'Chưa có số đo',
   });
   const [vitals, setVitals] = useState<BiometricRecord[]>([]);
   const [todayDose, setTodayDose] = useState<any>(null);
-  const [todayDosesSummary, setTodayDosesSummary] = useState({ taken: 2, total: 4 });
+  const [todayDosesSummary, setTodayDosesSummary] = useState({ taken: 0, total: 0 });
   const [isDoseTaken, setIsDoseTaken] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -31,11 +31,14 @@ export function useHomeLogic(initialMemberId = 'me', user?: any) {
     setLoading(true);
     setErrorMsg(null);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
       const urlMembers = user?.id ? `/api/members?userId=${user.id}` : '/api/members';
       const [memRes, bioRes, doseRes] = await Promise.all([
-        fetch(urlMembers).catch(() => null),
-        fetch(`/api/biometrics/${activeMemberId}`).catch(() => null),
-        fetch(`/api/prescriptions/${activeMemberId}/today-doses`).catch(() => null),
+        fetch(urlMembers, { headers: authHeaders }).catch(() => null),
+        fetch(`/api/biometrics/${activeMemberId}`, { headers: authHeaders }).catch(() => null),
+        fetch(`/api/prescriptions/${activeMemberId}/today-doses`, { headers: authHeaders }).catch(() => null),
       ]);
 
       if (memRes?.ok) {
@@ -44,10 +47,24 @@ export function useHomeLogic(initialMemberId = 'me', user?: any) {
           setMembers(mData.data);
         }
       }
+
       if (bioRes?.ok) {
         const bData = await bioRes.json();
-        if (Array.isArray(bData.data)) setVitals(bData.data);
+        const records = Array.isArray(bData.data) ? bData.data : [];
+        setVitals(records);
+
+        // Nếu người dùng KHÔNG có số đo sinh trắc nào trong CSDL, không dùng điểm sức khỏe giả
+        if (records.length === 0) {
+          setHealthScore({
+            total: 0,
+            biometrics: 0,
+            medications: 0,
+            clinical: 0,
+            status: 'Chưa có số đo',
+          });
+        }
       }
+
       if (doseRes?.ok) {
         const dData = await doseRes.json();
         if (Array.isArray(dData.data) && dData.data.length > 0) {
@@ -57,6 +74,10 @@ export function useHomeLogic(initialMemberId = 'me', user?: any) {
           const takenCount = list.filter((d: any) => d.taken).length;
           setTodayDosesSummary({ taken: takenCount, total: list.length });
           setIsDoseTaken(!!upcoming?.taken);
+        } else {
+          setTodayDose(null);
+          setTodayDosesSummary({ taken: 0, total: 0 });
+          setIsDoseTaken(false);
         }
       }
     } catch {
@@ -94,7 +115,7 @@ export function useHomeLogic(initialMemberId = 'me', user?: any) {
 
   const handleTakeDose = () => {
     setIsDoseTaken(true);
-    setTodayDosesSummary((prev) => ({ ...prev, taken: Math.min(prev.taken + 1, prev.total) }));
+    setTodayDosesSummary((prev) => ({ ...prev, taken: Math.min(prev.taken + 1, prev.total || 4) }));
     const doseId = todayDose?.id || '44444444-0000-0000-0000-000000000001';
     fetch(`/api/prescriptions/doses/${doseId}/log`, {
       method: 'POST',
@@ -108,12 +129,12 @@ export function useHomeLogic(initialMemberId = 'me', user?: any) {
   };
 
   useEffect(() => {
-    if (vitals.length > 0 || isDoseTaken) {
+    if (vitals.length > 0) {
       let bpScore = 32;
       const bp = vitals.find((v: any) => v.biometric_type === 'bp' || v.biometric_type === 'blood_pressure');
       if (bp) {
-        const sys = Number((bp as any).systolic || (bp as any).value_systolic || 120);
-        const dia = Number((bp as any).diastolic || (bp as any).value_diastolic || 80);
+        const sys = Number((bp as any).systolic || (bp as any).value_systolic || 0);
+        const dia = Number((bp as any).diastolic || (bp as any).value_diastolic || 0);
         if (sys <= 125 && dia <= 82) bpScore = 38;
         else if (sys <= 135 && dia <= 85) bpScore = 34;
         else bpScore = 24;
@@ -137,18 +158,18 @@ export function useHomeLogic(initialMemberId = 'me', user?: any) {
   const currentMemberObj = members.find((m) => m.id === activeMemberId);
   const fallbackWeight = currentMemberObj?.weight_kg
     ? `${currentMemberObj.weight_kg}`.replace('.', ',')
-    : (user?.weightKg ? `${user.weightKg}` : (activeMemberId === 'nam' ? '68' : '72,5'));
+    : (user?.weightKg ? `${user.weightKg}` : null);
 
   const latestBp = bpRec
-    ? `${Math.round(Number((bpRec as any).systolic || (bpRec as any).value_systolic || 120))}/${Math.round(Number((bpRec as any).diastolic || (bpRec as any).value_diastolic || 80))}`
-    : (activeMemberId === 'nam' ? '120/80' : '131/82');
-  const latestHr = hrRec ? `${Math.round(Number((hrRec as any).value_numeric || 72))}` : (activeMemberId === 'nam' ? '72' : '71');
+    ? `${Math.round(Number((bpRec as any).systolic || (bpRec as any).value_systolic))}/${Math.round(Number((bpRec as any).diastolic || (bpRec as any).value_diastolic))}`
+    : '--/--';
+  const latestHr = hrRec ? `${Math.round(Number((hrRec as any).value_numeric))}` : '--';
   const latestWeight = weightRec
-    ? `${(weightRec as any).value_numeric || fallbackWeight}`.replace('.00', '').replace('.', ',')
-    : fallbackWeight;
+    ? `${(weightRec as any).value_numeric}`.replace('.00', '').replace('.', ',')
+    : (fallbackWeight ? `${fallbackWeight}`.replace('.00', '').replace('.', ',') : '--');
   const latestGlucose = glucoseRec
-    ? `${(glucoseRec as any).value_numeric || '6,2'}`.replace('.00', '').replace('.', ',')
-    : (activeMemberId === 'nam' ? '6,2' : '6,6');
+    ? `${(glucoseRec as any).value_numeric}`.replace('.00', '').replace('.', ',')
+    : '--';
 
   return {
     members,

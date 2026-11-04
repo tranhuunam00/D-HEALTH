@@ -21,7 +21,7 @@ const MODALITY_CHIPS: readonly { id: ModalityType; label: string }[] = Object.fr
 export const SCR07_ImagingScreen: React.FC<SCR07Props> = ({
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
-  activeMemberId = 'me',
+  activeMemberId = 'nam',
 }) => {
   const { selectedModality, setSelectedModality, filteredStudies } = useImagingLogic(activeMemberId);
 

@@ -18,5 +18,5 @@ export interface HealthScore {
   biometrics: number;
   medications: number;
   clinical: number;
-  status: 'Xuất sắc' | 'Ổn định' | 'Cần lưu ý' | 'Nguy cơ';
+  status: 'Xuất sắc' | 'Ổn định' | 'Cần lưu ý' | 'Nguy cơ' | 'Chưa có số đo' | 'Chưa đủ dữ liệu';
 }

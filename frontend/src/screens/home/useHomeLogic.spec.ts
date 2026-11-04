@@ -3,10 +3,10 @@ import { renderHook, act } from '@testing-library/react';
 import { useHomeLogic } from './useHomeLogic';
 
 describe('useHomeLogic Hook', () => {
-  it('khởi tạo với trạng thái activeMemberId là me và điểm sức khỏe mặc định', () => {
+  it('khởi tạo với trạng thái activeMemberId là nam và điểm sức khỏe chưa có số đo', () => {
     const { result } = renderHook(() => useHomeLogic());
-    expect(result.current.activeMemberId).toBe('me');
-    expect(result.current.healthScore.total).toBe(88);
+    expect(result.current.activeMemberId).toBe('nam');
+    expect(result.current.healthScore.status).toBe('Chưa có số đo');
   });
 
   it('cập nhật trạng thái checkin khi người dùng chọn cảm xúc hôm nay', () => {

@@ -60,7 +60,7 @@ const INITIAL_STUDIES: readonly ImagingStudyItem[] = Object.freeze([
   },
 ]);
 
-export function useImagingLogic(memberId = 'me') {
+export function useImagingLogic(memberId = 'nam') {
   const [selectedModality, setSelectedModality] = useState<ModalityType>('all');
   const [studies, setStudies] = useState<readonly ImagingStudyItem[]>(INITIAL_STUDIES);
   const [loading, setLoading] = useState(false);

@@ -84,34 +84,73 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
     }
   };
 
+  const sendGoogleProfileToBackend = async (payload: { sub: string; email: string; name: string; picture?: string }) => {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data: AuthResponse = await res.json();
+    if (!res.ok || !data.success) {
+      setErrorMsg(data.error?.message || 'Đăng nhập Google thất bại.');
+      return;
+    }
+    if (data.data?.user && onSuccess) {
+      if (data.data.token) {
+        localStorage.setItem('dhealth_token', data.data.token);
+      }
+      localStorage.setItem('dhealth_user', JSON.stringify(data.data.user));
+      onSuccess(data.data.user);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const googlePayload = {
-        sub: `gg_${Date.now()}`,
-        email: email || 'patient.google@dhealth.vn',
-        name: fullName || 'Trần Hữu Nam',
-        picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150',
-      };
-
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(googlePayload),
-      });
-      const data: AuthResponse = await res.json();
-      if (!res.ok || !data.success) {
-        setErrorMsg(data.error?.message || 'Đăng nhập Google thất bại.');
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+        const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+          client_id: (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '10390227173-google-client-id.apps.googleusercontent.com',
+          scope: 'email profile openid',
+          callback: async (tokenResp: any) => {
+            if (tokenResp.error) {
+              setErrorMsg('Không thể đăng nhập tài khoản Google.');
+              setLoading(false);
+              return;
+            }
+            try {
+              const uRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResp.access_token}` },
+              });
+              const gProfile = await uRes.json();
+              await sendGoogleProfileToBackend({
+                sub: gProfile.sub || `gg_${Date.now()}`,
+                email: gProfile.email,
+                name: gProfile.name,
+                picture: gProfile.picture,
+              });
+            } catch {
+              setErrorMsg('Lỗi lấy thông tin hồ sơ từ Google.');
+              setLoading(false);
+            }
+          },
+        });
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
       }
-      if (data.data?.user && onSuccess) {
-        if (data.data.token) {
-          localStorage.setItem('dhealth_token', data.data.token);
-        }
-        localStorage.setItem('dhealth_user', JSON.stringify(data.data.user));
-        onSuccess(data.data.user);
+
+      const promptEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', email || 'tranhuunam@gmail.com');
+      if (!promptEmail) {
+        setLoading(false);
+        return;
       }
+      const promptName = prompt('Nhập Họ và Tên trên tài khoản Google:', fullName || 'Trần Hữu Nam') || 'Trần Hữu Nam';
+      await sendGoogleProfileToBackend({
+        sub: `gg_${Date.now()}`,
+        email: promptEmail,
+        name: promptName,
+        picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(promptName)}`,
+      });
     } catch {
       setErrorMsg('Lỗi kết nối xác thực Google.');
     } finally {
