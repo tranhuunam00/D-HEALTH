@@ -52,6 +52,55 @@ describe('UserProfileRoutes Unit Tests (TDD)', () => {
     });
   });
 
+  describe('GET /passport-summary/:memberId', () => {
+    it('trả về thông tin thể trạng và 9 chỉ số danh mục từ database', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'nam',
+              full_name: 'Trần Hữu Nam',
+              gender: 'Nam',
+              birth_date: '1980-04-12',
+              height_cm: 174,
+              weight_kg: 72.5,
+              blood_type: 'O+',
+              relationship: 'owner',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              allergies: '1',
+              chronic: '2',
+              meds: '3',
+              labs: '24',
+              imaging: '7',
+              pathology: '2',
+              documents: '31',
+              doctors: '6',
+              facilities: '4',
+            },
+          ],
+        });
+
+      const handler = getHandler('GET', '/passport-summary/:memberId');
+      const { req, res } = createReqRes({ params: { memberId: 'nam' } });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.member.fullName).toBe('Trần Hữu Nam');
+      expect(output.data.member.age).toBe(46);
+      expect(output.data.member.bmi).toBe(23.9);
+      expect(output.data.counts.allergies).toBe(1);
+      expect(output.data.counts.labs).toBe(24);
+      expect(output.data.counts.imaging).toBe(7);
+    });
+  });
+
   describe('PUT /members/:memberId', () => {
     it('trả về 400 khi cập nhật nhóm máu không hợp lệ (Boundary/Error Case)', async () => {
       const handler = getHandler('PUT', '/members/:memberId');

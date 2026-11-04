@@ -174,8 +174,9 @@ export default function App() {
       case 'records':
         return (
           <SCR10_RecordsScreen
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
+            onNavigate={(s) => setCurrentScreen(s as any)}
             onSelectMember={() => setCurrentScreen('family')}
           />
         );

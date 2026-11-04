@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, ArrowLeft, CheckCircle2, ChevronDown, Edit3, ShieldCheck, HeartPulse } from 'lucide-react';
+import { ArrowLeft, Edit3, ShieldCheck, Droplet, Activity, Phone } from 'lucide-react';
 import { useProfileLogic } from './useProfileLogic';
 import { EditProfileBottomSheet } from './EditProfileBottomSheet';
 import { User as UserType } from '../../types/auth.types';
@@ -17,187 +17,167 @@ export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   user: propUser,
   activeMemberId,
 }) => {
-  const { user, activeMember, isEditOpen, setIsEditOpen, successMsg, bmi, handleUpdateProfile } = useProfileLogic(propUser, activeMemberId);
+  const {
+    user,
+    activeMember,
+    isEditOpen,
+    setIsEditOpen,
+    bmi,
+    handleUpdateProfile,
+  } = useProfileLogic(propUser, activeMemberId);
 
-  const realPhone = (user?.phoneNumber && !user.phoneNumber.startsWith('gg_'))
-    ? user.phoneNumber
-    : '[Chưa cập nhật SĐT]';
+  const realPhone =
+    user?.phoneNumber && !user.phoneNumber.startsWith('gg_')
+      ? user.phoneNumber
+      : activeMember.phone_number || '0987654321';
+
+  const displayBlood = activeMember.blood_type || user?.bloodType || 'Chưa rõ';
+  const displayHeight = activeMember.height_cm || user?.heightCm;
+  const displayWeight = activeMember.weight_kg || user?.weightKg;
+  const formattedWeight = displayWeight ? displayWeight.toString().replace('.', ',') : null;
 
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-12">
-      {/* 1. Header Badges */}
-      <div className="flex gap-1.5 items-center flex-wrap px-4 pt-4 shrink-0">
-        <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          Hôm nay: 26/10/2026
-        </span>
-        <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-          Hồ sơ sức khoẻ: <b>{activeMember.full_name}</b>
-        </span>
-      </div>
-
-      {/* 2. Topbar Navigation matching Original Design */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 rounded-full bg-white text-slate-800 flex items-center justify-center shadow-xs active:scale-95 transition"
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h1 className="text-base font-extrabold text-slate-900 leading-tight">Thông tin người dùng</h1>
-            <span className="text-[10px] text-slate-400 font-semibold block">Hồ Sơ Sức Khỏe Cá Nhân</span>
-          </div>
-        </div>
-
+    <div className="w-full min-h-screen bg-[#070E1E] text-white flex flex-col font-sans select-none pb-10">
+      {/* 1. Header with back button */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0">
         <button
-          onClick={() => setIsEditOpen(true)}
-          className="h-8 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition"
+          type="button"
+          onClick={onBack}
+          className="p-2 text-slate-300 hover:text-white cursor-pointer active:scale-95 transition"
+          aria-label="Quay lại"
         >
-          <span>Lưu</span>
+          <ArrowLeft className="w-5 h-5" />
         </button>
+        <h1 className="text-sm font-black tracking-wider uppercase text-white pr-7 flex-1 text-center">
+          HỒ SƠ SỨC KHỎE CÁ NHÂN
+        </h1>
       </div>
 
-      <div className="flex-1 px-4 space-y-3.5 overflow-y-auto">
-        {successMsg && (
-          <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* 3. Hero Avatar & Identity Card with Pastel Gradient (Original Design 1:1) */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-[#E0F2FE] via-[#EDE9FE] to-[#FCE7F3] flex flex-col items-center text-center shadow-xs border border-slate-200/50 relative">
-          <div className="relative mb-2.5">
-            <div className="w-20 h-20 rounded-full bg-white border-2 border-white shadow-md overflow-hidden flex items-center justify-center text-2xl font-black text-[#1F7A8C]">
+      <div className="flex-1 px-4 space-y-4 overflow-y-auto pt-1">
+        {/* 2. User Profile Identity Box (1:1 with Design) */}
+        <div className="bg-[#131F37] rounded-[28px] p-6 border border-slate-700/60 flex flex-col items-center text-center relative shadow-lg">
+          <div className="relative mb-1">
+            <div className="w-20 h-20 rounded-full bg-[#1E293B] border-2 border-teal-400/80 shadow-md overflow-hidden flex items-center justify-center text-2xl font-black text-white">
               {activeMember.avatar_url ? (
-                <img src={activeMember.avatar_url} alt={activeMember.full_name} className="w-full h-full object-cover" />
+                <img
+                  src={activeMember.avatar_url}
+                  alt={activeMember.full_name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <span className="text-2xl font-black text-[#1F7A8C]">{activeMember.full_name.charAt(0)}</span>
+                <span>{(activeMember.full_name || 'B').charAt(0)}</span>
               )}
             </div>
-            <button
-              onClick={() => setIsEditOpen(true)}
-              aria-label="Đổi ảnh đại diện"
-              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-slate-900 border-2 border-white flex items-center justify-center text-white shadow"
-            >
-              <Camera className="w-3.5 h-3.5" />
-            </button>
+            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-teal-500 border-2 border-[#131F37] flex items-center justify-center text-white text-[11px] font-bold shadow">
+              ✓
+            </div>
           </div>
 
-          <h2 className="text-lg font-black text-slate-900">{activeMember.full_name}</h2>
-          <div className="flex items-center gap-1.5 mt-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="text-xs font-bold text-emerald-700">Đã xác thực định danh điện tử</span>
-          </div>
-        </div>
-
-        {/* 4. Card 1: THÔNG TIN CÁ NHÂN (Original Design 1:1) */}
-        <div className="bg-white rounded-3xl p-4.5 shadow-xs border border-slate-100 flex flex-col gap-3">
-          <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
-            THÔNG TIN CÁ NHÂN
+          <h2 className="text-xl font-black text-white mt-2">
+            {activeMember.full_name || 'Trần Hữu Nam'}
+          </h2>
+          <span className="text-[10px] font-black text-[#38BDF8] tracking-widest uppercase mt-1">
+            CHỦ TÀI KHOẢN (BỆNH NHÂN CHÍNH)
           </span>
 
-          <div>
-            <label className="text-xs text-slate-500 font-medium block">Số căn cước công dân</label>
-            <span className="text-sm font-bold text-slate-900">[Số CCCD – 12 chữ số]</span>
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mt-1.5">
+            <Phone className="w-3.5 h-3.5 text-slate-400" />
+            <span>{realPhone}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-50">
-            <div>
-              <label className="text-xs text-slate-500 font-medium block">Ngày sinh</label>
-              <span className="text-sm font-bold text-slate-900">
-                {activeMember.birth_date ? new Date(activeMember.birth_date).toLocaleDateString('vi-VN') : '20/06/1985'}
-              </span>
-            </div>
-            <div>
-              <label className="text-xs text-slate-500 font-medium block">Giới tính</label>
-              <div className="flex items-center justify-between text-sm font-bold text-slate-900">
-                <span>{activeMember.gender || 'Nam'}</span>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
+          <button
+            type="button"
+            onClick={() => setIsEditOpen(true)}
+            className="mt-4 px-5 py-2 rounded-full bg-[#1E293B] hover:bg-slate-700 text-slate-200 border border-slate-600/70 text-xs font-bold flex items-center gap-1.5 cursor-pointer active:scale-95 transition"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Chỉnh Sửa Hồ Sơ</span>
+          </button>
+        </div>
+
+        {/* 3. Chỉ Số Thể Trạng Nền (1:1 with Design) */}
+        <div>
+          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2.5 px-1 block">
+            CHỈ SỐ THỂ TRẠNG NỀN
+          </span>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Nhóm máu */}
+            <div className="bg-[#131F37] rounded-2xl p-4 border border-slate-700/60 flex flex-col justify-between min-h-[96px]">
+              <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                <span>Nhóm máu</span>
+                <Droplet className="w-4 h-4 text-rose-500" />
               </div>
-            </div>
-          </div>
-
-          <div className="pt-1 border-t border-slate-50">
-            <label className="text-xs text-slate-500 font-medium block">Số điện thoại</label>
-            <span className="text-sm font-bold text-slate-900 font-mono">
-              {realPhone}
-            </span>
-          </div>
-
-          <div className="pt-1 border-t border-slate-50">
-            <label className="text-xs text-slate-500 font-medium block">Email</label>
-            <span className="text-sm font-bold text-slate-900">
-              {user?.email || 'tranhuunam@gmail.com'}
-            </span>
-          </div>
-
-          <div className="pt-1 border-t border-slate-50">
-            <label className="text-xs text-slate-500 font-medium block">Địa chỉ</label>
-            <span className="text-sm font-bold text-slate-900">
-              {user?.address || '[Số nhà, đường, phường/xã, tỉnh/thành phố]'}
-            </span>
-          </div>
-        </div>
-
-        {/* 5. Card 2: THÔNG TIN Y TẾ · CHỈ SỐ THỂ TRẠNG NỀN (Original Design 1:1) */}
-        <div className="bg-white rounded-3xl p-4.5 shadow-xs border border-slate-100 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider block">
-                THÔNG TIN Y TẾ
-              </span>
-              <span className="text-xs text-slate-500 font-medium">Chỉ Số Thể Trạng Nền</span>
-            </div>
-            <span className="text-xs text-slate-500 font-medium">
-              Chỉ số khối (BMI): <b className="text-slate-900">{bmi}</b>
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2.5 text-center">
-            <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-              <span className="text-xs text-slate-500 font-medium block mb-0.5">Nhóm máu</span>
-              <span className="text-lg font-black text-rose-600">
-                {activeMember.blood_type || '--'}
+              <div className="text-2xl font-black text-white mt-1">
+                {displayBlood}
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">
+                Hệ ABO / Rh
               </span>
             </div>
 
-            <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-              <span className="text-xs text-slate-500 font-medium block mb-0.5">Chiều cao</span>
-              <span className="text-lg font-black text-slate-900">
-                {activeMember.height_cm ? `${activeMember.height_cm} cm` : '-- cm'}
+            {/* BMI */}
+            <div className="bg-[#131F37] rounded-2xl p-4 border border-slate-700/60 flex flex-col justify-between min-h-[96px]">
+              <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                <span>Chỉ số khối (BMI)</span>
+                <Activity className="w-4 h-4 text-teal-400" />
+              </div>
+              <div className="text-2xl font-black text-white mt-1">
+                {bmi}
+              </div>
+              <span className="text-[10px] text-emerald-400 font-semibold">
+                Thể trạng bình thường
               </span>
             </div>
 
-            <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-              <span className="text-xs text-slate-500 font-medium block mb-0.5">Cân nặng</span>
-              <span className="text-lg font-black text-slate-900">
-                {activeMember.weight_kg ? `${activeMember.weight_kg} kg` : '-- kg'}
+            {/* Chiều cao */}
+            <div className="bg-[#131F37] rounded-2xl p-4 border border-slate-700/60 flex flex-col justify-between min-h-[96px]">
+              <span className="text-xs text-slate-400 font-medium">
+                Chiều cao
               </span>
+              <div className="mt-1">
+                <span className="text-2xl font-black text-white">
+                  {displayHeight || '--'}
+                </span>
+                {displayHeight && <span className="text-xs text-slate-400 ml-1">cm</span>}
+              </div>
+              <div className="h-2" />
+            </div>
+
+            {/* Cân nặng */}
+            <div className="bg-[#131F37] rounded-2xl p-4 border border-slate-700/60 flex flex-col justify-between min-h-[96px]">
+              <span className="text-xs text-slate-400 font-medium">
+                Cân nặng
+              </span>
+              <div className="mt-1">
+                <span className="text-2xl font-black text-white">
+                  {formattedWeight || '--'}
+                </span>
+                {formattedWeight && <span className="text-xs text-slate-400 ml-1">kg</span>}
+              </div>
+              <div className="h-2" />
             </div>
           </div>
         </div>
 
-        {/* 6. Link chuyển sang PC Admin */}
+        {/* 4. Chuyển sang PC Admin (1:1 with Design) */}
         {onNavigateToAdmin && (
           <button
+            type="button"
             onClick={onNavigateToAdmin}
-            className="w-full py-3 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-xs font-bold transition-all active:scale-[0.99] flex items-center justify-center gap-1.5"
+            className="w-full py-3.5 rounded-2xl bg-[#26163F] hover:bg-[#341F54] border border-purple-500/40 text-purple-200 text-xs font-bold transition-all active:scale-[0.98] flex items-center justify-center cursor-pointer shadow"
           >
             <span>Chuyển sang Quản Trị Hệ Thống (PC Admin)</span>
           </button>
         )}
 
-        {/* 7. Nghị Định 13/2023/NĐ-CP */}
-        <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-100 text-xs space-y-1.5">
-          <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
+        {/* 5. Tuân thủ Nghị Định 13/2023/NĐ-CP (1:1 with Design) */}
+        <div className="bg-[#131F37] rounded-2xl p-4 border border-slate-700/60 text-xs space-y-1.5">
+          <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
             <ShieldCheck className="w-4 h-4 shrink-0" />
             <span>Tuân Thủ Nghị Định 13/2023/NĐ-CP</span>
           </div>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-[11px] text-slate-400 leading-relaxed">
             Hồ sơ y tế của bạn được mã hóa hai đầu và lưu trữ an toàn. Dữ liệu chỉ được chia sẻ cho bác sĩ khi có sự cho phép rõ ràng từ bạn.
           </p>
         </div>

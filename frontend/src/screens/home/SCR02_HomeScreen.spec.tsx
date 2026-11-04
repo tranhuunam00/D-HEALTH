@@ -1,11 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { SCR02_HomeScreen } from './SCR02_HomeScreen';
 
 describe('SCR02_HomeScreen Mobile View', () => {
-  it('render đầy đủ điểm sức khỏe, nút SOS cấp cứu, 2 vấn đề theo dõi và Health Timeline', () => {
-    render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} />);
+  it('render đầy đủ điểm sức khỏe, nút SOS cấp cứu, 2 vấn đề theo dõi và Health Timeline', async () => {
+    await act(async () => {
+      render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} />);
+    });
 
     expect(screen.getByText('Điểm sức khoẻ')).toBeDefined();
     expect(screen.getByText('SOS')).toBeDefined();
@@ -18,24 +20,30 @@ describe('SCR02_HomeScreen Mobile View', () => {
     expect(screen.getByRole('button', { name: /Nhập số đo/i })).toBeDefined();
   });
 
-  it('gọi onOpenEmergency khi người dùng nhấn nút SOS', () => {
+  it('gọi onOpenEmergency khi người dùng nhấn nút SOS', async () => {
     const handleSOS = vi.fn();
-    render(<SCR02_HomeScreen onOpenEmergency={handleSOS} />);
+    await act(async () => {
+      render(<SCR02_HomeScreen onOpenEmergency={handleSOS} />);
+    });
 
     fireEvent.click(screen.getByText('SOS'));
     expect(handleSOS).toHaveBeenCalled();
   });
 
-  it('gọi onNavigate khi người dùng nhấn thẻ Huyết áp', () => {
+  it('gọi onNavigate khi người dùng nhấn thẻ Huyết áp', async () => {
     const handleNav = vi.fn();
-    render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} onNavigate={handleNav} />);
+    await act(async () => {
+      render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} onNavigate={handleNav} />);
+    });
 
     fireEvent.click(screen.getByText('Huyết áp'));
     expect(handleNav).toHaveBeenCalledWith('biometrics');
   });
 
-  it('xử lý click Đã uống thuốc và hiển thị trạng thái đã hoàn thành', () => {
-    render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} />);
+  it('xử lý click Đã uống thuốc và hiển thị trạng thái đã hoàn thành', async () => {
+    await act(async () => {
+      render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} />);
+    });
 
     const doseBtn = screen.getByRole('button', { name: /Đã uống/i });
     fireEvent.click(doseBtn);
