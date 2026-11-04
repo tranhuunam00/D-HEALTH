@@ -7,6 +7,13 @@
 
 ## 1. CÁC NGUYÊN TẮC CỐT LÕI (CORE PRINCIPLES)
 
+### 0. KỶ LUẬT TÁI THẨM ĐỊNH KỸ NĂNG & QUY CHUẨN ĐỊNH KỲ (PERIODIC 30-MINUTE REVIEW MANDATE)
+1. **Chu kỳ bắt buộc**: Cứ sau **mỗi 30 phút** làm việc liên tục hoặc trước khi bắt đầu bất kỳ một Task/Phase/Màn hình mới nào, AI Agent **BẮT BUỘC PHẢI ĐỌC LẠI TOÀN BỘ 100% CÁC SKILLS VÀ RULES**:
+   - Đọc lại `GEMINI.md` và `.specify/memory/constitution.md`.
+   - Đọc lại toàn bộ danh mục skills (`code-convention`, `fe-development`, `spec-kit`, `web-security-auditor`).
+2. **Mục đích bất biến**: Triệt tiêu hoàn toàn hiện tượng quên ngữ cảnh (Context Drift), ngăn ngừa sinh mã tuỳ tiện ("vibe coding"), duy trì tính nghiêm ngặt tuyệt đối của TDD 4 chiều, kiến trúc DDD, chuẩn thiết bị và an toàn dữ liệu y tế.
+3. **Cam kết hành động**: Tuyệt đối không sinh code khi chưa kiểm chứng lại sự phù hợp với toàn bộ rule và skill.
+
 ### I. NGUYÊN TẮC ĐẢO CHIỀU ĐẶC TẢ (SPEC-DRIVEN DEVELOPMENT - SDD)
 1. **Code phục vụ Đặc tả (Code Serves Specifications)**: Mọi dòng code, schema database, API endpoint đều là hệ quả trực tiếp từ Đặc tả (`spec.md`) và Kế hoạch (`plan.md`). Tuyệt đối cấm "vibe coding" hoặc viết code trước khi có spec được phê duyệt.
 2. **Không có dữ liệu giả định tùy tiện (Zero Unverified Defaults)**: Mọi trường thông tin hiển thị trên giao diện phải có nguồn gốc rõ ràng trong CSDL, phương thức nhập liệu, hoặc thuật toán tính toán cụ thể.
@@ -31,19 +38,21 @@
 4. **Kiến trúc phân tầng Clean Architecture**:
    `Controller / Screen` (Chỉ nhận/trả dữ liệu) $\rightarrow$ `Use Case / Service` (Nghiệp vụ thuần túy) $\rightarrow$ `Repository Interface` (Tầng Domain khai báo) $\rightarrow$ `Infrastructure` (Cài đặt SQLite / Postgres / BLE).
 
-### IV. NGUYÊN TẮC FRONTEND & TRẢI NGHIỆM NGƯỜI DÙNG (FE & ERGONOMIC UX)
-1. **Module hoá Component (Atomic Design)**:
-   - Chia nhỏ thành **Atoms**, **Molecules**, **Organisms**, **Screens**.
-   - Phân tách tuyệt đối giữa **Presentational Component (Dumb UI)** và **Container / Custom Hook (Smart Logic)**. Không viết màn hình dài vượt quá 200 dòng UI.
-2. **Vòng đời State 5 trạng thái (Strict State Lifecycle)**:
-   - Mọi màn hình/khung danh sách phải xử lý đủ: `Loading` (Skeleton), `Empty` (Icon, Text, Primary CTA), `Error` (Message thân thiện, Nút Retry), `Data`, và `Offline/Syncing`.
-3. **Đồng bộ Design Tokens**:
-   - 100% màu sắc, typography (Plus Jakarta Sans), spacing (lưới 4px), radius (Card 20–24px, Sheet 28px) phải lấy từ `DesignTokens`. Màu thương hiệu chính: Primary Teal `#1F7A8C`, Gradient `#1F7A8C` $\rightarrow$ `#2F6FDB`.
-4. **Thiết kế tiết kiệm không gian & Công thái học (High-Density UX)**:
-   - **In-Frame Scroll**: Danh sách dài (kết quả XN, CĐHA, GPB, Bác sĩ) chỉ hiển thị tối đa **5 mục mới nhất**, phần còn lại cuộn nội bộ trong khung kèm nhãn dẫn hướng.
-   - **Carousel Chip Ngang**: Dùng chip pill ngang để lọc danh mục, không dùng dropdown chiếm diện tích.
-   - **Bottom Sheet Modal**: Dùng Modal Bottom Sheet cho nhập liệu nhanh (nhập sinh trắc, thêm thuốc, quét BLE) thay vì chuyển trang.
-   - **Touch Target & Thumb Zone**: Vùng chạm $\ge 44 \times 44\text{ pt}$, đặt các thao tác quan trọng trong tầm với ngón tay cái.
+### IV. NGUYÊN TẮC PHÂN TÁCH THIẾT BỊ TRẢI NGHIỆM (DEVICE EXPERIENCE SEPARATION)
+1. **Người dùng cuối: Ưu tiên Mobile tuyệt đối (User / Patient / Family Mobile-First)**:
+   - 100% màn hình bệnh nhân, người nhà theo dõi sức khỏe chủ động, đo chỉ số sinh trắc IoT BLE, quản lý đơn thuốc, xem hồ sơ sức khỏe và Thẻ cấp cứu SOS thiết kế chuẩn Mobile (390 × 844 iPhone, 360 × 800 Android).
+   - **Atomic Design**: Atoms, Molecules, Organisms, Screens (không quá 200 dòng UI). Tách Dumb UI và Custom Hook.
+   - **State 5 trạng thái**: `Loading` (Skeleton), `Empty` (CTA), `Error` (Retry), `Data`, `Offline/Syncing`.
+   - **Thumb Zone**: Touch Target $\ge 44 \times 44\text{ pt}$, tập trung vùng ngón tay cái, tương phản chữ $\ge 4.5:1$.
+   - **Modal Bottom Sheet**: Dùng Bottom Sheet (bo góc 28px, overlay tối) cho mọi thao tác nhập liệu nhanh thay vì chuyển trang.
+   - **In-Frame Scroll**: Danh sách dài chỉ hiện tối đa **5 mục mới nhất**, phần còn lại cuộn nội bộ trong khung.
+   - **Carousel Chip Ngang**: Dùng chip pill cuộn ngang lọc danh mục, không dùng dropdown.
+2. **Quản trị & Y tế chuyên sâu: Ưu tiên PC / Desktop tuyệt đối (Admin & Clinical PC-First)**:
+   - Toàn bộ giao diện Quản trị hệ thống (Admin Console), Trạm điều dưỡng (Nurse Station), Bảng theo dõi lâm sàng Bác sĩ (Doctor Clinical Dashboard) thiết kế chuẩn PC ($\ge 1280\text{px}$, $1440\text{px}$, $1920\text{px}$).
+   - **Desktop Tri-Layout**: Sidebar trái cố định, Topbar toàn cục, Content Area rộng rãi đa cột.
+   - **High-Density Data Grids**: Bảng dữ liệu mật độ cao có lọc đa cột, sorting, phân trang server-side, ghim cột, xuất Excel/PDF/FHIR.
+   - **Multi-Panel Clinical Dashboard**: Hiển thị đồng thời biểu đồ xu hướng sinh trắc học dài hạn, kết quả xét nghiệm liên hoàn và trình xem phim chụp X-quang/CT/MRI (DICOM Viewer) trên cùng một màn hình lớn.
+   - **Tối ưu thao tác phím tắt (Keyboard Shortcuts)**: Nhập liệu, duyệt đơn thuốc và gắn nhãn ICD-10 tốc độ cao.
 
 ### V. AN TOÀN Y TẾ & BẢO VỆ DỮ LIỆU CÁ NHÂN (SECURITY & COMPLIANCE)
 1. **Tuân thủ Nghị định 13/2023/NĐ-CP**:
@@ -62,11 +71,12 @@
 
 Mọi Kế hoạch triển khai (`plan.md`) trước khi được chuyển thành danh sách công việc (`tasks.md`) bắt buộc phải vượt qua bảng kiểm soát sau:
 
+- [ ] **Gate 0 (30-Minute Review Verified)**: Đã đọc lại toàn bộ skills và hiến pháp kỹ thuật trong vòng 30 phút gần nhất?
 - [ ] **Gate 1 (Spec Alignment)**: Đã có file `spec.md` với đầy đủ User Stories được phân cấp ưu tiên (P1, P2, P3) và Acceptance Criteria (Given-When-Then)?
 - [ ] **Gate 2 (Data Feasibility)**: Mọi trường dữ liệu hiển thị đã được định vị chính xác nguồn gốc (Bảng nào, Cột nào, Cách nhập liệu nào) và không có trường default vô căn cứ?
 - [ ] **Gate 3 (TDD Matrix Prepared)**: Đã chuẩn bị sẵn ma trận kiểm thử 4 chiều (Input / Output / Error / Logic) cho toàn bộ các hàm mới?
 - [ ] **Gate 4 (DDD Architecture)**: Đã đóng gói các thuộc tính nhạy cảm thành Value Objects bất biến và xác định đúng Aggregate Root?
-- [ ] **Gate 5 (UX Standards)**: Thiết kế màn hình đã tuân thủ 5 trạng thái State, Design Tokens và In-frame scroll $\le 5$ mục?
+- [ ] **Gate 5 (Device Experience Validation)**: Màn hình người dùng cuối đã ưu tiên Mobile-First (Thumb Zone, Bottom Sheet, In-frame $\le 5$ mục) và màn Admin đã chuẩn PC-First (High-density grid, Multi-panel dashboard)?
 - [ ] **Gate 6 (Decree 13 Compliance)**: Đã thiết lập cơ chế Consent Gate cho thành viên $\ge 18$ tuổi và che chắn PII?
 
 ---
@@ -75,5 +85,4 @@ Mọi Kế hoạch triển khai (`plan.md`) trước khi được chuyển thàn
 - **Hiến pháp này có giá trị pháp lý cao nhất trong dự án**.
 - Mọi Pull Request, mã nguồn sinh ra bởi AI hoặc lập trình viên nếu vi phạm bất kỳ điều khoản nào của Hiến pháp sẽ bị từ chối sáp nhập (Rejected).
 
-**Phiên bản**: `1.0.0` | **Ngày ban hành**: `2026-11-04` | **Tổ chức**: `D-HEALTH Engineering Team`
-
+**Phiên bản**: `1.1.0` | **Ngày cập nhật**: `2026-11-04` | **Tổ chức**: `D-HEALTH Engineering Team`

@@ -5,6 +5,15 @@
 
 ---
 
+## 0. KỶ LUẬT TÁI THẨM ĐỊNH KỸ NĂNG & QUY CHUẨN ĐỊNH KỲ (PERIODIC 30-MINUTE REVIEW MANDATE)
+- **Chu kỳ bắt buộc**: Cứ sau **mỗi 30 phút** làm việc liên tục hoặc trước khi bắt đầu bất kỳ một Task/Phase/Màn hình mới nào, AI Agent **BẮT BUỘC PHẢI ĐỌC LẠI TOÀN BỘ 100% CÁC SKILLS VÀ RULES**:
+  - Đọc lại toàn bộ `GEMINI.md` và `.specify/memory/constitution.md`.
+  - Đọc lại toàn bộ danh mục skills trong hệ thống (`code-convention`, `fe-development`, `spec-kit`, `web-security-auditor`).
+- **Mục đích bất biến**: Triệt tiêu hoàn toàn hiện tượng quên ngữ cảnh (Context Drift), ngăn ngừa sinh mã tuỳ tiện ("vibe coding"), duy trì tính nghiêm ngặt tuyệt đối của TDD 4 chiều, kiến trúc DDD, chuẩn thiết bị và an toàn dữ liệu y tế.
+- **Cam kết hành động**: Tuyệt đối không sinh code khi chưa kiểm chứng lại sự phù hợp với toàn bộ rule và skill.
+
+---
+
 ## 1. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT)
 - **Quy tắc mọi hàm mới (Function Testing Mandate)**: Bất cứ hàm mới nào (Utility function, Service method, Domain Entity method, Use Case, API Handler) khi được tạo ra **BẮT BUỘC PHẢI CÓ FILE TEST ĐI KÈM** (`*.spec.ts` hoặc `*.test.ts`). Tuyệt đối không bàn giao hàm mà thiếu unit test.
 - **Ma trận kiểm thử 4 chiều bắt buộc cho mỗi hàm**:
@@ -40,23 +49,28 @@
 
 ---
 
-## 3. NGUYÊN TẮC FRONTEND & MOBILE UI (EXPERIENCE & COMPONENT DESIGN)
-- **Tách Component Nhỏ & Tái Sử Dụng (Atomic Decomposition)**:
-  - Chia nhỏ component theo 4 cấp: **Atoms** (Button, Badge, Pill), **Molecules** (MetricRow, SearchBar), **Organisms** (BiometricCard, MedicationPanel), **Screens**.
-  - Tách bạch rõ ràng giữa **Presentational Component (Dumb UI)** nhận props thuần túy và **Container Component / Custom Hook (Smart Logic)**.
-  - Không viết file màn hình dài vượt quá 200 dòng UI.
-- **Quản Lý State Màn Hình Chặt Chẽ (Strict State Lifecycle)**:
-  - Phân tách rõ ràng 3 tầng: **Server State** (TanStack Query/SWR - không tự đẩy vào global store), **Global App State** (Auth, Active Member, NetInfo) và **Local UI State** (Modal, Tab).
-  - Bắt buộc xử lý đủ **5 trạng thái**: `Loading` (dùng Skeleton, không dùng full spinner), `Empty` (icon, mô tả, nút Primary CTA), `Error` (thông điệp thân thiện, nút Retry), `Data`, và `Offline/Syncing` (Optimistic updates).
-- **Đồng Bộ Màu Sắc & Cấu Trúc (Design Tokens & Uniform Layout)**:
-  - 100% màu sắc, typography (Plus Jakarta Sans), spacing (lưới 4px), bán kính bo góc (Card bo 20–24px) phải lấy từ `DesignTokens`, không hardcode style.
-  - Màu thương hiệu chính: Primary Teal `#1F7A8C`, Gradient `#1F7A8C` ➔ `#2F6FDB`. Trạng thái: Tốt `#DCFCE7`/`#166534`, Chú ý `#FEF3C7`/`#92400E`, Nguy hiểm `#DC2626`/`#FEE2E2`.
-  - Cấu trúc Card đồng nhất: Header (Icon + Title + Badge) ➔ Body (Chỉ số to + Biểu đồ mini) ➔ Footer (Thời gian + Link chi tiết).
-- **Thiết Kế Tiết Kiệm Không Gian & Trải Nghiệm Chuẩn (High-Density & Ergonomic UX)**:
-  - **Cuộn nội bộ trong khung (In-Frame Scroll)**: Danh sách dài (kết quả xét nghiệm, bác sĩ, GPB) hiển thị tối đa **5 mục mới nhất**, phần còn lại cuộn bên trong khung `max-height` kèm nhãn dẫn hướng.
-  - **Carousel Chip Ngang**: Dùng chip pill cuộn ngang để lọc danh mục, không dùng dropdown chiếm diện tích.
-  - **Modal Bottom Sheet**: Dùng Bottom Sheet (bo góc trên 28px, overlay tối, tay nắm 40×5px) cho nhập liệu nhanh hoặc chi tiết thay vì chuyển trang.
-  - **Công thái học & Khả năng tiếp cận**: Vùng chạm Touch Target ≥ **44 × 44 pt**, ưu tiên thao tác trong vùng ngón tay cái (**Thumb Zone**), độ tương phản chữ ≥ **4.5:1** (WCAG 2.1 AA), có `accessibilityLabel` cho mọi icon/nút bấm.
+## 3. NGUYÊN TẮC FRONTEND & PHÂN TÁCH THIẾT BỊ TRẢI NGHIỆM (DEVICE EXPERIENCE SEPARATION)
+
+### A. Người Dùng Cuối: Ưu Tiên Màn Mobile Tuyệt Đối (User / Patient / Family Mobile-First)
+- **Phạm vi áp dụng**: 100% màn hình dành cho Bệnh nhân, Người nhà, Thành viên gia đình theo dõi sức khỏe chủ động, đo chỉ số sinh trắc IoT BLE, quản lý đơn thuốc & nhắc thuốc, xem hồ sơ sức khỏe và Thẻ cấp cứu.
+- **Viewport chuẩn**: Mobile-First (390 × 844 iPhone, 360 × 800 Android).
+- **Quy chuẩn UX/UI di động**:
+  - **Tách Component Nhỏ (Atomic Decomposition)**: Chia 4 cấp: **Atoms** (Button, Badge, Pill), **Molecules** (MetricRow, SearchBar), **Organisms** (BiometricCard, MedicationPanel), **Screens** (không vượt quá 200 dòng UI). Tách bạch Dumb UI và Custom Hook.
+  - **Vòng đời State 5 trạng thái**: Bắt buộc xử lý đủ `Loading` (Skeleton), `Empty` (CTA), `Error` (Retry), `Data`, `Offline/Syncing`.
+  - **Công thái học & Vùng chạm (Thumb Zone)**: Touch Target $\ge \mathbf{44 \times 44\text{ pt}}$, tập trung thao tác chính trong tầm với của ngón tay cái, độ tương phản $\ge 4.5:1$ (WCAG 2.1 AA).
+  - **Modal Bottom Sheet**: Dùng Bottom Sheet (bo góc trên 28px, overlay tối, thanh kéo 40×5px) cho toàn bộ thao tác nhập liệu nhanh (nhập huyết áp, SPO2, thêm liều thuốc, quét Bluetooth) thay vì mở trang mới.
+  - **In-Frame Internal Scroll**: Danh sách dài (kết quả xét nghiệm, lịch sử đo, danh sách bác sĩ) chỉ hiển thị tối đa **5 mục mới nhất**, phần còn lại cuộn nội bộ trong khung `max-height` kèm nhãn dẫn hướng.
+  - **Carousel Chip Ngang**: Dùng chip pill cuộn ngang để lọc danh mục, tuyệt đối không dùng dropdown chiếm diện tích màn hình điện thoại.
+  - **Design Tokens đồng nhất**: Primary Teal `#1F7A8C`, Gradient `#1F7A8C` $\rightarrow$ `#2F6FDB`. Card bo tròn 20–24px.
+
+### B. Quản Trị & Y Tế Chuyên Sâu: Ưu Tiên Màn PC / Desktop Tuyệt Đối (Admin & Clinical PC-First)
+- **Phạm vi áp dụng**: Toàn bộ màn hình dành cho Quản trị viên hệ thống (System Admin), Trạm điều dưỡng (Nurse Station), Bảng theo dõi lâm sàng Bác sĩ (Doctor Clinical Dashboard), Phân tích số liệu vĩ mô.
+- **Viewport chuẩn**: PC / Desktop ($\ge 1280\text{px}$, $1440\text{px}$, $1920\text{px}$).
+- **Quy chuẩn UX/UI máy tính**:
+  - **Bố cục 3 khối chuẩn (Desktop Tri-Layout)**: Sidebar trái cố định (Navigation phân cấp), Topbar (Tìm kiếm bệnh nhân toàn cục, Bộ chọn cơ sở y tế, Thông báo, Profile), Content Area rộng rãi đa cột.
+  - **Bảng dữ liệu mật độ cao (High-Density Data Grids)**: Danh sách bệnh nhân, ca bệnh, lịch hẹn với lọc đa cột nâng cao, sắp xếp (sorting), phân trang server-side, ghim cột (sticky column) và xuất dữ liệu (Excel, PDF, HL7 FHIR).
+  - **Bảng điều khiển lâm sàng đa chiều (Multi-Panel Dashboard)**: Hiển thị đồng thời biểu đồ xu hướng sinh trắc học dài hạn, kết quả xét nghiệm liên hoàn và trình xem phim chụp X-quang/CT/MRI (DICOM Viewer) trên cùng một màn hình lớn.
+  - **Tối ưu hóa thao tác phím tắt (Keyboard Shortcuts)**: Phục vụ nhập liệu, duyệt đơn thuốc và gắn nhãn chẩn đoán ICD-10 tốc độ cao.
 
 ---
 
