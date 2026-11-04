@@ -81,6 +81,6 @@ jobs:
             docker compose ps
 
             echo "🎉 [CI/CD] Triển khai thành công phiên bản mới D-HEALTH lên Server!"
-            echo "🌐 Frontend: http://103.90.227.173:7001 hoặc https://dhealth.home-care.vn"
-            echo "🌐 Backend:  http://103.90.227.173:7002/api/health"
-            echo "🌐 MinIO:    http://103.90.227.173:7005 (Console)"
+            echo "🌐 Frontend: http://103.90.227.173:7101 hoặc https://dhealth.home-care.vn"
+            echo "🌐 Backend:  http://103.90.227.173:7102/api/health"
+            echo "🌐 MinIO:    http://103.90.227.173:7105 (Console)"

@@ -91,7 +91,7 @@ export default function App() {
                   <Database className="w-5 h-5 text-blue-400" />
                   <div>
                     <div className="text-sm font-semibold">PostgreSQL 16</div>
-                    <div className="text-xs text-slate-400">Cổng 7003 · 13 Bảng CSDL</div>
+                    <div className="text-xs text-slate-400">Cổng 7103 · 13 Bảng CSDL</div>
                   </div>
                 </div>
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
@@ -109,7 +109,7 @@ export default function App() {
                   <HardDrive className="w-5 h-5 text-purple-400" />
                   <div>
                     <div className="text-sm font-semibold">MinIO S3 Storage</div>
-                    <div className="text-xs text-slate-400">Cổng 7004 (S3) · 7005 (Console)</div>
+                    <div className="text-xs text-slate-400">Cổng 7104 (S3) · 7105 (Console)</div>
                   </div>
                 </div>
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
@@ -127,7 +127,7 @@ export default function App() {
                   <ShieldCheck className="w-5 h-5 text-emerald-400" />
                   <div>
                     <div className="text-sm font-semibold">Backend Node.js API</div>
-                    <div className="text-xs text-slate-400">Cổng 7002 · Clean Architecture</div>
+                    <div className="text-xs text-slate-400">Cổng 7102 · Clean Architecture</div>
                   </div>
                 </div>
                 <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">

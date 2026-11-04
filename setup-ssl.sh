@@ -2,25 +2,32 @@
 # ====================================================================
 # D-HEALTH: Script tự động cấu hình Nginx Reverse Proxy & Cấp SSL Let's Encrypt
 # Domain   : dhealth.home-care.vn
-# Upstream : http://127.0.0.1:7001 (Frontend Container)
+# Upstream : http://127.0.0.1:${TARGET_PORT} (Frontend Container)
 # ====================================================================
 
 set -e
 
 DOMAIN="dhealth.home-care.vn"
-TARGET_PORT="7001"
 EMAIL="${1:-}"
+
+# Tự động đọc cổng FRONTEND_PORT từ file .env nếu có
+CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "${CURRENT_DIR}/.env" ]; then
+  ENV_PORT=$(grep -E '^FRONTEND_PORT=' "${CURRENT_DIR}/.env" | head -n 1 | cut -d '=' -f2 | tr -d ' "\r\n')
+fi
+TARGET_PORT="${ENV_PORT:-7101}"
 
 # Màu sắc thông báo terminal
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 echo -e "${BLUE}====================================================================${NC}"
 echo -e "${BLUE}   D-HEALTH: TỰ ĐỘNG CẤU HÌNH NGINX & CẤP PHÁT SSL CHO DOMAIN       ${NC}"
-echo -e "${BLUE}   Tên miền: ${GREEN}${DOMAIN}${BLUE} -> Target: ${GREEN}127.0.0.1:${TARGET_PORT}${NC}"
+echo -e "${BLUE}   Tên miền : ${GREEN}${DOMAIN}${NC}"
+echo -e "${BLUE}   Upstream : ${GREEN}127.0.0.1:${TARGET_PORT}${NC}"
 echo -e "${BLUE}====================================================================${NC}"
 
 # 1. Kiểm tra quyền root / sudo
@@ -32,7 +39,6 @@ fi
 
 # 2. Xác định file cấu hình nguồn
 CONF_NAME="${DOMAIN}.conf"
-CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_CONF="${CURRENT_DIR}/nginx/dhealth.home-care.vn.conf"
 
 if [ ! -f "$SOURCE_CONF" ]; then
@@ -79,17 +85,39 @@ echo -e "${YELLOW}[2/4] Thiết lập cấu hình Nginx cho ${DOMAIN}...${NC}"
 
 if [ -d "/etc/nginx/sites-available" ]; then
   # Dành cho Debian / Ubuntu
-  cp "$SOURCE_CONF" "/etc/nginx/sites-available/${CONF_NAME}"
+  DEST_CONF="/etc/nginx/sites-available/${CONF_NAME}"
+  cp "$SOURCE_CONF" "$DEST_CONF"
+  
+  # Cập nhật đúng cổng upstream từ biến TARGET_PORT
+  sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "$DEST_CONF"
+  
   mkdir -p /etc/nginx/sites-enabled
-  ln -sf "/etc/nginx/sites-available/${CONF_NAME}" "/etc/nginx/sites-enabled/${CONF_NAME}"
+  ln -sf "$DEST_CONF" "/etc/nginx/sites-enabled/${CONF_NAME}"
+  
+  # Xóa default site nếu tồn tại để tránh Nginx hiển thị trang "Welcome to nginx!"
+  if [ -f "/etc/nginx/sites-enabled/default" ]; then
+    echo -e "${YELLOW}Gỡ bỏ default site Nginx để tránh xung đột domain...${NC}"
+    rm -f "/etc/nginx/sites-enabled/default"
+  fi
+  
   echo -e "${GREEN}✓ Đã gắn cấu hình vào /etc/nginx/sites-available/ và sites-enabled/${NC}"
 elif [ -d "/etc/nginx/conf.d" ]; then
   # Dành cho CentOS / RHEL / Alpine / Nginx mặc định
-  cp "$SOURCE_CONF" "/etc/nginx/conf.d/${CONF_NAME}"
+  DEST_CONF="/etc/nginx/conf.d/${CONF_NAME}"
+  cp "$SOURCE_CONF" "$DEST_CONF"
+  sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "$DEST_CONF"
+  
+  # Vô hiệu hóa default.conf nếu có
+  if [ -f "/etc/nginx/conf.d/default.conf" ]; then
+    mv "/etc/nginx/conf.d/default.conf" "/etc/nginx/conf.d/default.conf.bak" || true
+  fi
+  
   echo -e "${GREEN}✓ Đã gắn cấu hình vào /etc/nginx/conf.d/${NC}"
 else
   mkdir -p /etc/nginx/conf.d
-  cp "$SOURCE_CONF" "/etc/nginx/conf.d/${CONF_NAME}"
+  DEST_CONF="/etc/nginx/conf.d/${CONF_NAME}"
+  cp "$SOURCE_CONF" "$DEST_CONF"
+  sed -i "s|proxy_pass http://127.0.0.1:[0-9]*;|proxy_pass http://127.0.0.1:${TARGET_PORT};|g" "$DEST_CONF"
   echo -e "${GREEN}✓ Đã tạo thư mục và gắn cấu hình vào /etc/nginx/conf.d/${NC}"
 fi
 
@@ -100,7 +128,7 @@ nginx -t
 systemctl enable nginx || true
 systemctl restart nginx || service nginx restart
 
-echo -e "${GREEN}✓ Nginx đã tải cấu hình mới thành công!${NC}"
+echo -e "${GREEN}✓ Nginx đã tải cấu hình reverse proxy tới 127.0.0.1:${TARGET_PORT} thành công!${NC}"
 
 # 6. Cấp phát chứng chỉ SSL Let's Encrypt qua Certbot
 echo -e "${YELLOW}[4/4] Bắt đầu xin cấp chứng chỉ SSL Let's Encrypt cho ${DOMAIN}...${NC}"
@@ -114,14 +142,15 @@ else
 fi
 
 # Chạy Certbot tự động cấu hình SSL
-certbot $CERTBOT_ARGS
-
-# Nạp lại Nginx sau khi certbot đã gắn SSL
-systemctl reload nginx || service nginx reload
-
-echo ""
-echo -e "${GREEN}====================================================================${NC}"
-echo -e "${GREEN}🎉 HOÀN TẤT THIẾT LẬP NGINX & SSL CHO D-HEALTH!${NC}"
-echo -e "${GREEN}   Website đang chạy an toàn tại: https://${DOMAIN}${NC}"
-echo -e "${GREEN}   Tự động gia hạn chứng chỉ (Cron/Systemd Timer): Đã kích hoạt${NC}"
-echo -e "${GREEN}====================================================================${NC}"
+if certbot $CERTBOT_ARGS; then
+  systemctl reload nginx || service nginx reload
+  echo ""
+  echo -e "${GREEN}====================================================================${NC}"
+  echo -e "${GREEN}🎉 HOÀN TẤT THIẾT LẬP NGINX & SSL CHO D-HEALTH!${NC}"
+  echo -e "${GREEN}   Website đang chạy bảo mật HTTPS tại: https://${DOMAIN}${NC}"
+  echo -e "${GREEN}   Tự động gia hạn chứng chỉ SSL (Certbot Timer): Đã kích hoạt${NC}"
+  echo -e "${GREEN}====================================================================${NC}"
+else
+  echo -e "${YELLOW}⚠️ Certbot gặp vấn đề trong việc xin cấp SSL Let's Encrypt (DNS hoặc Rate Limit).${NC}"
+  echo -e "${GREEN}✓ Tuy nhiên hệ thống vẫn đang hoạt động bình thường qua HTTP tại: http://${DOMAIN}${NC}"
+fi

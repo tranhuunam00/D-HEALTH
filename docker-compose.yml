@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-dhealth_secret_2026}
       POSTGRES_DB: ${DB_NAME:-dhealth_db}
     ports:
-      - "${DB_PORT:-7003}:5432"
+      - "${DB_PORT:-7103}:5432"
     volumes:
       - dhealth-pgdata:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
@@ -35,8 +35,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dhealth_minio_admin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-dhealth_minio_secret_2026}
     ports:
-      - "${MINIO_PORT:-7004}:9000"         # S3 API
-      - "${MINIO_CONSOLE_PORT:-7005}:9001" # Web Admin Console
+      - "${MINIO_PORT:-7104}:9000"         # S3 API
+      - "${MINIO_CONSOLE_PORT:-7105}:9001" # Web Admin Console
     volumes:
       - dhealth-minio-data:/data
     healthcheck:
@@ -77,7 +77,7 @@ services:
       MINIO_USE_SSL: "false"
       JWT_SECRET: ${JWT_SECRET:-dhealth_jwt_super_secret_2026}
     ports:
-      - "${BACKEND_PORT:-7002}:5000"
+      - "${BACKEND_PORT:-7102}:5000"
     networks:
       - dhealth-net
 
@@ -93,7 +93,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "${FRONTEND_PORT:-7001}:80"
+      - "${FRONTEND_PORT:-7101}:80"
     networks:
       - dhealth-net
 

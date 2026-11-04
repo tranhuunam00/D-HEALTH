@@ -22,15 +22,15 @@ Dự án được xây dựng tuân thủ 100% nguyên tắc kỹ thuật chuẩ
 
 ## 🏗️ Kiến Trúc Hệ Thống & Cấu Hình Cổng (Port Mapping)
 
-Để đảm bảo vận hành song song mượt mà cùng các hệ thống khác trên máy chủ (như DSONO chạy dải cổng `6000`), D-HEALTH được cấu hình độc lập hoàn toàn trên dải cổng **`7000-series`**:
+Để đảm bảo vận hành song song mượt mà cùng các hệ thống khác trên máy chủ (như DSONO chạy dải cổng `6000`), D-HEALTH được cấu hình độc lập hoàn toàn trên dải cổng **`7100-series`**:
 
 | Thành Phần | Dịch Vụ / Công Nghệ | Cổng Nội Bộ (Container) | Cổng Máy Chủ (Host Port) | Ghi Chú |
 | :--- | :--- | :--- | :--- | :--- |
-| **Frontend Web** | React 18/19, Vite, Tailwind CSS, Web BLE | `80` (Nginx) | `7001` | Giao diện Web PWA & Mobile Viewport |
-| **Backend API** | Node.js, Express, TypeScript, Clean Arch | `7002` | `7002` | REST API `/api/v1` |
-| **Database** | PostgreSQL 16 Alpine, UUID-OSSP, Seed | `5432` | `7003` | CSDL quan hệ chuẩn 13 bảng |
-| **MinIO S3 API** | MinIO Object Storage Engine | `9000` | `7004` | S3 API lưu trữ tài liệu, ảnh, DICOM |
-| **MinIO Console**| MinIO Web Management Console | `9001` | `7005` | Giao diện quản trị S3 Bucket |
+| **Frontend Web** | React 18/19, Vite, Tailwind CSS, Web BLE | `80` (Nginx) | `7101` | Giao diện Web PWA & Mobile Viewport |
+| **Backend API** | Node.js, Express, TypeScript, Clean Arch | `7002` | `7102` | REST API `/api/v1` |
+| **Database** | PostgreSQL 16 Alpine, UUID-OSSP, Seed | `5432` | `7103` | CSDL quan hệ chuẩn 13 bảng |
+| **MinIO S3 API** | MinIO Object Storage Engine | `9000` | `7104` | S3 API lưu trữ tài liệu, ảnh, DICOM |
+| **MinIO Console**| MinIO Web Management Console | `9001` | `7105` | Giao diện quản trị S3 Bucket |
 
 ---
 
@@ -89,10 +89,10 @@ docker compose ps
 ```
 
 Khi chạy thành công:
-- **Frontend Web Simulator**: `http://localhost:7001`
-- **Backend API Health Check**: `http://localhost:7002/api/health`
-- **MinIO Console**: `http://localhost:7005` (Tài khoản: `admin_dhealth` / Mật khẩu: `DhealthMinio#2026@Secure`)
-- **PostgreSQL**: `localhost:7003` (DB: `dhealth_db`, User: `dhealth_user`)
+- **Frontend Web Simulator**: `http://localhost:7101`
+- **Backend API Health Check**: `http://localhost:7102/api/health`
+- **MinIO Console**: `http://localhost:7105` (Tài khoản: `dhealth_minio_admin` / Mật khẩu: `dhealth_minio_secret_2026`)
+- **PostgreSQL**: `localhost:7103` (DB: `dhealth_db`, User: `dhealth_user`)
 
 ---
 
