@@ -1,6 +1,7 @@
 import React from 'react';
-import { Building2, Stethoscope, Pill, ShieldCheck, Database, RefreshCw, Activity, Search, Users } from 'lucide-react';
+import { Building2, Stethoscope, Pill, ShieldCheck, Database, RefreshCw, Activity, Search, Users, UserCheck } from 'lucide-react';
 import { useAdminLogic } from './useAdminLogic';
+import { AdminUserManagement } from './AdminUserManagement';
 
 export const AdminDashboard: React.FC = () => {
   const { stats, facilities, doctors, medications, activeTab, setActiveTab, loading, refresh } = useAdminLogic();
@@ -23,6 +24,7 @@ export const AdminDashboard: React.FC = () => {
           <nav className="space-y-1.5 text-xs font-semibold">
             {[
               { id: 'overview', label: 'Toàn Cảnh Hệ Thống', icon: Activity },
+              { id: 'users', label: 'Quản Trị Người Dùng', icon: UserCheck },
               { id: 'facilities', label: 'Cơ Sở Y Tế (CSYT)', icon: Building2 },
               { id: 'doctors', label: 'Danh Bạ Bác Sĩ', icon: Stethoscope },
               { id: 'medications', label: 'Dược Thư Quốc Gia', icon: Pill },
@@ -75,8 +77,12 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Dynamic Panels */}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Overview Cards */}
-          <div className="grid grid-cols-4 gap-4">
+          {activeTab === 'users' ? (
+            <AdminUserManagement />
+          ) : (
+            <>
+              {/* Overview Cards */}
+              <div className="grid grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
               <span className="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><Building2 className="w-4 h-4 text-blue-400" /> CSYT Đối Tác</span>
               <div className="text-2xl font-black text-white">{stats.totalFacilities} <span className="text-xs font-normal text-slate-500">cơ sở</span></div>
@@ -141,6 +147,8 @@ export const AdminDashboard: React.FC = () => {
               </table>
             </div>
           </div>
+            </>
+          )}
         </div>
       </main>
     </div>

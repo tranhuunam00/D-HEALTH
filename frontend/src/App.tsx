@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Smartphone, Monitor, ShieldCheck, HeartPulse, LogOut } from 'lucide-react';
+import { Smartphone, Monitor, ShieldCheck, HeartPulse, LogOut, User as UserIcon } from 'lucide-react';
 import { SCR01_LoginScreen } from './screens/auth/SCR01_LoginScreen';
 import { SCR02_HomeScreen } from './screens/home/SCR02_HomeScreen';
+import { SCR16_UserProfileScreen } from './screens/profile/SCR16_UserProfileScreen';
 import { AdminDashboard } from './screens/admin/AdminDashboard';
 import { User } from './types/auth.types';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'mobile_patient' | 'pc_admin'>('mobile_patient');
+  const [mobileScreen, setMobileScreen] = useState<'home' | 'profile'>('home');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const handleLoginSuccess = (user: User) => {
@@ -60,9 +62,16 @@ export default function App() {
         <div className="flex items-center gap-2">
           {currentUser ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-300 font-medium hidden sm:inline">
-                {currentUser.fullName || currentUser.phoneNumber}
-              </span>
+              <button
+                onClick={() => setMobileScreen(mobileScreen === 'home' ? 'profile' : 'home')}
+                className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-1.5"
+                title="Hồ sơ cá nhân"
+              >
+                <UserIcon className="w-3.5 h-3.5 text-[#1F7A8C]" />
+                <span className="hidden sm:inline">
+                  {currentUser.fullName || currentUser.phoneNumber}
+                </span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800"
@@ -98,6 +107,8 @@ export default function App() {
               <div className="flex-1 flex flex-col">
                 {!currentUser ? (
                   <SCR01_LoginScreen onLoginSuccess={handleLoginSuccess} />
+                ) : mobileScreen === 'profile' ? (
+                  <SCR16_UserProfileScreen onBack={() => setMobileScreen('home')} />
                 ) : (
                   <SCR02_HomeScreen onOpenEmergency={() => alert('Thẻ Cấp Cứu SOS (SCR-16) đã kích hoạt!')} />
                 )}

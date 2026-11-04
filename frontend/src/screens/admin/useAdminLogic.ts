@@ -21,7 +21,7 @@ export function useAdminLogic() {
   const [facilities, setFacilities] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [medications, setMedications] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'facilities' | 'doctors' | 'medications' | 'thresholds'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'facilities' | 'doctors' | 'medications' | 'thresholds'>('overview');
   const [loading, setLoading] = useState(false);
 
   const fetchAdminData = async () => {

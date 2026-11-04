@@ -7,6 +7,8 @@ import * as Minio from 'minio';
 import dotenv from 'dotenv';
 import { apiLimiter } from './infrastructure/security/rate-limiters';
 import { createAuthRouter } from './presentation/routes/auth.routes';
+import { createAdminUsersRouter } from './presentation/routes/admin-users.routes';
+import { createUserProfileRouter } from './presentation/routes/user-profile.routes';
 
 dotenv.config();
 
@@ -27,6 +29,8 @@ const pool = new Pool({
 
 // Gắn Module Xác thực & Đăng nhập (Auth & Security Routes)
 app.use('/api/auth', createAuthRouter(pool));
+app.use('/api/admin/users', createAdminUsersRouter(pool));
+app.use('/api/user/profile', createUserProfileRouter(pool));
 
 // 2. MinIO S3 Client
 const minioClient = new Minio.Client({
