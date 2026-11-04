@@ -26,6 +26,49 @@ const minioClient = new Minio.Client({
   secretKey: process.env.MINIO_SECRET_KEY || 'dhealth_minio_secret_2026',
 });
 
+// Auto-initialize required S3 buckets on startup
+const REQUIRED_BUCKETS = ['dhealth-reports', 'dhealth-dicom', 'dhealth-avatars', 'dhealth-prescriptions'];
+
+async function initMinioBuckets(retries = 15, delayMs = 2000): Promise<void> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      for (const bucket of REQUIRED_BUCKETS) {
+        const exists = await minioClient.bucketExists(bucket);
+        if (!exists) {
+          await minioClient.makeBucket(bucket);
+          console.log(`[MinIO] Bucket created: ${bucket}`);
+
+          // Set public read policy for avatars and reports
+          if (bucket === 'dhealth-avatars' || bucket === 'dhealth-reports') {
+            const policy = JSON.stringify({
+              Version: '2012-10-17',
+              Statement: [
+                {
+                  Effect: 'Allow',
+                  Principal: { AWS: ['*'] },
+                  Action: ['s3:GetObject'],
+                  Resource: [`arn:aws:s3:::${bucket}/*`],
+                },
+              ],
+            });
+            try {
+              await minioClient.setBucketPolicy(bucket, policy);
+            } catch {
+              // Ignore policy error if unsupported in local mode
+            }
+          }
+        }
+      }
+      console.log('✓ [MinIO] All S3 Buckets initialized successfully!');
+      return;
+    } catch (err: any) {
+      console.log(`[MinIO] Waiting for S3 storage (attempt ${attempt}/${retries}): ${err.message}`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  console.warn('⚠️ [MinIO] Could not initialize buckets after maximum attempts. Continuing...');
+}
+
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
   let dbStatus = 'disconnected';
@@ -114,4 +157,5 @@ app.get('/api/reports/:memberId', async (req: Request, res: Response) => {
 
 app.listen(port, () => {
   console.log(`D-Health Backend API running on port ${port}`);
+  initMinioBuckets().catch((err) => console.error('[MinIO] Bucket init error:', err));
 });
