@@ -4,6 +4,7 @@ import { HomeBottomNav } from '../home/HomeBottomNav';
 import { PassportIdentityCard } from './components/PassportIdentityCard';
 import { PassportTilesGrid } from './components/PassportTilesGrid';
 import { useRecordsLogic, type PassportCounts } from './useRecordsLogic';
+import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
 interface SCR10Props {
   readonly onNavigate: (screen: string) => void;
@@ -56,24 +57,12 @@ export const SCR10_RecordsScreen: React.FC<SCR10Props> = ({
 
   return (
     <div className="w-full min-h-screen bg-[#F3F6F9] text-slate-800 flex flex-col font-sans select-none relative pb-20">
-      <div className="px-4 pt-3 pb-6 flex flex-col gap-3 flex-1 overflow-y-auto">
+      <div className="px-4 pt-3 pb-32 flex flex-col gap-3 flex-1 overflow-y-auto">
         {/* Header Badges */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs border border-slate-100">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-          <button
-            type="button"
-            onClick={() => onSelectMember?.('family')}
-            className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs cursor-pointer active:scale-95 transition"
-          >
-            <span>👤</span>
-            <span>Hồ sơ sức khoẻ:</span>
-            <span className="font-bold">{effectiveMember.fullName}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </button>
-        </div>
+        <ScreenHeaderPills
+          activeMemberName={effectiveMember.fullName}
+          onSelectMember={() => onSelectMember?.('family')}
+        />
 
         {/* Title */}
         <div>

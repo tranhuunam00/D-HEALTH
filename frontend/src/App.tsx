@@ -199,7 +199,13 @@ export default function App() {
       case 'ai':
         return <SCR13_AIAssistantScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
       case 'care':
-        return <SCR14_CareScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return (
+          <SCR14_CareScreen
+            onNavigate={(s) => setCurrentScreen(s as any)}
+            activeMemberName={activeMemberName}
+            activeMemberId={activeMemberId}
+          />
+        );
       case 'profile':
         return (
           <SCR16_UserProfileScreen

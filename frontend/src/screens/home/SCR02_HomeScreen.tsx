@@ -59,7 +59,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] pb-24 relative flex flex-col font-sans select-none">
       {/* Scrollable Content (1:1 with Design) */}
-      <div className="flex-1 px-4 pt-4 pb-6 flex flex-col gap-3">
+      <div className="flex-1 px-4 pt-4 pb-32 flex flex-col gap-3">
         {/* 1. Top Header: Avatar + Xin chào + SOS + Bell */}
         <div className="flex items-center gap-3">
           <button

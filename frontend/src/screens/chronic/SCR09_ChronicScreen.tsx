@@ -1,11 +1,11 @@
 import React from 'react';
-import { User } from 'lucide-react';
 import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { useChronicLogic } from './useChronicLogic';
 import { CardioConditionCard } from './components/CardioConditionCard';
 import { NextTasksCard } from './components/NextTasksCard';
 import { DiabetesConditionCard } from './components/DiabetesConditionCard';
+import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
 interface SCR09Props {
   readonly onNavigate: (screen: string) => void;
@@ -36,18 +36,12 @@ export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
 
   return (
     <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-24">
-      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-6 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-32 flex flex-col gap-3">
         {/* 1. Header Pills */}
-        <div className="flex gap-2 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-2xs">
-            <User className="w-3.5 h-3.5 text-slate-300" />
-            Hồ sơ sức khoẻ: <b>{activeMemberName}</b>
-          </span>
-        </div>
+        <ScreenHeaderPills
+          activeMemberName={activeMemberName}
+          onSelectMember={() => onNavigate('family')}
+        />
 
         {/* 2. Tiêu đề Sức khoẻ */}
         <h1 className="text-[26px] font-black tracking-tight text-slate-900 leading-none mt-0.5">

@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { ArrowLeft, Camera, Check, ShieldCheck, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useProfileLogic } from './useProfileLogic';
 import { EditProfileBottomSheet } from './EditProfileBottomSheet';
+import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 import { User as UserType } from '../../types/auth.types';
 
 export interface UserProfileScreenProps {
@@ -84,16 +85,7 @@ export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-12">
       {/* 1. Header with Pills (1:1 with Reference Design) */}
       <div className="px-4 pt-3 pb-2 flex flex-col gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200/80 rounded-full px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span>Hôm nay: 26/10/2026</span>
-          </div>
-          <div className="inline-flex items-center gap-1.5 bg-slate-900 text-white rounded-full px-3 py-1 text-[11px] font-bold shadow-2xs">
-            <span className="w-4 h-4 rounded-full bg-blue-500 text-[9px] flex items-center justify-center font-bold">👤</span>
-            <span>Hồ sơ sức khoẻ: {fullName || 'Trần Minh Khang'}</span>
-          </div>
-        </div>
+        <ScreenHeaderPills activeMemberName={fullName || 'Trần Minh Khang'} />
 
         {/* Top Navbar: Back + Title + Save Button */}
         <div className="flex items-center justify-between pt-1">

@@ -83,7 +83,7 @@ describe('SCR16_UserProfileScreen Light Mobile View TDD', () => {
       );
     });
 
-    expect(screen.getByText('Nguyễn Văn Test')).toBeDefined();
+    expect(screen.getAllByText('Nguyễn Văn Test').length).toBeGreaterThan(0);
     expect(screen.getByText('22.5')).toBeDefined();
   });
 });

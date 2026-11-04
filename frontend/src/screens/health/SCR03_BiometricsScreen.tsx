@@ -3,6 +3,7 @@ import { Plus, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useBiometricsLogic, MetricType } from './useBiometricsLogic';
 import { HomeBottomNav, NavTabId } from '../home/HomeBottomNav';
 import { BiometricEntrySheet } from '../../components/organisms/BiometricEntrySheet';
+import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
 interface SCR03Props {
   readonly onNavigate: (screen: string) => void;
@@ -44,23 +45,12 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
 
   return (
     <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-24">
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 flex flex-col gap-3">
         {/* 1. Header Pills (1:1 with Design) */}
-        <div className="flex gap-1.5 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-          <button
-            onClick={() => onSelectMember?.('family')}
-            className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs hover:bg-slate-800"
-          >
-            <span className="w-4 h-4 rounded-full bg-white text-[#111827] text-[10px] font-black flex items-center justify-center">
-              👤
-            </span>
-            Hồ sơ sức khoẻ: <b>{activeMemberName}</b>
-          </button>
-        </div>
+        <ScreenHeaderPills
+          activeMemberName={activeMemberName}
+          onSelectMember={() => onSelectMember ? onSelectMember('family') : onNavigate('family')}
+        />
 
         {/* 2. Tiêu đề màn hình */}
         <div className="flex items-center justify-between pt-1">

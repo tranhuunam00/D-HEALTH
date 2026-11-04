@@ -1,7 +1,8 @@
 import React from 'react';
-import { ChevronRight, User, Plus, Check } from 'lucide-react';
+import { ChevronRight, Plus, Check } from 'lucide-react';
 import { useLabsLogic, LabSpecialtyCode, TRACKED_METRICS_CONFIG } from './useLabsLogic';
 import { HomeBottomNav } from '../home/HomeBottomNav';
+import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
 interface SCR05Props {
   readonly onNavigate: (screen: string, reportId?: string) => void;
@@ -87,18 +88,12 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-24">
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 flex flex-col gap-3.5">
         {/* 1. Header Badges */}
-        <div className="flex gap-1.5 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-            <User className="w-3.5 h-3.5" />
-            Hồ sơ sức khoẻ: <b>{activeMemberName}</b>
-          </span>
-        </div>
+        <ScreenHeaderPills
+          activeMemberName={activeMemberName}
+          onSelectMember={() => onNavigate('family')}
+        />
 
         {/* 2. Tiêu đề Sức khoẻ */}
         <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-tight pt-1">

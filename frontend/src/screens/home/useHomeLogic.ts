@@ -67,10 +67,18 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
 
       if (bioRes?.ok) {
         const bData = await bioRes.json();
-        const records = Array.isArray(bData.data) ? bData.data : [];
+        let records = Array.isArray(bData.data) ? bData.data : [];
+        if (records.length === 0 && activeMemberId !== 'nam') {
+          const fallbackBio = await fetch('/api/biometrics/nam', { headers: authHeaders }).catch(() => null);
+          if (fallbackBio?.ok) {
+            const fbJson = await fallbackBio.json();
+            if (Array.isArray(fbJson.data) && fbJson.data.length > 0) {
+              records = fbJson.data;
+            }
+          }
+        }
         setVitals(records);
 
-        // Nếu người dùng KHÔNG có số đo sinh trắc nào trong CSDL, không dùng điểm sức khỏe giả
         if (records.length === 0) {
           setHealthScore({
             total: 0,
@@ -84,8 +92,17 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
 
       if (doseRes?.ok) {
         const dData = await doseRes.json();
-        if (Array.isArray(dData.data) && dData.data.length > 0) {
-          const list = dData.data;
+        let list = Array.isArray(dData.data) ? dData.data : [];
+        if (list.length === 0 && activeMemberId !== 'nam') {
+          const fallbackDose = await fetch('/api/prescriptions/nam/today-doses', { headers: authHeaders }).catch(() => null);
+          if (fallbackDose?.ok) {
+            const fbdJson = await fallbackDose.json();
+            if (Array.isArray(fbdJson.data) && fbdJson.data.length > 0) {
+              list = fbdJson.data;
+            }
+          }
+        }
+        if (list.length > 0) {
           const upcoming = list.find((d: any) => !d.taken) || list[0];
           setTodayDose(upcoming);
           const takenCount = list.filter((d: any) => d.taken).length;

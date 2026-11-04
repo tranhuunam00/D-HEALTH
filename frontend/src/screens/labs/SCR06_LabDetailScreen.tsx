@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, User, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
 interface SCR06Props {
   readonly onNavigate: (screen: string) => void;
@@ -86,16 +87,10 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-8">
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
         {/* 1. Header Badges */}
-        <div className="flex gap-1.5 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-            <User className="w-3.5 h-3.5" />
-            Hồ sơ sức khoẻ: <b>{activeMemberName}</b>
-          </span>
-        </div>
+        <ScreenHeaderPills
+          activeMemberName={activeMemberName}
+          onSelectMember={() => onNavigate('family')}
+        />
 
         {/* 2. Topbar với nút Back & Badge Chuyên khoa */}
         <div className="flex items-center justify-between pt-1">

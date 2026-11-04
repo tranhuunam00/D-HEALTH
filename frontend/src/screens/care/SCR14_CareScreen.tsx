@@ -7,6 +7,7 @@ import { CareTeamRow } from './components/CareTeamRow';
 import { DoctorProfileCard } from './components/DoctorProfileCard';
 import { DataSharingBox } from './components/DataSharingBox';
 import { AddDoctorSheet } from './components/AddDoctorSheet';
+import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
 interface SCR14Props {
   readonly onNavigate: (screen: string) => void;
@@ -35,19 +36,12 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
 
   return (
     <div className="w-full min-h-screen relative bg-[#F1F5F9] text-[#111827] flex flex-col font-sans select-none pb-20">
-      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-6 flex flex-col gap-3.5">
+      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-32 flex flex-col gap-3.5">
         {/* 1. Header Badges */}
-        <div className="flex gap-1.5 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs border border-slate-100">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-            <span>👤</span>
-            <span>Hồ sơ sức khoẻ:</span>
-            <b>{activeMemberName}</b>
-          </span>
-        </div>
+        <ScreenHeaderPills
+          activeMemberName={activeMemberName}
+          onSelectMember={() => onNavigate?.('family')}
+        />
 
         {/* 2. Tiêu đề màn hình */}
         <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-tight">
