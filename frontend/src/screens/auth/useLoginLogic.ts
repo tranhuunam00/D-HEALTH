@@ -123,10 +123,15 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
                 headers: { Authorization: `Bearer ${tokenResp.access_token}` },
               });
               const gProfile = await uRes.json();
+              const googleFullName = (
+                gProfile.name ||
+                [gProfile.given_name, gProfile.family_name].filter(Boolean).join(' ') ||
+                (gProfile.email ? gProfile.email.split('@')[0].replace(/[._-]/g, ' ') : 'Trần Hữu Nam')
+              ).trim();
               await sendGoogleProfileToBackend({
                 sub: gProfile.sub || `gg_${Date.now()}`,
                 email: gProfile.email,
-                name: gProfile.name,
+                name: googleFullName,
                 picture: gProfile.picture,
               });
             } catch {

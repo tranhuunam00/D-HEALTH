@@ -16,7 +16,13 @@ export function parseGooglePayload(payload: any): GoogleUserProfile {
 
   const googleId = payload.sub || payload.googleId;
   const email = payload.email;
-  const fullName = payload.name || payload.fullName || 'Người dùng Google';
+  const rawName = (payload.name || payload.fullName || payload.displayName || '').trim();
+  const emailUser = email && typeof email === 'string' && email.includes('@')
+    ? email.split('@')[0].replace(/[._-]/g, ' ')
+    : 'Bệnh nhân';
+  const fullName = rawName && rawName !== 'Người dùng Google' && rawName !== 'Bệnh Nhân Google'
+    ? rawName
+    : emailUser;
   const avatarUrl = payload.picture || payload.avatarUrl;
 
   if (!googleId || !email) {

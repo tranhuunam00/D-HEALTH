@@ -33,6 +33,8 @@ describe('EditProfileBottomSheet Component TDD', () => {
     expect(screen.getByDisplayValue('Trần Bệnh Nhân')).toBeDefined();
     expect(screen.getByDisplayValue('175')).toBeDefined();
     expect(screen.getByDisplayValue('70')).toBeDefined();
+    expect(screen.getByText('Chỉ số khối (BMI) tự động:')).toBeDefined();
+    expect(screen.getByText('22.9')).toBeDefined();
   });
 
   it('không render nội dung khi isOpen = false', () => {

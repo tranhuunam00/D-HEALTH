@@ -115,22 +115,28 @@ describe('UserProfileRoutes Unit Tests (TDD)', () => {
       expect(output.error.code).toBe('INVALID_BLOOD_TYPE');
     });
 
-    it('cập nhật thành công hồ sơ thành viên khi dữ liệu hợp lệ', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rowCount: 1,
-        rows: [{ id: 'mem_1', full_name: 'Trần Bệnh Nhân Cập Nhật', blood_type: 'O+' }],
-      });
+    it('cập nhật thành công hồ sơ thành viên khi dữ liệu hợp lệ và tự động đồng bộ BMI', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rowCount: 1,
+          rows: [{ id: 'mem_1', full_name: 'Trần Bệnh Nhân Cập Nhật', blood_type: 'O+', height_cm: 174, weight_kg: 72.5, avatar_url: 'https://example.com/a.jpg' }],
+        })
+        .mockResolvedValueOnce({ rowCount: 1 }) // weight insert
+        .mockResolvedValueOnce({ rowCount: 1 }); // bmi insert
 
       const handler = getHandler('PUT', '/members/:memberId');
       const { req, res } = createReqRes({
         params: { memberId: 'mem_1' },
-        body: { fullName: 'Trần Bệnh Nhân Cập Nhật', bloodType: 'O+' },
+        body: { fullName: 'Trần Bệnh Nhân Cập Nhật', bloodType: 'O+', heightCm: 174, weightKg: 72.5, avatarUrl: 'https://example.com/a.jpg' },
       });
 
       await handler(req, res);
       const output = res.json.mock.calls[0][0];
       expect(output.success).toBe(true);
       expect(output.data.blood_type).toBe('O+');
+      expect(output.data.avatar_url).toBe('https://example.com/a.jpg');
+      // kiểm tra pool.query đã được gọi cho cả UPDATE, biometric weight và bmi
+      expect(mockPool.query).toHaveBeenCalledTimes(3);
     });
   });
 });

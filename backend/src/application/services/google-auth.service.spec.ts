@@ -19,6 +19,15 @@ describe('GoogleAuthService', () => {
       expect(profile.avatarUrl).toBe('https://lh3.googleusercontent.com/avatar123.jpg');
     });
 
+    it('tự động trích xuất tên từ email khi Google không trả về trường name', () => {
+      const payload = {
+        sub: 'google_sub_9999',
+        email: 'tran.minh.khang@gmail.com',
+      };
+      const profile = parseGooglePayload(payload);
+      expect(profile.fullName).toBe('tran minh khang');
+    });
+
     // 2. ERROR & BOUNDARY
     it('ném lỗi khi payload rỗng hoặc null', () => {
       expect(() => parseGooglePayload(null)).toThrow('Dữ liệu xác thực Google không hợp lệ.');

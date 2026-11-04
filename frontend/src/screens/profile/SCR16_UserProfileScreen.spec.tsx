@@ -3,8 +3,8 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { SCR16_UserProfileScreen } from './SCR16_UserProfileScreen';
 
-describe('SCR16_UserProfileScreen Dark Mobile View TDD', () => {
-  it('render 100% chuẩn giao diện: HỒ SƠ SỨC KHỎE CÁ NHÂN, CHỈ SỐ THỂ TRẠNG NỀN, nút Chỉnh Sửa Hồ Sơ, chuyển PC Admin và Nghị định 13', async () => {
+describe('SCR16_UserProfileScreen Light Mobile View TDD', () => {
+  it('render 100% chuẩn giao diện: Thông tin người dùng, THÔNG TIN CÁ NHÂN, THÔNG TIN Y TẾ, camera đổi avatar và BMI tự động', async () => {
     const handleBack = vi.fn();
     const handleAdmin = vi.fn();
 
@@ -15,39 +15,49 @@ describe('SCR16_UserProfileScreen Dark Mobile View TDD', () => {
           onNavigateToAdmin={handleAdmin}
           user={{
             id: 'nam',
-            fullName: 'Trần Hữu Nam',
-            phoneNumber: '0987654321',
-            email: 'tranhuunam@gmail.com',
+            fullName: 'Trần Minh Khang',
+            phoneNumber: '0901234567',
+            email: 'minhkhang.demo@example.com',
             bloodType: 'O+',
-            heightCm: 172,
-            weightKg: 68,
+            heightCm: 174,
+            weightKg: 72.5,
             role: 'patient',
           }}
         />
       );
     });
 
-    expect(screen.getByText('HỒ SƠ SỨC KHỎE CÁ NHÂN')).toBeDefined();
-    expect(screen.getByText('CHỦ TÀI KHOẢN (BỆNH NHÂN CHÍNH)')).toBeDefined();
-    expect(screen.getByText('Trần Hữu Nam')).toBeDefined();
-    expect(screen.getByText('0987654321')).toBeDefined();
-    expect(screen.getByText('Chỉnh Sửa Hồ Sơ')).toBeDefined();
+    // Tiêu đề & header pills
+    expect(screen.getByText('Thông tin người dùng')).toBeDefined();
+    expect(screen.getByText('Hôm nay: 26/10/2026')).toBeDefined();
+    expect(screen.getByText(/Hồ sơ sức khoẻ:/)).toBeDefined();
 
-    expect(screen.getByText('CHỈ SỐ THỂ TRẠNG NỀN')).toBeDefined();
+    // Thẻ định danh
+    expect(screen.getAllByText('Trần Minh Khang').length).toBeGreaterThan(0);
+    expect(screen.getByText('Đã xác thực định danh điện tử')).toBeDefined();
+    expect(screen.getByLabelText('Đổi ảnh đại diện')).toBeDefined();
+
+    // Thẻ THÔNG TIN CÁ NHÂN
+    expect(screen.getByText('THÔNG TIN CÁ NHÂN')).toBeDefined();
+    expect(screen.getByText('Số căn cước công dân')).toBeDefined();
+    expect(screen.getByText('Ngày sinh')).toBeDefined();
+    expect(screen.getByText('Giới tính')).toBeDefined();
+    expect(screen.getByText('Số điện thoại')).toBeDefined();
+    expect(screen.getByText('Email')).toBeDefined();
+    expect(screen.getByText('Địa chỉ')).toBeDefined();
+
+    // Thẻ THÔNG TIN Y TẾ
+    expect(screen.getByText('THÔNG TIN Y TẾ')).toBeDefined();
     expect(screen.getByText('Nhóm máu')).toBeDefined();
     expect(screen.getByText('O+')).toBeDefined();
-    expect(screen.getByText('Hệ ABO / Rh')).toBeDefined();
-
-    expect(screen.getByText('Chỉ số khối (BMI)')).toBeDefined();
-    expect(screen.getByText('23.0')).toBeDefined();
-    expect(screen.getByText('Thể trạng bình thường')).toBeDefined();
-
     expect(screen.getByText('Chiều cao')).toBeDefined();
-    expect(screen.getByText('172')).toBeDefined();
-
     expect(screen.getByText('Cân nặng')).toBeDefined();
-    expect(screen.getByText('68')).toBeDefined();
 
+    // Live BMI
+    expect(screen.getByText('Chỉ số khối (BMI):')).toBeDefined();
+    expect(screen.getByText('23.9')).toBeDefined();
+
+    // Switch admin & Decree 13
     expect(screen.getByText('Chuyển sang Quản Trị Hệ Thống (PC Admin)')).toBeDefined();
     expect(screen.getByText('Tuân Thủ Nghị Định 13/2023/NĐ-CP')).toBeDefined();
 
@@ -56,27 +66,24 @@ describe('SCR16_UserProfileScreen Dark Mobile View TDD', () => {
     expect(handleAdmin).toHaveBeenCalled();
   });
 
-  it('khi người dùng Google chưa nhập chiều cao cân nặng thì hiển thị Chưa rõ và --', async () => {
+  it('tự động tính BMI khi chiều cao và cân nặng thay đổi', async () => {
     await act(async () => {
       render(
         <SCR16_UserProfileScreen
           onBack={vi.fn()}
           user={{
-            id: 'google_user',
-            fullName: 'Bệnh Nhân Google',
-            phoneNumber: undefined,
-            email: 'google@gmail.com',
-            bloodType: undefined,
-            heightCm: undefined,
-            weightKg: undefined,
+            id: 'u2',
+            fullName: 'Nguyễn Văn Test',
+            bloodType: 'A+',
+            heightCm: 170,
+            weightKg: 65,
             role: 'patient',
           }}
         />
       );
     });
 
-    expect(screen.getByText('Bệnh Nhân Google')).toBeDefined();
-    expect(screen.getByText('Chưa rõ')).toBeDefined();
-    expect(screen.getAllByText('--').length).toBeGreaterThan(0);
+    expect(screen.getByText('Nguyễn Văn Test')).toBeDefined();
+    expect(screen.getByText('22.5')).toBeDefined();
   });
 });

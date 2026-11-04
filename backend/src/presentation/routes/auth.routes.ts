@@ -190,13 +190,13 @@ export function createAuthRouter(pool: Pool): Router {
       );
       const owner = memberRes.rows[0];
 
-      if (owner && profile.avatarUrl && (!owner.avatar_url || owner.avatar_url !== profile.avatarUrl)) {
-        await pool.query(`UPDATE family_members SET avatar_url = $1 WHERE id = $2`, [profile.avatarUrl, owner.id]);
-        owner.avatar_url = profile.avatarUrl;
+      if (owner && profile.avatarUrl && profile.avatarUrl.trim()) {
+        await pool.query(`UPDATE family_members SET avatar_url = $1 WHERE id = $2`, [profile.avatarUrl.trim(), owner.id]);
+        owner.avatar_url = profile.avatarUrl.trim();
       }
-      if (owner && profile.fullName && (owner.full_name === 'Người dùng Google' || owner.full_name === 'Bệnh Nhân Google')) {
-        await pool.query(`UPDATE family_members SET full_name = $1 WHERE id = $2`, [profile.fullName, owner.id]);
-        owner.full_name = profile.fullName;
+      if (owner && profile.fullName && profile.fullName.trim() && profile.fullName !== 'Người dùng Google' && profile.fullName !== 'Bệnh Nhân Google') {
+        await pool.query(`UPDATE family_members SET full_name = $1 WHERE id = $2`, [profile.fullName.trim(), owner.id]);
+        owner.full_name = profile.fullName.trim();
       }
 
       const realPhone = (user.phone_number && !user.phone_number.startsWith('gg_')) ? user.phone_number : null;

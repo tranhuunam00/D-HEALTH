@@ -143,7 +143,7 @@ export function createUserProfileRouter(pool: Pool): Router {
              weight_kg = COALESCE($6, weight_kg),
              avatar_url = COALESCE($7, avatar_url),
              updated_at = NOW()
-         WHERE id = $8 AND ($9::varchar IS NULL OR user_id = $9::varchar OR user_id = 'usr_000000000001')
+         WHERE id = $8 AND ($9::text IS NULL OR user_id::text = $9::text)
          RETURNING *`,
         [fullName, gender, birthDate, bloodType, heightCm, weightKg, avatarUrl, memberId, userId || null]
       );
@@ -152,9 +152,29 @@ export function createUserProfileRouter(pool: Pool): Router {
         return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Không tìm thấy hồ sơ thành viên.' } });
       }
 
+      const updated = updateRes.rows[0];
+      const numWeight = updated.weight_kg ? Number(updated.weight_kg) : null;
+      const numHeight = updated.height_cm ? Number(updated.height_cm) : null;
+
+      if (numWeight !== null && numWeight > 0) {
+        await pool.query(
+          `INSERT INTO biometric_records (member_id, biometric_type, value_numeric, unit, measured_at, source)
+           VALUES ($1, 'weight', $2, 'kg', NOW(), 'manual')`,
+          [memberId, numWeight]
+        );
+      }
+      if (numHeight !== null && numWeight !== null && numHeight > 0 && numWeight > 0) {
+        const liveBmi = Math.round((numWeight / Math.pow(numHeight / 100, 2)) * 10) / 10;
+        await pool.query(
+          `INSERT INTO biometric_records (member_id, biometric_type, value_numeric, unit, measured_at, source)
+           VALUES ($1, 'bmi', $2, 'kg/m²', NOW(), 'manual')`,
+          [memberId, liveBmi]
+        );
+      }
+
       return res.json({
         success: true,
-        data: updateRes.rows[0],
+        data: updated,
         message: 'Cập nhật hồ sơ sức khỏe thành công.',
       });
     } catch (err: any) {

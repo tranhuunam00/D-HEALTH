@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Camera, Activity } from 'lucide-react';
 import { BottomSheet } from '../../components/organisms/BottomSheet';
 import { Input } from '../../components/atoms/Input';
 import { Button } from '../../components/atoms/Button';
@@ -23,6 +24,8 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
   const [bloodType, setBloodType] = useState(member.blood_type || 'O+');
   const [heightCm, setHeightCm] = useState(String(member.height_cm || ''));
   const [weightKg, setWeightKg] = useState(String(member.weight_kg || ''));
+  const [avatarUrl, setAvatarUrl] = useState(member.avatar_url || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setFullName(member.full_name);
@@ -31,7 +34,25 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
     setBloodType(member.blood_type || 'O+');
     setHeightCm(String(member.height_cm || ''));
     setWeightKg(String(member.weight_kg || ''));
+    setAvatarUrl(member.avatar_url || '');
   }, [member, isOpen]);
+
+  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setAvatarUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const hVal = parseFloat(heightCm);
+  const wVal = parseFloat(weightKg);
+  const liveBmi = hVal > 0 && wVal > 0 ? (wVal / Math.pow(hVal / 100, 2)).toFixed(1) : null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +63,48 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
       blood_type: bloodType,
       height_cm: heightCm ? parseFloat(heightCm) : undefined,
       weight_kg: weightKg ? parseFloat(weightKg) : undefined,
+      avatar_url: avatarUrl || undefined,
     });
   };
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Chỉnh Sửa Hồ Sơ Sức Khỏe">
       <form onSubmit={handleSubmit} className="space-y-3.5 pb-2">
+        {/* Avatar Upload Picker */}
+        <div className="flex flex-col items-center justify-center pt-1 pb-2">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-teal-400 overflow-hidden flex items-center justify-center text-xl font-bold text-white shadow">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span>{(fullName || 'B').charAt(0)}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-slate-900 border border-white text-white flex items-center justify-center shadow hover:bg-slate-800 transition"
+              title="Đổi ảnh đại diện"
+            >
+              <Camera className="w-3.5 h-3.5" />
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleAvatarFile}
+              className="hidden"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-[11px] font-semibold text-teal-400 hover:underline mt-1.5"
+          >
+            Đổi ảnh đại diện
+          </button>
+        </div>
+
         <Input
           label="Họ và tên bệnh nhân"
           value={fullName}
@@ -94,19 +151,43 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Chiều cao (cm)"
-            placeholder="170"
+            placeholder="174"
             type="number"
             value={heightCm}
             onChange={(e) => setHeightCm(e.target.value)}
           />
           <Input
             label="Cân nặng (kg)"
-            placeholder="65"
+            placeholder="72.5"
             type="number"
-            step="0.5"
+            step="0.1"
             value={weightKg}
             onChange={(e) => setWeightKg(e.target.value)}
           />
+        </div>
+
+        {/* Real-time Live BMI feedback from Height and Weight */}
+        <div className="bg-slate-900/60 border border-slate-700/60 rounded-2xl p-3 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-slate-300">
+            <Activity className="w-4 h-4 text-teal-400 shrink-0" />
+            <span className="font-semibold">Chỉ số khối (BMI) tự động:</span>
+          </div>
+          {liveBmi ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-black text-white">{liveBmi}</span>
+              <span className="text-[10px] text-teal-300 font-bold px-2 py-0.5 rounded-full bg-teal-500/20">
+                {Number(liveBmi) < 18.5
+                  ? 'Thiếu cân'
+                  : Number(liveBmi) < 23
+                  ? 'Bình thường'
+                  : Number(liveBmi) < 25
+                  ? 'Tiền béo phì'
+                  : 'Béo phì'}
+              </span>
+            </div>
+          ) : (
+            <span className="text-slate-400 italic">Nhập chiều cao & cân nặng</span>
+          )}
         </div>
 
         <div className="flex gap-2 pt-3">
