@@ -38,5 +38,30 @@ export function createClinicalReportsRouter(pool: Pool): Router {
     }
   });
 
+  // 3. POST / - Nhập mới phiếu kết quả cận lâm sàng (SCR-12)
+  router.post('/', async (req: AuthenticatedRequest, res: Response) => {
+    const { memberId, kind, category = 'SH', title, performedAt, facilityName, doctorName, conclusion } = req.body;
+    if (!memberId || !kind || !title) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Vui lòng cung cấp đủ memberId, kind và title.' },
+      });
+    }
+
+    try {
+      const reportId = `rep_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const result = await pool.query(
+        `INSERT INTO clinical_reports 
+          (id, member_id, kind, category, title, performed_at, facility_name, ordering_doctor_name, conclusion)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *`,
+        [reportId, memberId, kind, category, title, performedAt || new Date().toISOString().split('T')[0], facilityName || null, doctorName || null, conclusion || null]
+      );
+      return res.status(201).json({ success: true, data: result.rows[0], message: 'Tạo phiếu kết quả cận lâm sàng thành công.' });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
   return router;
 }

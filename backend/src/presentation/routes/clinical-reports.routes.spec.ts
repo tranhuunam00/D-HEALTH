@@ -85,4 +85,50 @@ describe('ClinicalReportsRoutes TDD', () => {
       expect(output.data[0].test_name).toBe('Glucose máu đói');
     });
   });
+
+  describe('POST /', () => {
+    it('tạo mới phiếu kết quả cận lâm sàng thành công', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'rep_new_1',
+            member_id: 'mem_1',
+            kind: 'lab',
+            category: 'SH',
+            title: 'Sinh hóa máu',
+            performed_at: '2026-10-26',
+          },
+        ],
+      });
+
+      const handler = getHandler('POST', '/');
+      const { req, res } = createReqRes({
+        body: {
+          memberId: 'mem_1',
+          kind: 'lab',
+          category: 'SH',
+          title: 'Sinh hóa máu',
+          performedAt: '2026-10-26',
+          facilityName: 'Bệnh viện Bạch Mai',
+        },
+      });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(201);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.id).toBe('rep_new_1');
+    });
+
+    it('trả về 400 khi thiếu thông tin bắt buộc', async () => {
+      const handler = getHandler('POST', '/');
+      const { req, res } = createReqRes({ body: {} });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(false);
+      expect(output.error.code).toBe('VALIDATION_ERROR');
+    });
+  });
 });
