@@ -15,9 +15,21 @@
 ---
 
 ## 1. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT)
+- **Quy tắc viết TDD từng hàm một (One-Function-At-A-Time TDD Workflow)**:
+  - Bắt buộc phải thực hiện theo chu trình nguyên tử cho **TỪNG HÀM RIÊNG BIỆT (ONE FUNCTION AT A TIME)**:
+    1. **Bước 1 (Test First)**: Viết file kiểm thử unit test cho hàm đó trước khi viết code thực thi (Red phase).
+    2. **Bước 2 (Implementation)**: Viết mã nguồn cài đặt tối thiểu cho riêng hàm đó để test chuyển sang màu xanh (Green phase).
+    3. **Bước 3 (Verify & Refactor)**: Chạy test ngay cho hàm đó, kiểm chứng độ dài $\le 30$ dòng, tham số $\le 3$.
+    4. **Chỉ khi hàm này hoàn thành 100% và test pass tuyệt đối mới chuyển sang viết hàm tiếp theo**. Tuyệt đối cấm viết ồ ạt nhiều hàm rồi mới quay lại viết test đối phó.
 - **Quy tắc 100% mọi hàm mới bắt buộc có test (100% Function Testing Mandate)**: 
   - Bất cứ hàm mới nào (Utility function, Helper, Service method, Domain Entity method, Value Object method, Use Case, API Handler) khi được tạo ra **BẮT BUỘC 100% PHẢI CÓ FILE TEST ĐI KÈM** (`*.spec.ts` hoặc `*.test.ts`).
   - **Không có test = Không nghiệm thu (Definition of Done = Failed)**. Tuyệt đối không bàn giao bất kỳ hàm nào mà thiếu unit test.
+- **Kỷ luật chạy lại toàn bộ test trước mỗi lần commit (100% Full-Suite Test Pass Mandate Before Commit)**:
+  - Trước mỗi lần thực hiện lệnh `git commit`, **BẮT BUỘC PHẢI CHẠY LẠI TOÀN BỘ TEST SUITE CỦA CẢ HỆ THỐNG** (Cả Backend và Frontend):
+    ```bash
+    npm --prefix backend test && npm --prefix frontend test
+    ```
+  - **100% tất cả các test suites phải PASSED (Exit code = 0)**. Dù chỉ có **1 test bị FAIL**, **TUYỆT ĐỐI CẤM COMMIT**.
 - **Ma trận kiểm thử 4 chiều bắt buộc cho mỗi hàm**:
   1. **INPUT**:
      - Kiểm thử dữ liệu hợp lệ (Happy path).

@@ -1,0 +1,14 @@
+{
+  "name": "d-health",
+  "version": "1.0.0",
+  "private": true,
+  "description": "D-Health Intelligent Healthcare Ecosystem",
+  "scripts": {
+    "test:backend": "npm --prefix backend test",
+    "test:frontend": "npm --prefix frontend test",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build"
+  }
+}
