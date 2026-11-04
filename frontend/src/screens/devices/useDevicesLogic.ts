@@ -17,8 +17,8 @@ export const INITIAL_DEVICES: readonly DeviceItem[] = Object.freeze([
     id: 'apple-health',
     name: 'Apple Health',
     group: 'platforms',
-    subtitle: 'Đồng bộ 5 phút trước',
-    isConnected: true,
+    subtitle: 'Dành cho iOS',
+    isConnected: false,
     abbr: 'AH',
     bg: '#FEE2E2',
     fg: '#DC2626',
@@ -38,8 +38,8 @@ export const INITIAL_DEVICES: readonly DeviceItem[] = Object.freeze([
     id: 'apple-watch',
     name: 'Apple Watch',
     group: 'wearables',
-    subtitle: 'Pin 64% · đồng bộ 5 phút trước',
-    isConnected: true,
+    subtitle: 'Qua ứng dụng Apple Watch',
+    isConnected: false,
     abbr: 'AW',
     bg: '#F1F5F9',
     fg: '#334155',
@@ -79,8 +79,8 @@ export const INITIAL_DEVICES: readonly DeviceItem[] = Object.freeze([
     id: 'omron-bp',
     name: 'Máy đo huyết áp',
     group: 'medical',
-    subtitle: 'Lần đo gần nhất 07:15 · 26/10',
-    isConnected: true,
+    subtitle: 'Bluetooth · bắp tay',
+    isConnected: false,
     abbr: 'HA',
     bg: '#DBEAFE',
     fg: '#2563EB',
@@ -127,8 +127,24 @@ export const INITIAL_DEVICES: readonly DeviceItem[] = Object.freeze([
   },
 ]);
 
+const STORAGE_KEY = 'dhealth_connected_devices';
+
 export function useDevicesLogic() {
-  const [devices, setDevices] = useState<readonly DeviceItem[]>(INITIAL_DEVICES);
+  const [devices, setDevices] = useState<readonly DeviceItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const ids: string[] = JSON.parse(stored);
+          return INITIAL_DEVICES.map((d) => ({
+            ...d,
+            isConnected: ids.includes(d.id),
+          }));
+        }
+      } catch {}
+    }
+    return INITIAL_DEVICES;
+  });
   const [isScanning, setIsScanning] = useState(false);
 
   const startScan = useCallback(() => {
@@ -137,9 +153,16 @@ export function useDevicesLogic() {
   }, []);
 
   const toggleDeviceConnection = useCallback((deviceId: string) => {
-    setDevices((prev) =>
-      prev.map((d) => (d.id === deviceId ? { ...d, isConnected: !d.isConnected } : d))
-    );
+    setDevices((prev) => {
+      const updated = prev.map((d) => (d.id === deviceId ? { ...d, isConnected: !d.isConnected } : d));
+      if (typeof window !== 'undefined') {
+        try {
+          const connectedIds = updated.filter((d) => d.isConnected).map((d) => d.id);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(connectedIds));
+        } catch {}
+      }
+      return updated;
+    });
   }, []);
 
   const connectedCount = devices.filter((d) => d.isConnected).length;

@@ -3,6 +3,7 @@ import { ChevronRight, Plus, Check } from 'lucide-react';
 import { useLabsLogic, LabSpecialtyCode, TRACKED_METRICS_CONFIG } from './useLabsLogic';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
+import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
 
 interface SCR05Props {
   readonly onNavigate: (screen: string, reportId?: string) => void;
@@ -100,30 +101,15 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
           Sức khoẻ
         </h1>
 
-        {/* 3. Category Tabs 4 nhóm */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-          <button
-            onClick={() => onNavigate('biometrics')}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
-          >
-            Sinh trắc
-          </button>
-          <button className="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white shadow-xs">
-            Xét nghiệm
-          </button>
-          <button
-            onClick={() => onNavigate('imaging')}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
-          >
-            CĐHA
-          </button>
-          <button
-            onClick={() => onNavigate('chronic')}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
-          >
-            Bệnh mạn tính
-          </button>
-        </div>
+        {/* 3. Category Tabs 1 dòng */}
+        <HealthCategoryTabs
+          activeTab="labs"
+          onSelectTab={(tab: HealthTabId) => {
+            if (tab === 'biometrics') onNavigate('biometrics');
+            else if (tab === 'imaging') onNavigate('imaging');
+            else if (tab === 'chronic') onNavigate('chronic');
+          }}
+        />
 
         {/* 4. Section: Kết quả xét nghiệm */}
         <div className="flex flex-col gap-2">

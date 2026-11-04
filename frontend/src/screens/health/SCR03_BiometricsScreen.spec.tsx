@@ -15,7 +15,7 @@ describe('SCR03_BiometricsScreen Mobile View TDD', () => {
     expect(screen.getAllByText('Sức khoẻ').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Sinh trắc')).toBeDefined();
     expect(screen.getByText('Xét nghiệm')).toBeDefined();
-    expect(screen.getByText(/Đồng bộ từ Apple Watch/i)).toBeDefined();
+    expect(screen.getByText(/Chưa có thiết bị.*kết nối/i)).toBeDefined();
     expect(screen.getByText(/Nhập số đo.*thủ công/i)).toBeDefined();
     expect(screen.getByText('Huyết áp')).toBeDefined();
     expect(screen.getByText('Nhịp tim')).toBeDefined();

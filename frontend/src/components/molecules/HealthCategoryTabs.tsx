@@ -24,7 +24,7 @@ export const HealthCategoryTabs: React.FC<HealthCategoryTabsProps> = ({
   onSelectTab,
 }) => {
   return (
-    <div className="flex gap-1.5 shrink-0 w-full" role="tablist">
+    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 shrink-0" role="tablist">
       {HEALTH_TABS.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -33,10 +33,10 @@ export const HealthCategoryTabs: React.FC<HealthCategoryTabsProps> = ({
             role="tab"
             aria-selected={isActive}
             onClick={() => onSelectTab(tab.id)}
-            className={`flex-1 h-9 px-2 rounded-[18px] justify-center whitespace-nowrap text-xs font-semibold flex items-center transition-all ${
+            className={`px-4 py-1.5 rounded-full whitespace-nowrap shrink-0 text-xs font-semibold flex items-center transition-all ${
               isActive
-                ? 'bg-[#111827] text-white font-bold shadow-sm'
-                : 'bg-white text-slate-700 hover:bg-slate-50'
+                ? 'bg-[#111827] text-white font-bold shadow-xs'
+                : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
             }`}
           >
             {tab.label}

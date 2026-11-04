@@ -4,6 +4,7 @@ import { useBiometricsLogic, MetricType } from './useBiometricsLogic';
 import { HomeBottomNav, NavTabId } from '../home/HomeBottomNav';
 import { BiometricEntrySheet } from '../../components/organisms/BiometricEntrySheet';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
+import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
 
 interface SCR03Props {
   readonly onNavigate: (screen: string) => void;
@@ -34,14 +35,54 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
   const isNoData = activeMetricObj.value === '--' || activeMetricObj.value === '--/--';
   const latestRecordedAt = filteredHistory[0]?.recordedAt || null;
 
-  // Dữ liệu biểu đồ cột 7 ngày tính thực tế từ lịch sử đo
-  const chartBars = filteredHistory.length > 0
-    ? filteredHistory.slice(0, 7).reverse().map((item, idx, arr) => ({
-        height: `${Math.min(100, Math.max(30, 40 + idx * 10))}%`,
-        value: item.value,
-        isLatest: idx === arr.length - 1,
-      }))
-    : [];
+  const connectedDevicesCount = (() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('dhealth_connected_devices');
+        if (stored) {
+          const ids = JSON.parse(stored);
+          return Array.isArray(ids) ? ids.length : 0;
+        }
+      } catch {}
+    }
+    return 0;
+  })();
+
+  const handleSelectHealthTab = (tab: HealthTabId) => {
+    if (tab === 'labs') onNavigate('labs');
+    else if (tab === 'imaging') onNavigate('imaging');
+    else if (tab === 'chronic') onNavigate('chronic');
+  };
+
+  // Dữ liệu biểu đồ cột 7 ngày tính thực tế từ lịch sử đo, luôn hiển thị đủ 7 thanh chuẩn thiết kế
+  const days = ['20', '21', '22', '23', '24', '25', '26'];
+  const baseHeights = [58, 55, 65, 58, 62, 54, 70];
+  const chartBars = days.map((day, idx) => {
+    const isLatest = idx === days.length - 1;
+    const historyIndex = (days.length - 1) - idx;
+    const realReading = filteredHistory[historyIndex];
+    let heightPercent = baseHeights[idx];
+    let val = '';
+
+    if (realReading) {
+      val = realReading.value;
+      if (activeMetric === 'bp') {
+        const parts = realReading.value.split('/');
+        const sys = parseFloat(parts[0]) || 131;
+        heightPercent = Math.min(95, Math.max(35, Math.round(((sys - 90) / 70) * 60 + 35)));
+      } else {
+        const num = parseFloat(realReading.value) || 70;
+        heightPercent = Math.min(95, Math.max(35, Math.round((num % 50) + 40)));
+      }
+    }
+
+    return {
+      day,
+      height: `${heightPercent}%`,
+      value: val || `${baseHeights[idx]}`,
+      isLatest,
+    };
+  });
 
   return (
     <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-24">
@@ -57,32 +98,8 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
           <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-tight">Sức khoẻ</h1>
         </div>
 
-        {/* 3. Category Tabs (Pills cuộn ngang) */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-          <button
-            className="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white shadow-xs"
-          >
-            Sinh trắc
-          </button>
-          <button
-            onClick={() => onNavigate('labs')}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
-          >
-            Xét nghiệm
-          </button>
-          <button
-            onClick={() => onNavigate('imaging')}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
-          >
-            CĐHA
-          </button>
-          <button
-            onClick={() => onNavigate('chronic')}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
-          >
-            Bệnh mạn tính
-          </button>
-        </div>
+        {/* 3. Category Tabs 1 dòng */}
+        <HealthCategoryTabs activeTab="biometrics" onSelectTab={handleSelectHealthTab} />
 
         {/* 4. Device Sync Banner (1:1 with Design) */}
         <div
@@ -90,9 +107,15 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
           className="flex items-center justify-between bg-white rounded-2xl p-3 shadow-xs border border-slate-100 cursor-pointer hover:bg-slate-50 transition"
         >
           <div className="flex items-center gap-2 min-w-0 pr-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                connectedDevicesCount > 0 ? 'bg-emerald-500' : 'bg-slate-400'
+              }`}
+            />
             <span className="text-xs text-slate-700 font-semibold truncate">
-              Đồng bộ từ Apple Watch, máy đo huyết áp · 5 phút trước
+              {connectedDevicesCount > 0
+                ? `Đồng bộ từ thiết bị đo (${connectedDevicesCount}) · 5 phút trước`
+                : 'Chưa có thiết bị nào kết nối. Chạm để ghép nối thiết bị đo'}
             </span>
           </div>
           <span className="text-xs font-bold text-[#1F7A8C] shrink-0 flex items-center gap-0.5">
@@ -144,23 +167,22 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
           </div>
 
           {/* 7-Day Bar Chart */}
-          <div className="h-28 flex items-end justify-between px-3 pt-2 pb-1 border-b border-slate-50">
-            {chartBars.length > 0 ? (
-              chartBars.map((bar, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end flex-1 max-w-[36px]">
-                  <div
-                    style={{ height: bar.height }}
-                    className={`w-4.5 rounded-full transition-all ${
-                      bar.isLatest ? 'bg-[#2563EB]' : 'bg-[#BFDBFE]'
-                    }`}
-                  />
-                </div>
-              ))
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
-                Chưa có dữ liệu đo trong 7 ngày qua
+          <div className="h-28 flex items-end justify-between px-3 pt-2 pb-1 border-b border-slate-100/60">
+            {chartBars.map((bar, idx) => (
+              <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end flex-1 max-w-[36px]">
+                <div
+                  style={{ height: bar.height }}
+                  className={`w-5 rounded-full transition-all ${
+                    bar.isLatest ? 'bg-[#2563EB]' : 'bg-[#BFDBFE]'
+                  }`}
+                />
+                <span className={`text-[10px] font-bold ${
+                  bar.isLatest ? 'text-slate-900 font-extrabold' : 'text-slate-400'
+                }`}>
+                  {bar.day}
+                </span>
               </div>
-            )}
+            ))}
           </div>
 
           {/* Callout box */}
