@@ -13,6 +13,7 @@ import { createBiometricsRouter } from './presentation/routes/biometrics.routes'
 import { createPrescriptionsRouter } from './presentation/routes/prescriptions.routes';
 import { createClinicalReportsRouter } from './presentation/routes/clinical-reports.routes';
 import { createChronicConditionsRouter } from './presentation/routes/chronic-conditions.routes';
+import { createCareRouter } from './presentation/routes/care.routes';
 import { MinioStorageService } from './infrastructure/storage/minio-storage.service';
 import { createStorageRouter } from './presentation/routes/storage.routes';
 
@@ -41,6 +42,7 @@ app.use('/api/biometrics', createBiometricsRouter(pool));
 app.use('/api/prescriptions', createPrescriptionsRouter(pool));
 app.use('/api/clinical-reports', createClinicalReportsRouter(pool));
 app.use('/api/chronic-conditions', createChronicConditionsRouter(pool));
+app.use('/api/care', createCareRouter(pool));
 
 // 2. MinIO S3 Client & Storage Service
 const isDockerEnv = process.env.IS_DOCKER === 'true' || process.env.NODE_ENV === 'production';

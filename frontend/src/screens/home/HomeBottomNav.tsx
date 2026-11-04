@@ -6,17 +6,23 @@ export type NavTabId = 'home' | 'health' | 'records' | 'ai' | 'care' | 'meds' | 
 export interface HomeBottomNavProps {
   activeTab?: NavTabId;
   onTabChange?: (tab: NavTabId) => void;
+  onNavigate?: (screen: string, extra?: any) => void;
 }
 
 export const HomeBottomNav: React.FC<HomeBottomNavProps> = ({
   activeTab = 'home',
   onTabChange,
+  onNavigate,
 }) => {
+  const handleTabClick = (tab: NavTabId) => {
+    onTabChange?.(tab);
+    onNavigate?.(tab);
+  };
   return (
     <nav className="fixed bottom-3 left-3 right-3 max-w-[456px] mx-auto h-16 bg-white/95 backdrop-blur-md rounded-[24px] px-3 shadow-xl shadow-slate-200/50 border border-slate-100/80 flex items-center justify-around z-30 font-sans">
       {/* 1. Trang chủ */}
       <button
-        onClick={() => onTabChange?.('home')}
+        onClick={() => handleTabClick('home')}
         className={`flex flex-col items-center gap-0.5 transition-all ${
           activeTab === 'home' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
         }`}
@@ -33,7 +39,7 @@ export const HomeBottomNav: React.FC<HomeBottomNavProps> = ({
 
       {/* 2. Sức khoẻ */}
       <button
-        onClick={() => onTabChange?.('health')}
+        onClick={() => handleTabClick('health')}
         className={`flex flex-col items-center gap-0.5 transition-all ${
           activeTab === 'health' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
         }`}
@@ -50,7 +56,7 @@ export const HomeBottomNav: React.FC<HomeBottomNavProps> = ({
 
       {/* 3. Hồ sơ */}
       <button
-        onClick={() => onTabChange?.('records')}
+        onClick={() => handleTabClick('records')}
         className={`flex flex-col items-center gap-0.5 transition-all ${
           activeTab === 'records' || activeTab === 'profile' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
         }`}
@@ -67,7 +73,7 @@ export const HomeBottomNav: React.FC<HomeBottomNavProps> = ({
 
       {/* 4. Trợ lý AI */}
       <button
-        onClick={() => onTabChange?.('ai')}
+        onClick={() => handleTabClick('ai')}
         className={`flex flex-col items-center gap-0.5 transition-all ${
           activeTab === 'ai' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
         }`}
@@ -80,7 +86,7 @@ export const HomeBottomNav: React.FC<HomeBottomNavProps> = ({
 
       {/* 5. Chăm sóc */}
       <button
-        onClick={() => onTabChange?.('care')}
+        onClick={() => handleTabClick('care')}
         className={`flex flex-col items-center gap-0.5 transition-all ${
           activeTab === 'care' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
         }`}

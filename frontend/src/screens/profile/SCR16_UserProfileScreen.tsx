@@ -29,7 +29,7 @@ export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   const realPhone =
     user?.phoneNumber && !user.phoneNumber.startsWith('gg_')
       ? user.phoneNumber
-      : activeMember.phone_number || '0987654321';
+      : null;
 
   const displayBlood = activeMember.blood_type || user?.bloodType || 'Chưa rõ';
   const displayHeight = activeMember.height_cm || user?.heightCm;
@@ -80,10 +80,12 @@ export const SCR16_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
             CHỦ TÀI KHOẢN (BỆNH NHÂN CHÍNH)
           </span>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mt-1.5">
-            <Phone className="w-3.5 h-3.5 text-slate-400" />
-            <span>{realPhone}</span>
-          </div>
+          {realPhone && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mt-1.5">
+              <Phone className="w-3.5 h-3.5 text-slate-400" />
+              <span>{realPhone}</span>
+            </div>
+          )}
 
           <button
             type="button"
