@@ -150,7 +150,7 @@ export function useCameraInputLogic(initialMemberId = 'nam') {
       const body = {
         memberId: initialMemberId,
         kind: kind === 'lab' ? 'lab' : kind === 'img' ? 'imaging' : 'pathology',
-        category: curCode,
+        category: kind === 'lab' ? curCode : kind === 'img' ? modality : curCode,
         title: buildTitle(),
         performedAt: testDate,
         facilityName,

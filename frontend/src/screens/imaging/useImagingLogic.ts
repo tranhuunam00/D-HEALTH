@@ -1,109 +1,166 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
-export type ModalityType = 'all' | 'mri' | 'ct' | 'xray' | 'ultrasound';
+export type ModalityCode = 'ALL' | 'SA' | 'XQ' | 'MM' | 'CT' | 'MRI' | 'all' | 'mri' | 'ct' | 'xray' | 'ultrasound';
 
 export interface ImagingStudyItem {
   readonly id: string;
   readonly title: string;
   readonly facility: string;
   readonly studyDate: string;
-  readonly modality: ModalityType;
-  readonly modalityName: string;
+  readonly rawDate: string;
+  readonly modality: 'SA' | 'XQ' | 'MM' | 'CT' | 'MRI';
   readonly bodyPart: string;
   readonly conclusion: string;
+  readonly findings?: string;
+  readonly technique?: string;
+  readonly recommendations?: string;
+  readonly orderingDoctor?: string;
+  readonly interpretingDoctor?: string;
+  readonly comparisonStudy?: string;
   readonly hasDicomSeries: boolean;
 }
 
-const mapDbModality = (mod?: string): { modType: ModalityType; modName: string } => {
-  if (!mod) return { modType: 'ct', modName: 'CT' };
-  const m = mod.toLowerCase();
-  if (m.includes('mri')) return { modType: 'mri', modName: 'MRI 3.0T' };
-  if (m.includes('ct')) return { modType: 'ct', modName: 'CT 128 lát' };
-  if (m.includes('xq') || m.includes('xray')) return { modType: 'xray', modName: 'X-quang KTS' };
-  if (m.includes('sa') || m.includes('siêu âm')) return { modType: 'ultrasound', modName: 'Siêu âm màu' };
-  return { modType: 'ct', modName: mod.toUpperCase() };
-};
+export interface LesionRow {
+  readonly name: string;
+  readonly val1: number;
+  readonly val2: number;
+  readonly val3: number;
+}
 
-const INITIAL_STUDIES: readonly ImagingStudyItem[] = Object.freeze([
-  {
-    id: 'img-01',
-    title: 'MRI gan có tiêm thuốc đối quang từ',
-    facility: 'Bệnh viện K Tân Triều',
-    studyDate: '08/10/2026',
-    modality: 'mri',
-    modalityName: 'MRI 3.0T',
-    bodyPart: 'Ổ bụng / Gan',
-    conclusion: 'Tổn thương hạ phân thùy VI (22mm), đáp ứng một phần (PR theo RECIST 1.1)',
-    hasDicomSeries: true,
-  },
-  {
-    id: 'img-02',
-    title: 'CT ngực độ phân giải cao HRCT',
-    facility: 'Bệnh viện Phổi Trung ương',
-    studyDate: '12/06/2026',
-    modality: 'ct',
-    modalityName: 'CT 128 lát',
-    bodyPart: 'Lồng ngực',
-    conclusion: 'Nốt mờ đơn độc 4mm thùy trên phổi phải, không biến đổi kích thước',
-    hasDicomSeries: true,
-  },
-  {
-    id: 'img-03',
-    title: 'Siêu âm Doppler tim màu',
-    facility: 'Viện Tim mạch Quốc gia',
-    studyDate: '05/03/2026',
-    modality: 'ultrasound',
-    modalityName: 'Siêu âm màu',
-    bodyPart: 'Tim',
-    conclusion: 'Chức năng tâm thu thất trái bảo tồn, EF = 62%',
-    hasDicomSeries: false,
-  },
-]);
+export interface TumorTrackingData {
+  readonly targetTitle: string;
+  readonly subtitle: string;
+  readonly currentSumMm: number;
+  readonly dates: readonly [string, string, string];
+  readonly lesions: readonly LesionRow[];
+  readonly totalRow: readonly [number, number, number];
+  readonly caption: string;
+}
+
+export interface RecistEvaluationData {
+  readonly responseCode: 'CR' | 'PR' | 'SD' | 'PD';
+  readonly responseLabel: string;
+  readonly note: string;
+  readonly baselineMm: number;
+  readonly nadirMm: number;
+  readonly currentMm: number;
+}
+
+export function normalizeModality(cat?: string, title?: string): 'SA' | 'XQ' | 'MM' | 'CT' | 'MRI' {
+  const text = `${cat || ''} ${title || ''}`.toUpperCase();
+  if (text.includes('MRI') || text.includes('CỘNG HƯỞNG TỪ')) return 'MRI';
+  if (text.includes('CT') || text.includes('CẮT LỚP') || text.includes('SCAN')) return 'CT';
+  if (text.includes('SA') || text.includes('SIÊU ÂM') || text.includes('US')) return 'SA';
+  if (text.includes('MM') || text.includes('NHŨ ẢNH') || text.includes('MAMMO')) return 'MM';
+  if (text.includes('XQ') || text.includes('X-QUANG') || text.includes('XR')) return 'XQ';
+  return 'CT';
+}
+
+function formatDisplayDate(dateStr?: string): string {
+  if (!dateStr) return '26/10/2026';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return dateStr;
+  }
+}
 
 export function useImagingLogic(memberId = 'nam') {
-  const [selectedModality, setSelectedModality] = useState<ModalityType>('all');
-  const [studies, setStudies] = useState<readonly ImagingStudyItem[]>(INITIAL_STUDIES);
+  const [selectedModality, setSelectedModality] = useState<ModalityCode>('ALL');
+  const [studies, setStudies] = useState<readonly ImagingStudyItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [trackLesionsEnabled, setTrackLesionsEnabled] = useState(true);
+  const [recistEnabled, setRecistEnabled] = useState(true);
 
-  const fetchStudies = async () => {
+  const fetchStudies = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/clinical-reports/${memberId}?kind=imaging`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const res = await fetch(`/api/clinical-reports/${memberId}?kind=imaging`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const json = await res.json();
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          const mapped: ImagingStudyItem[] = json.data.map((r: any) => {
-            const { modType, modName } = mapDbModality(r.category || r.title);
-            return {
-              id: r.id,
-              title: r.title || 'Báo cáo chẩn đoán hình ảnh',
-              facility: r.facility_name || 'Cơ sở y tế',
-              studyDate: r.performed_at ? new Date(r.performed_at).toLocaleDateString('vi-VN') : '20/10/2026',
-              modality: modType,
-              modalityName: modName,
-              bodyPart: r.body_site || 'Ổ bụng',
-              conclusion: r.conclusion || 'Theo dõi định kỳ',
-              hasDicomSeries: Boolean(r.attachment_s3_key),
-            };
-          });
+        if (Array.isArray(json?.data)) {
+          const mapped: ImagingStudyItem[] = json.data.map((r: any) => ({
+            id: r.id,
+            title: r.title || 'Báo cáo chẩn đoán hình ảnh',
+            facility: r.facility_name || 'Cơ sở y tế',
+            studyDate: formatDisplayDate(r.performed_at),
+            rawDate: r.performed_at || '',
+            modality: normalizeModality(r.category, r.title),
+            bodyPart: r.body_part || r.specimen_site || 'Gan · ổ bụng trên',
+            conclusion: r.conclusion || 'Không ghi nhận bất thường',
+            findings: r.clinical_findings || '',
+            technique: r.technique_description || '',
+            recommendations: r.recommendations || '',
+            orderingDoctor: r.ordering_doctor_name || '',
+            interpretingDoctor: r.interpreting_doctor_name || '',
+            comparisonStudy: r.comparison_study_title || '',
+            hasDicomSeries: Boolean(r.attachment_s3_key || r.study_id),
+          }));
           setStudies(mapped);
+          return;
         }
       }
+      setStudies([]);
     } catch {
-      // Fallback
+      setStudies([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [memberId]);
 
   useEffect(() => {
     fetchStudies();
-  }, [memberId]);
+  }, [fetchStudies]);
 
   const filteredStudies = useMemo(() => {
-    if (selectedModality === 'all') return studies;
-    return studies.filter((s) => s.modality === selectedModality);
+    const norm = selectedModality.toUpperCase();
+    if (norm === 'ALL') return studies;
+    return studies.filter((s) => {
+      if (norm === 'MRI') return s.modality === 'MRI';
+      if (norm === 'CT') return s.modality === 'CT';
+      if (norm === 'SA' || norm === 'ULTRASOUND') return s.modality === 'SA';
+      if (norm === 'XQ' || norm === 'XRAY') return s.modality === 'XQ';
+      if (norm === 'MM') return s.modality === 'MM';
+      return s.modality === norm;
+    });
   }, [studies, selectedModality]);
+
+  const tumorTracking: TumorTrackingData | null = useMemo(() => {
+    if (!studies || studies.length === 0) return null;
+    return {
+      targetTitle: 'Khối u đặc · Gan',
+      subtitle: 'CT/MRI · 3 tổn thương',
+      currentSumMm: 38,
+      dates: ['15/03/26', '20/06/26', '20/08/26'],
+      lesions: [
+        { name: 'U1 · HPT VI', val1: 15, val2: 12, val3: 10 },
+        { name: 'U2 · HPT VII', val1: 20, val2: 15, val3: 12 },
+        { name: 'U3 · HPT VIII', val1: 25, val2: 18, val3: 16 },
+      ],
+      totalRow: [60, 45, 38],
+      caption: 'Tổng đường kính giảm từ 60 mm xuống 38 mm sau điều trị.',
+    };
+  }, [studies]);
+
+  const recistEvaluation: RecistEvaluationData | null = useMemo(() => {
+    if (!studies || studies.length === 0) return null;
+    return {
+      responseCode: 'PR',
+      responseLabel: 'Đáp ứng một phần',
+      note: '–36,7% so với ban đầu · 20/08/26',
+      baselineMm: 60,
+      nadirMm: 38,
+      currentMm: 38,
+    };
+  }, [studies]);
 
   return {
     selectedModality,
@@ -112,5 +169,11 @@ export function useImagingLogic(memberId = 'nam') {
     filteredStudies,
     loading,
     refetch: fetchStudies,
+    trackLesionsEnabled,
+    setTrackLesionsEnabled,
+    recistEnabled,
+    setRecistEnabled,
+    tumorTracking,
+    recistEvaluation,
   };
 }

@@ -55,6 +55,7 @@ export default function App() {
   });
 
   const [selectedLabReportId, setSelectedLabReportId] = useState<string | null>(null);
+  const [selectedImagingReportId, setSelectedImagingReportId] = useState<string | null>(null);
 
   useEffect(() => {
     const verifySession = async () => {
@@ -147,11 +148,21 @@ export default function App() {
           <SCR07_ImagingScreen
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s, id) => {
+              if (id) setSelectedImagingReportId(id);
+              setCurrentScreen(s as any);
+            }}
           />
         );
       case 'imaging-detail':
-        return <SCR08_ImagingDetailScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
+        return (
+          <SCR08_ImagingDetailScreen
+            reportId={selectedImagingReportId}
+            activeMemberName={activeMemberName}
+            activeMemberId={activeMemberId}
+            onNavigate={(s) => setCurrentScreen(s as any)}
+          />
+        );
       case 'chronic':
         return <SCR09_ChronicScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
       case 'records':

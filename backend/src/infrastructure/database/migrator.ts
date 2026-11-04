@@ -6,7 +6,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MIGRATIONS_DIR = path.resolve(__dirname, '../../../../migrations');
+const MIGRATIONS_DIR = fs.existsSync(path.resolve(__dirname, '../../../migrations'))
+  ? path.resolve(__dirname, '../../../migrations')
+  : path.resolve(__dirname, '../../../../migrations');
 
 interface MigrationRecord {
   id: number;
@@ -23,7 +25,7 @@ function calculateChecksum(content: string): string {
 async function getClient(): Promise<Client> {
   const connectionString =
     process.env.DATABASE_URL ||
-    'postgresql://dhealth_user:dhealth_secret_2026@localhost:7003/dhealth_db';
+    'postgresql://dhealth_user:dhealth_secret_2026@127.0.0.1:5432/dhealth_db';
 
   const client = new Client({ connectionString });
   await client.connect();

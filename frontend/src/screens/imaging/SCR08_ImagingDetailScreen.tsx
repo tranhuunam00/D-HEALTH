@@ -1,118 +1,265 @@
-import React from 'react';
-import { ArrowLeft, Sparkles, Layers, FileText, CheckCircle2, Eye } from 'lucide-react';
-import { HomeBottomNav } from '../home/HomeBottomNav';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 interface SCR08Props {
+  readonly reportId?: string | null;
   readonly onNavigate: (screen: string) => void;
   readonly activeMemberName?: string;
+  readonly activeMemberId?: string;
+}
+
+interface ImagingDetailData {
+  readonly id: string;
+  readonly title: string;
+  readonly modality: string;
+  readonly performedAt: string;
+  readonly bodyPart: string;
+  readonly facilityName: string;
+  readonly orderingDoctor: string;
+  readonly interpretingDoctor: string;
+  readonly comparisonText: string;
+  readonly technique: string;
+  readonly findings: string;
+  readonly conclusion: string;
+  readonly recommendations: string;
+  readonly series: readonly { id: string; name: string }[];
+}
+
+function formatDateVN(dateStr?: string): string {
+  if (!dateStr) return '20/08/2026';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}/${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
 }
 
 export const SCR08_ImagingDetailScreen: React.FC<SCR08Props> = ({
+  reportId,
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
 }) => {
+  const [detail, setDetail] = useState<ImagingDetailData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      const idToFetch = reportId || 'rep_img_03';
+      setLoading(true);
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+        const res = await fetch(`/api/clinical-reports/detail/${idToFetch}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data) {
+            const d = json.data;
+            const compText = d.comparison_study_modality && d.comparison_study_date
+              ? `${d.comparison_study_modality} ${formatDateVN(d.comparison_study_date)}`
+              : d.comparison_study_title || 'CT 20/06/2026';
+
+            setDetail({
+              id: d.id,
+              title: d.title || 'MRI gan có tiêm thuốc',
+              modality: d.modality || d.category || 'MRI',
+              performedAt: formatDateVN(d.performed_at),
+              bodyPart: d.body_part || d.specimen_site || 'Gan · ổ bụng trên',
+              facilityName: d.facility_name || '[Bệnh viện đối tác]',
+              orderingDoctor: d.ordering_doctor_name || '[Bác sĩ ung bướu]',
+              interpretingDoctor: d.interpreting_doctor_name || 'BS Lê Văn C',
+              comparisonText: compText,
+              technique: d.technique_description || 'MRI 1.5T ổ bụng trên, chuỗi T1, T2, DWI; tiêm thuốc tương phản từ, chụp động học các thì.',
+              findings: d.clinical_findings || 'Gan kích thước bình thường, bờ đều. Ba khối đặc ở hạ phân thuỳ VI, VII, VIII, ngấm thuốc dạng viền, kích thước giảm so với phim trước. Nang gan đơn thuần hạ phân thuỳ II, 12 mm, không thay đổi. Không thấy huyết khối tĩnh mạch cửa. Không có dịch ổ bụng.',
+              conclusion: d.conclusion || 'Ba khối đặc gan giảm kích thước so với phim 20/06/2026 (tổng 45 → 38 mm). Nang gan đơn thuần ổn định.',
+              recommendations: d.recommendations || 'Theo dõi đáp ứng điều trị, chụp lại sau 3 tháng.',
+              series: Array.isArray(d.series) && d.series.length > 0
+                ? d.series.map((s: any) => ({ id: s.id, name: s.series_name }))
+                : [
+                    { id: '1', name: 'T1 + thuốc' },
+                    { id: '2', name: 'T2' },
+                    { id: '3', name: 'DWI' },
+                  ],
+            });
+          }
+        }
+      } catch {
+        // Fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetail();
+  }, [reportId]);
+
   return (
-    <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-20">
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
-        {/* 1. Header Pills */}
-        <div className="flex gap-1.5 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            08/10/2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-            Hồ sơ: <b>{activeMemberName}</b>
+    <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-8">
+      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-6 flex flex-col gap-3">
+        {/* 1. Topbar with Back, Title & Modality Badge */}
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => onNavigate('imaging')}
+              aria-label="Quay lại"
+              className="w-10 h-10 rounded-full bg-white text-slate-800 flex items-center justify-center shadow-xs active:scale-95 transition shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-base font-black text-slate-900 leading-tight truncate">
+                {detail?.title || 'MRI gan có tiêm thuốc'}
+              </h1>
+              <span className="text-xs text-slate-500 font-medium block">
+                Báo cáo chẩn đoán hình ảnh
+              </span>
+            </div>
+          </div>
+          <span className="w-11 h-7 rounded-xl bg-[#CCFBF1] text-[#0F766E] text-xs font-black flex items-center justify-center shrink-0">
+            {detail?.modality || 'MRI'}
           </span>
         </div>
 
-        {/* 2. Topbar với nút Back */}
-        <div className="flex items-center gap-3">
+        {/* 2. 3 DICOM Thumbnails */}
+        <div className="grid grid-cols-3 gap-2">
+          {(detail?.series || [{ id: '1', name: 'T1 + thuốc' }, { id: '2', name: 'T2' }, { id: '3', name: 'DWI' }]).map(
+            (pulse, idx) => (
+              <div
+                key={pulse.id || idx}
+                className="bg-[#0F172A] rounded-2xl h-22 relative overflow-hidden flex items-center justify-center shadow-xs border border-slate-800"
+              >
+                <div
+                  className="w-14 h-14 rounded-full opacity-60"
+                  style={{
+                    background:
+                      idx === 0
+                        ? 'radial-gradient(circle, rgba(148,163,184,0.5) 0%, rgba(15,23,42,0) 70%)'
+                        : idx === 1
+                        ? 'radial-gradient(circle, rgba(203,213,225,0.7) 0%, rgba(15,23,42,0) 70%)'
+                        : 'radial-gradient(circle, rgba(100,116,139,0.5) 0%, rgba(15,23,42,0) 70%)',
+                  }}
+                />
+                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-md">
+                  {pulse.name}
+                </span>
+              </div>
+            )
+          )}
+        </div>
+
+        {/* 3. Metadata Card (2 Columns Grid) */}
+        <div className="bg-white rounded-3xl p-4 border border-slate-200/60 shadow-xs">
+          <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-xs">
+            <div>
+              <span className="text-slate-500 font-semibold text-[11px] block">Ngày thực hiện</span>
+              <span className="font-extrabold text-slate-900 block mt-0.5">
+                {detail?.performedAt || '20/08/2026'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 font-semibold text-[11px] block">Bộ phận</span>
+              <span className="font-extrabold text-slate-900 block mt-0.5">
+                {detail?.bodyPart || 'Gan · ổ bụng trên'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 font-semibold text-[11px] block">Nơi thực hiện</span>
+              <span className="font-extrabold text-slate-900 block mt-0.5">
+                {detail?.facilityName || '[Bệnh viện đối tác]'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 font-semibold text-[11px] block">Bác sĩ chỉ định</span>
+              <span className="font-extrabold text-slate-900 block mt-0.5">
+                {detail?.orderingDoctor || '[Bác sĩ ung bướu]'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 font-semibold text-[11px] block">Bác sĩ đọc kết quả</span>
+              <span className="font-extrabold text-slate-900 block mt-0.5">
+                {detail?.interpretingDoctor || 'BS Lê Văn C'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 font-semibold text-[11px] block">So sánh với</span>
+              <span className="font-extrabold text-slate-900 block mt-0.5">
+                {detail?.comparisonText || 'CT 20/06/2026'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Clinical Details Card: KỸ THUẬT & MÔ TẢ */}
+        <div className="bg-white rounded-3xl p-4 border border-slate-200/60 shadow-xs flex flex-col gap-3">
+          <div>
+            <span className="font-black text-xs text-slate-800 tracking-wider block">
+              KỸ THUẬT
+            </span>
+            <p className="text-xs text-slate-700 font-medium leading-relaxed mt-1">
+              {detail?.technique ||
+                'MRI 1.5T ổ bụng trên, chuỗi T1, T2, DWI; tiêm thuốc tương phản từ, chụp động học các thì.'}
+            </p>
+          </div>
+          <div>
+            <span className="font-black text-xs text-slate-800 tracking-wider block">
+              MÔ TẢ
+            </span>
+            <p className="text-xs text-slate-700 font-medium leading-relaxed mt-1">
+              {detail?.findings ||
+                'Gan kích thước bình thường, bờ đều. Ba khối đặc ở hạ phân thuỳ VI, VII, VIII, ngấm thuốc dạng viền, kích thước giảm so với phim trước. Nang gan đơn thuần hạ phân thuỳ II, 12 mm, không thay đổi. Không thấy huyết khối tĩnh mạch cửa. Không có dịch ổ bụng.'}
+            </p>
+          </div>
+        </div>
+
+        {/* 5. Conclusion Card: KẾT LUẬN & ĐỀ NGHỊ */}
+        <div className="bg-white rounded-3xl p-4 border border-slate-200/60 border-l-4 border-l-[#1F7A8C] shadow-xs flex flex-col gap-3">
+          <div>
+            <span className="font-black text-xs text-[#1F7A8C] tracking-wider block">
+              KẾT LUẬN
+            </span>
+            <p className="text-xs text-slate-900 font-bold leading-relaxed mt-1">
+              {detail?.conclusion ||
+                'Ba khối đặc gan giảm kích thước so với phim 20/06/2026 (tổng 45 → 38 mm). Nang gan đơn thuần ổn định.'}
+            </p>
+          </div>
+          <div>
+            <span className="font-black text-xs text-slate-800 tracking-wider block">
+              ĐỀ NGHỊ
+            </span>
+            <p className="text-xs text-slate-700 font-medium leading-relaxed mt-1">
+              {detail?.recommendations || 'Theo dõi đáp ứng điều trị, chụp lại sau 3 tháng.'}
+            </p>
+          </div>
+        </div>
+
+        {/* 6. Action Button: Xem ảnh DICOM (PACS) */}
+        <button
+          onClick={() => alert('Mở PACS Cloud Viewer (MinIO S3 / Orthanc)...')}
+          className="w-full h-11 rounded-2xl bg-white border border-slate-200 text-slate-800 font-extrabold text-xs shadow-xs hover:bg-slate-50 active:scale-98 transition flex items-center justify-center"
+        >
+          Xem ảnh DICOM (PACS) · Báo cáo PDF
+        </button>
+
+        {/* 7. Dual Action Buttons */}
+        <div className="flex gap-2 pt-1">
           <button
             onClick={() => onNavigate('imaging')}
-            aria-label="Quay lại"
-            className="w-11 h-11 rounded-full bg-white text-slate-800 flex items-center justify-center shadow-xs active:scale-95"
+            className="flex-1 h-11 rounded-2xl bg-white border border-slate-200 text-slate-800 font-extrabold text-xs shadow-xs hover:bg-slate-50 active:scale-98 transition flex items-center justify-center"
           >
-            <ArrowLeft className="w-5 h-5" />
+            Theo dõi tổn thương
           </button>
-          <div>
-            <span className="text-base font-extrabold text-slate-900 leading-tight block">
-              MRI gan có tiêm thuốc đối quang từ
-            </span>
-            <span className="text-xs text-slate-500 font-medium">Bệnh viện K Tân Triều · BS. Trần Đức Minh</span>
-          </div>
-        </div>
-
-        {/* 3. 3 Chuỗi xung DICOM then chốt */}
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-bold text-slate-700 px-1">Chuỗi xung DICOM then chốt</span>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { id: 't1', label: 'T1 + Thuốc', sub: 'Thì động mạch', color: '#1F7A8C' },
-              { id: 't2', label: 'T2', sub: 'Tĩnh mạch cửa', color: '#2F6FDB' },
-              { id: 'dwi', label: 'DWI', sub: 'Khuếch tán b800', color: '#7E22CE' },
-            ].map((pulse) => (
-              <div
-                key={pulse.id}
-                className="bg-slate-900 text-white rounded-2xl p-2.5 flex flex-col items-center justify-center text-center shadow-sm"
-              >
-                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center mb-1.5">
-                  <Layers className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-xs font-extrabold">{pulse.label}</span>
-                <span className="text-[10px] text-slate-300">{pulse.sub}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 4. Khối mô tả & kết luận chuẩn Bộ Y tế */}
-        <div className="bg-white rounded-3xl p-4 flex flex-col gap-3 shadow-xs border border-slate-200/60 text-xs">
-          <div>
-            <div className="font-bold text-slate-900 flex items-center gap-1.5 mb-1 text-xs">
-              <FileText className="w-3.5 h-3.5 text-[#1F7A8C]" />
-              MÔ TẢ HÌNH ẢNH
-            </div>
-            <p className="text-slate-600 leading-relaxed text-[11px]">
-              Hạ phân thùy VI có nốt ngấm thuốc mạnh thì động mạch gan, kích thước 22 x 18 mm. Thải thuốc nhanh thì tĩnh mạch cửa và thì muộn. Giảm kích thước so với phim chụp tháng 06/2026 (28 mm).
-            </p>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100">
-            <div className="font-bold text-slate-900 flex items-center gap-1.5 mb-1 text-xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              KẾT LUẬN & ĐÁNH GIÁ RECIST 1.1
-            </div>
-            <p className="text-slate-800 font-semibold leading-relaxed text-[11px]">
-              U gan hạ phân thùy VI (HCC). Đáp ứng một phần (PR - Partial Response theo tiêu chuẩn RECIST 1.1: giảm &gt; 30% đường kính).
-            </p>
-          </div>
-        </div>
-
-        {/* 5. Action Buttons */}
-        <div className="flex flex-col gap-2 shrink-0">
           <button
-            onClick={() => alert('Mở DICOM Series Viewer kết nối MinIO S3')}
-            className="h-12 rounded-2xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow active:scale-95 transition"
+            onClick={() => alert('Đã gửi liên kết báo cáo và phim chụp cho Bác sĩ điều trị!')}
+            className="flex-1 h-11 rounded-2xl bg-[#1F7A8C] hover:bg-[#196575] text-white font-extrabold text-xs shadow-xs active:scale-98 transition flex items-center justify-center"
           >
-            <Eye className="w-4 h-4 text-purple-400" />
-            <span>Xem chuỗi lát cắt DICOM (MinIO S3)</span>
-          </button>
-
-          <button
-            onClick={() => onNavigate('ai')}
-            className="h-11 rounded-2xl bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition"
-          >
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>Hỏi Trợ lý AI về ca chụp này</span>
+            Gửi cho bác sĩ
           </button>
         </div>
       </div>
-
-      {/* 6. Bottom Navigation */}
-      <HomeBottomNav
-        activeTab="health"
-        onTabChange={(tab) => onNavigate(tab)}
-      />
     </div>
   );
 };

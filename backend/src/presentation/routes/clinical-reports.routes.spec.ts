@@ -86,6 +86,52 @@ describe('ClinicalReportsRoutes TDD', () => {
     });
   });
 
+  describe('GET /detail/:reportId', () => {
+    it('trả về chi tiết phiếu kết quả và chuỗi xung series khi tìm thấy', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'rep_img_03',
+              title: 'MRI gan có tiêm thuốc',
+              study_id: 'std_img_03',
+              modality: 'MRI',
+              facility_name: '[Bệnh viện đối tác]',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            { id: 'ser_1', series_name: 'T1 + thuốc', series_number: 1 },
+            { id: 'ser_2', series_name: 'T2', series_number: 2 },
+          ],
+        });
+
+      const handler = getHandler('GET', '/detail/:reportId');
+      const { req, res } = createReqRes({ params: { reportId: 'rep_img_03' } });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.title).toBe('MRI gan có tiêm thuốc');
+      expect(output.data.series.length).toBe(2);
+    });
+
+    it('trả về 404 khi không tìm thấy phiếu kết quả', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const handler = getHandler('GET', '/detail/:reportId');
+      const { req, res } = createReqRes({ params: { reportId: 'non_existent' } });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(false);
+      expect(output.error.code).toBe('NOT_FOUND');
+    });
+  });
+
   describe('POST /', () => {
     it('tạo mới phiếu kết quả cận lâm sàng thành công', async () => {
       mockPool.query.mockResolvedValueOnce({
@@ -118,6 +164,41 @@ describe('ClinicalReportsRoutes TDD', () => {
       const output = res.json.mock.calls[0][0];
       expect(output.success).toBe(true);
       expect(output.data.id).toBe('rep_new_1');
+    });
+
+    it('tạo mới phiếu CĐHA kèm danh sách khối u thành công', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'rep_img_new',
+              member_id: 'mem_1',
+              kind: 'imaging',
+              category: 'MRI',
+              title: 'MRI gan có tiêm thuốc',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({ rows: [] }) // insert imaging_studies
+        .mockResolvedValueOnce({ rows: [] }); // insert tumor_tracking_evaluations
+
+      const handler = getHandler('POST', '/');
+      const { req, res } = createReqRes({
+        body: {
+          memberId: 'mem_1',
+          kind: 'imaging',
+          category: 'MRI',
+          title: 'MRI gan có tiêm thuốc',
+          organ: 'Gan',
+          lesions: [{ type: 'Khối u đặc', size: '20', side: 'Hạ phân thùy VI' }],
+        },
+      });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(201);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.id).toBe('rep_img_new');
     });
 
     it('trả về 400 khi thiếu thông tin bắt buộc', async () => {
