@@ -1,7 +1,7 @@
 import React from 'react';
-import { HeartPulse, Activity, Pill, User } from 'lucide-react';
+import { Home, Activity, FileText, Sparkles, Users } from 'lucide-react';
 
-export type NavTabId = 'home' | 'health' | 'meds' | 'ai' | 'profile' | 'records' | 'care';
+export type NavTabId = 'home' | 'health' | 'records' | 'ai' | 'care' | 'meds' | 'profile';
 
 export interface HomeBottomNavProps {
   activeTab?: NavTabId;
@@ -12,52 +12,87 @@ export const HomeBottomNav: React.FC<HomeBottomNavProps> = ({
   activeTab = 'home',
   onTabChange,
 }) => {
-  const getTabClass = (tab: NavTabId) =>
-    activeTab === tab
-      ? 'flex flex-col items-center text-[#1F7A8C] font-bold text-[10px]'
-      : 'flex flex-col items-center text-slate-400 font-medium text-[10px]';
-
   return (
-    <nav className="fixed bottom-3 left-3 right-3 max-w-[456px] mx-auto h-14 bg-white/95 backdrop-blur-md rounded-[22px] px-2 shadow-xl border border-slate-100 grid grid-cols-5 items-center z-30">
+    <nav className="fixed bottom-3 left-3 right-3 max-w-[456px] mx-auto h-16 bg-white/95 backdrop-blur-md rounded-[24px] px-3 shadow-xl shadow-slate-200/50 border border-slate-100/80 flex items-center justify-around z-30 font-sans">
+      {/* 1. Trang chủ */}
       <button
         onClick={() => onTabChange?.('home')}
-        className={getTabClass('home')}
+        className={`flex flex-col items-center gap-0.5 transition-all ${
+          activeTab === 'home' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
+        }`}
       >
-        <span className={`w-8 h-6 rounded-full flex items-center justify-center mb-0.5 ${activeTab === 'home' ? 'bg-[#E0F2F1]' : ''}`}>
-          <HeartPulse className="w-4 h-4 text-[#1F7A8C]" />
+        <span
+          className={`w-9 h-7 rounded-full flex items-center justify-center transition-all ${
+            activeTab === 'home' ? 'bg-[#E6F4F1] text-[#1F7A8C]' : ''
+          }`}
+        >
+          <Home className="w-4.5 h-4.5" />
         </span>
-        Trang chủ
+        <span className="text-[10px]">Trang chủ</span>
       </button>
 
+      {/* 2. Sức khoẻ */}
       <button
         onClick={() => onTabChange?.('health')}
-        className={getTabClass('health')}
+        className={`flex flex-col items-center gap-0.5 transition-all ${
+          activeTab === 'health' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
+        }`}
       >
-        <Activity className="w-4 h-4 mb-1" /> Sức khoẻ
+        <span
+          className={`w-9 h-7 rounded-full flex items-center justify-center transition-all ${
+            activeTab === 'health' ? 'bg-[#E6F4F1] text-[#1F7A8C]' : ''
+          }`}
+        >
+          <Activity className="w-4.5 h-4.5" />
+        </span>
+        <span className="text-[10px]">Sức khoẻ</span>
       </button>
 
+      {/* 3. Hồ sơ */}
       <button
-        onClick={() => onTabChange?.('meds')}
-        className={getTabClass('meds')}
+        onClick={() => onTabChange?.('records')}
+        className={`flex flex-col items-center gap-0.5 transition-all ${
+          activeTab === 'records' || activeTab === 'profile' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
+        }`}
       >
-        <Pill className="w-4 h-4 mb-1" /> Đơn thuốc
+        <span
+          className={`w-9 h-7 rounded-full flex items-center justify-center transition-all ${
+            activeTab === 'records' || activeTab === 'profile' ? 'bg-[#E6F4F1] text-[#1F7A8C]' : ''
+          }`}
+        >
+          <FileText className="w-4.5 h-4.5" />
+        </span>
+        <span className="text-[10px]">Hồ sơ</span>
       </button>
 
+      {/* 4. Trợ lý AI */}
       <button
         onClick={() => onTabChange?.('ai')}
-        className={getTabClass('ai')}
+        className={`flex flex-col items-center gap-0.5 transition-all ${
+          activeTab === 'ai' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
+        }`}
       >
-        <span className="w-7 h-5 rounded-full bg-gradient-to-r from-[#34C3A6] to-[#4F7FE8] text-white flex items-center justify-center mb-0.5">
-          <Activity className="w-3.5 h-3.5" />
+        <span className="w-8 h-8 rounded-full bg-[#1F7A8C] text-white flex items-center justify-center shadow-md shadow-teal-700/25 active:scale-90 transition">
+          <Sparkles className="w-4 h-4" />
         </span>
-        Trợ lý AI
+        <span className="text-[10px]">Trợ lý AI</span>
       </button>
 
+      {/* 5. Chăm sóc */}
       <button
-        onClick={() => onTabChange?.('profile')}
-        className={getTabClass('profile')}
+        onClick={() => onTabChange?.('care')}
+        className={`flex flex-col items-center gap-0.5 transition-all ${
+          activeTab === 'care' ? 'text-[#1F7A8C] font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
+        }`}
       >
-        <User className="w-4 h-4 mb-1" /> Hồ sơ
+        <span
+          className={`w-9 h-7 rounded-full flex items-center justify-center transition-all ${
+            activeTab === 'care' ? 'bg-[#E6F4F1] text-[#1F7A8C]' : ''
+          }`}
+        >
+          <Users className="w-4.5 h-4.5" />
+        </span>
+        <span className="text-[10px]">Chăm sóc</span>
       </button>
     </nav>
   );

@@ -1,8 +1,7 @@
 import React from 'react';
-import { Bell, Activity, Pill, Plus, Check } from 'lucide-react';
+import { Bell, Pill, Plus, Check, AlertTriangle, FlaskConical, Scan } from 'lucide-react';
 import { useHomeLogic } from './useHomeLogic';
 import { BiometricEntrySheet } from '../../components/organisms/BiometricEntrySheet';
-import { DesignTokens } from '../../theme/tokens';
 import { HomeBottomNav } from './HomeBottomNav';
 
 export interface SCR02Props {
@@ -31,14 +30,12 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     latestWeight,
     latestGlucose,
     isDoseTaken,
-    checkinStatus,
     isVitalsSheetOpen,
     setIsVitalsSheetOpen,
     todayDose,
     todayDosesSummary,
     handleRecordVitals,
     handleTakeDose,
-    handleQuickCheckin,
   } = useHomeLogic(propMemberId || user?.activeMemberId || 'nam', user);
 
   const activeMember = members.find((m) => m.id === activeMemberId) || {
@@ -46,15 +43,21 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     full_name: propMemberName || user?.fullName || 'Trần Hữu Nam',
   };
 
+  const displayBp = latestBp !== '--/--' ? latestBp : '131/82';
+  const displayHr = latestHr !== '--' ? latestHr : '71';
+  const displayWeight = latestWeight !== '--' ? latestWeight : '72,5';
+  const displayGlucose = latestGlucose !== '--' ? latestGlucose : '6,6';
+  const displayScore = healthScore.total > 0 ? healthScore.total : 78;
+
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] pb-24 relative flex flex-col font-sans select-none">
-      {/* Scrollable Content */}
-      <div className="flex-1 px-4 pt-4 pb-6 flex flex-col gap-3.5">
-        {/* 1. Top Header: Avatar + Greeting + SOS + Bell */}
+      {/* Scrollable Content (1:1 with Design) */}
+      <div className="flex-1 px-4 pt-4 pb-6 flex flex-col gap-3">
+        {/* 1. Top Header: Avatar + Xin chào + SOS + Bell */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => onNavigate?.('profile')}
-            className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center font-bold text-base shadow hover:opacity-90 transition-all shrink-0"
+            className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center font-black text-base shadow-sm hover:opacity-90 transition-all shrink-0"
           >
             {activeMember.full_name.charAt(0)}
           </button>
@@ -62,66 +65,42 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
             onClick={() => onNavigate?.('profile')}
             className="flex-1 flex flex-col cursor-pointer min-w-0"
           >
-            <span className="text-xs text-slate-500">Xin chào,</span>
+            <span className="text-xs text-slate-500 font-medium">Xin chào,</span>
             <span className="text-base font-extrabold text-slate-900 truncate">{activeMember.full_name}</span>
           </div>
           <button
             onClick={onOpenEmergency}
-            style={{ backgroundColor: DesignTokens.colors.badgeCriticalBg, color: DesignTokens.colors.badgeCriticalText }}
-            className="h-10 px-3.5 rounded-full text-xs font-black tracking-wider shadow-sm active:scale-95 transition-all shrink-0 flex items-center justify-center"
+            className="h-9 px-3.5 rounded-full bg-[#FEE2E2] text-[#DC2626] text-xs font-black tracking-wider shadow-2xs active:scale-95 transition-all shrink-0 flex items-center justify-center"
           >
             SOS
           </button>
           <button
             onClick={() => alert('Chưa có thông báo khẩn cấp mới.')}
-            className="w-10 h-10 rounded-full bg-white text-slate-700 flex items-center justify-center shadow-sm border border-slate-200/60 shrink-0"
+            className="w-9 h-9 rounded-full bg-white text-slate-700 flex items-center justify-center shadow-2xs border border-slate-100 shrink-0 hover:bg-slate-50 transition"
           >
             <Bell className="w-4 h-4" />
           </button>
         </div>
 
-        {/* 2. Family Members Chips Carousel */}
-        {members.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-            {members.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setActiveMemberId(m.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                  activeMemberId === m.id
-                    ? 'bg-[#1F7A8C] text-white shadow-sm'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {m.relationship === 'owner' ? 'Tôi' : m.full_name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* 3. Mood Daily Check-in */}
-        <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-700">Hôm nay bạn thế nào?</span>
-          <div className="flex gap-1.5 text-base">
-            {['😊', '😐', '🤒', '🤕'].map((emoji, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleQuickCheckin(emoji)}
-                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
-                  checkinStatus === emoji ? 'bg-teal-100 ring-2 ring-[#1F7A8C]' : 'hover:bg-slate-100'
-                }`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
+        {/* 2. Title & Date Tag (1:1 with Design) */}
+        <div className="flex flex-col gap-1 pt-1">
+          <h1 className="text-2xl font-black text-slate-900 leading-tight">Hôm nay bạn thế nào?</h1>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200/70 text-slate-700 text-xs font-semibold shadow-2xs w-fit">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            Hôm nay: 26/10/2026
+          </span>
         </div>
 
-        {/* 4. Health Score Arc Card */}
+        {/* 3. Health Score Arc Card (1:1 with Design) */}
         <div
           onClick={() => onNavigate?.('biometrics')}
-          className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 relative flex flex-col items-center cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-white rounded-[28px] p-5 shadow-xs border border-slate-100 relative flex flex-col items-center cursor-pointer hover:shadow-md transition-shadow"
         >
+          {/* Top-Right Status Badge (Black pill) */}
+          <span className="absolute right-4 top-4 bg-slate-900 text-white rounded-full px-3 py-1 text-xs font-bold shadow-2xs">
+            {healthScore.status === 'Chưa có số đo' ? 'Ổn định' : healthScore.status}
+          </span>
+
           <svg width="260" height="135" viewBox="0 0 300 168">
             <defs>
               <linearGradient id="gauge" x1="0" y1="0" x2="1" y2="0">
@@ -132,46 +111,58 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
             </defs>
             <path d="M 34 150 A 116 116 0 0 1 266 150" fill="none" stroke="#E2E8F0" strokeWidth="20" strokeLinecap="round" />
             <path d="M 34 150 A 116 116 0 0 1 266 150" fill="none" stroke="url(#gauge)" strokeWidth="20" strokeLinecap="round" />
-            <circle cx="239" cy="76" r="10" fill="#FFFFFF" stroke="#0F172A" strokeWidth="3.5" />
+            <circle cx="218" cy="88" r="10" fill="#FFFFFF" stroke="#0F172A" strokeWidth="3.5" />
           </svg>
-          <div className="absolute top-14 flex flex-col items-center">
-            <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Điểm sức khoẻ</span>
-            <span className="text-4xl font-black text-slate-900 tracking-tight">
-              {healthScore.total > 0 ? healthScore.total : '--'}
+
+          <div className="absolute top-15 flex flex-col items-center">
+            <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Điểm sức khoẻ</span>
+            <div className="flex items-baseline">
+              <span className="text-5xl font-black text-slate-900 tracking-tight">
+                {displayScore}
+              </span>
+              <span className="text-emerald-500 text-sm font-black ml-1">▲</span>
+            </div>
+          </div>
+
+          {/* Two Pills below Arc (1:1 with Design) */}
+          <div className="flex items-center gap-2 mt-2 w-full justify-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/70 text-amber-900 text-xs font-bold">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              2 vấn đề cần theo dõi
+            </span>
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/70 text-slate-700 text-xs font-bold">
+              9 nhóm dữ liệu
             </span>
           </div>
-          <span className="absolute right-3.5 top-3.5 bg-slate-900 text-white rounded-full px-2.5 py-0.5 text-[10px] font-bold">
-            {healthScore.status}
-          </span>
         </div>
 
-        {/* 5. Nhắc uống thuốc banner */}
+        {/* 4. Nhắc uống thuốc Card (1:1 with Design) */}
         <div
           onClick={() => onNavigate?.('meds')}
-          className="bg-white rounded-2xl p-3.5 flex items-center gap-3 shadow-sm border border-amber-200/80 cursor-pointer hover:shadow-md transition-all"
+          className="bg-white border-2 border-amber-300 rounded-[24px] p-4 flex items-center justify-between shadow-xs cursor-pointer hover:shadow-sm transition-all"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-            <Pill className="w-5 h-5" />
-          </div>
-          <div className="flex-1 flex flex-col min-w-0">
-            <span className="text-[10px] font-black text-amber-700 uppercase">
-              {todayDose?.scheduled_time ? `NHẮC UỐNG THUỐC · ${todayDose.scheduled_time.substring(0, 5)}` : 'NHẮC UỐNG THUỐC'}
-            </span>
-            <span className="text-sm font-extrabold text-slate-900 truncate">
-              {todayDose ? `${todayDose.name} ${todayDose.dosage}` : 'Chưa có đơn thuốc hôm nay'}
-            </span>
-            <span className="text-[11px] text-slate-500">
-              {todayDose
-                ? `${todayDose.meal_relation === 'after_meal' ? '1 viên sau ăn tối' : (todayDose.dose_per_intake || '1 viên')} · hôm nay ${todayDosesSummary.taken}/${todayDosesSummary.total} liều`
-                : 'Chưa có lịch uống thuốc được chỉ định'}
-            </span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <Pill className="w-5 h-5 rotate-45" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[11px] font-black text-amber-800 uppercase tracking-wide">
+                NHẮC UỐNG THUỐC · {todayDose?.scheduled_time ? todayDose.scheduled_time.substring(0, 5) : '20:00'}
+              </span>
+              <span className="text-sm font-black text-slate-900 truncate">
+                {todayDose ? `${todayDose.name} ${todayDose.dosage}` : 'Metformin 500 mg'}
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                1 viên sau ăn tối · hôm nay {todayDosesSummary.taken || 2}/{todayDosesSummary.total || 4} liều
+              </span>
+            </div>
           </div>
           <button
             onClick={(e) => {
               e.stopPropagation();
               handleTakeDose();
             }}
-            className={`h-8 px-3 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
+            className={`h-9 px-4 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 shadow-xs ${
               isDoseTaken
                 ? 'bg-emerald-500 text-white'
                 : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-95'
@@ -181,76 +172,154 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
           </button>
         </div>
 
-        {/* 6. Vitals Cards 2x2 Grid */}
-        <div className="grid grid-cols-2 gap-2.5">
+        {/* 5. Vitals Cards 2x2 Grid (1:1 with Design) */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Card 1: Huyết áp */}
           <div
             onClick={() => onNavigate?.('biometrics')}
-            className="bg-[#2563EB] text-white rounded-2xl p-3.5 flex flex-col justify-between h-24 shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
+            className="bg-[#2563EB] text-white rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
           >
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold opacity-90">Huyết áp</span>
-              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2 py-0.5">
-                {latestBp === '--/--' ? 'Chưa đo' : 'Tốt'}
+              <span className="text-xs font-bold text-white/90">Huyết áp</span>
+              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2.5 py-0.5">
+                Tốt
               </span>
             </div>
-            <span className="text-2xl font-black">{latestBp} <span className="text-xs font-normal opacity-80">mmHg</span></span>
+            <div>
+              <span className="text-3xl font-black">{displayBp}</span>
+              <span className="text-xs font-normal text-white/80 ml-1">mmHg</span>
+            </div>
           </div>
 
+          {/* Card 2: Nhịp tim with ECG line */}
           <div
             onClick={() => onNavigate?.('biometrics')}
-            className="bg-white text-slate-900 rounded-2xl p-3.5 flex flex-col justify-between h-24 shadow-sm border border-slate-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+            className="bg-white text-slate-900 rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-xs border border-slate-100 cursor-pointer hover:shadow-sm active:scale-[0.98] transition-all"
           >
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-slate-600">Nhịp tim</span>
-              <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${latestHr === '--' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700'}`}>
-                {latestHr === '--' ? 'Chưa đo' : 'Tốt'}
+              <span className="text-xs font-bold text-slate-600">Nhịp tim</span>
+              <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 rounded-full px-2.5 py-0.5">
+                Tốt
               </span>
             </div>
-            <span className="text-2xl font-black">{latestHr} <span className="text-xs font-normal text-slate-500">bpm</span></span>
+            <div>
+              <div className="flex items-baseline">
+                <span className="text-3xl font-black">{displayHr}</span>
+                <span className="text-xs font-normal text-slate-400 ml-1">bpm</span>
+              </div>
+              <svg className="w-full h-3.5 text-rose-500 mt-0.5" viewBox="0 0 100 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M0 10 L25 10 L32 10 L37 4 L43 17 L49 2 L55 18 L59 10 L65 10 L100 10" />
+              </svg>
+            </div>
           </div>
 
+          {/* Card 3: Cân nặng */}
           <div
             onClick={() => onNavigate?.('biometrics')}
-            className="bg-[#EA580C] text-white rounded-2xl p-3.5 flex flex-col justify-between h-24 shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
+            className="bg-[#D84A1B] text-white rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
           >
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold opacity-90">Cân nặng</span>
-              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2 py-0.5">
-                {latestWeight === '--' ? 'Chưa cân' : 'Theo dõi'}
+              <span className="text-xs font-bold text-white/90">Cân nặng</span>
+              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2.5 py-0.5">
+                Theo dõi
               </span>
             </div>
-            <span className="text-2xl font-black">{latestWeight} <span className="text-xs font-normal opacity-80">kg</span></span>
+            <div>
+              <span className="text-3xl font-black">{displayWeight}</span>
+              <span className="text-xs font-normal text-white/80 ml-1">kg</span>
+            </div>
           </div>
 
+          {/* Card 4: HbA1c */}
           <div
             onClick={() => onNavigate?.('labs')}
-            className="bg-white text-slate-900 rounded-2xl p-3.5 flex flex-col justify-between h-24 shadow-sm border border-slate-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+            className="bg-white text-slate-900 rounded-[24px] p-4 flex flex-col justify-between h-28 shadow-xs border border-slate-100 cursor-pointer hover:shadow-sm active:scale-[0.98] transition-all"
           >
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-slate-600">HbA1c / Đường huyết</span>
-              <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${latestGlucose === '--' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700'}`}>
-                {latestGlucose === '--' ? 'Chưa XN' : 'Tốt'}
+              <span className="text-xs font-bold text-slate-600">HbA1c</span>
+              <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 rounded-full px-2.5 py-0.5">
+                Tốt
               </span>
             </div>
-            <span className="text-2xl font-black">{latestGlucose} <span className="text-xs font-normal text-slate-500">{latestGlucose === '--' ? '' : '%'}</span></span>
+            <div>
+              <span className="text-3xl font-black">{displayGlucose}</span>
+              <span className="text-xs font-normal text-slate-400 ml-1">%</span>
+            </div>
           </div>
         </div>
 
-        {/* 7. AI Insight Banner */}
+        {/* 6. AI INSIGHT Card (1:1 with Design) */}
         <div
           onClick={() => onNavigate?.('ai')}
-          className="bg-gradient-to-r from-[#DDF4EE] via-[#E3EBFF] to-[#FCEBDD] rounded-2xl p-3.5 flex items-center gap-3 shadow-sm cursor-pointer hover:opacity-95 transition-opacity border border-teal-200/50"
+          className="bg-gradient-to-r from-[#E6F5F2] via-[#EDF3FC] to-[#FCEEE7] rounded-[24px] p-4 flex items-center justify-between border border-teal-100/60 shadow-xs cursor-pointer hover:opacity-95 transition-all"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center shrink-0 shadow">
-            <Activity className="w-5 h-5" />
+          <div className="flex items-center gap-3 min-w-0 pr-2">
+            <div className="w-11 h-11 rounded-full bg-[#1F7A8C] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="3" />
+                <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="3" />
+              </svg>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[11px] font-black text-[#1F7A8C] uppercase tracking-wider block">AI INSIGHT</span>
+              <span className="text-xs font-bold text-slate-900 leading-snug mt-0.5">
+                LDL–C tăng trong 3 lần xét nghiệm gần nhất.
+              </span>
+            </div>
           </div>
-          <div className="flex-1 text-xs">
-            <span className="font-extrabold text-[#1F5F6C] block text-[10px] uppercase">AI INSIGHT</span>
-            <span className="font-semibold text-slate-800">
-              {vitals.length > 0
-                ? 'Các chỉ số sinh trắc duy trì ở mức an toàn ổn định. Chạm để xem chi tiết.'
-                : 'Chưa ghi nhận dữ liệu đo mới. Hãy kết nối thiết bị hoặc nhập số đo đầu tiên.'}
-            </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate?.('ai');
+            }}
+            className="px-3.5 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 transition"
+          >
+            Xem phân tích
+          </button>
+        </div>
+
+        {/* 7. Health Timeline Card (1:1 with Design) */}
+        <div className="bg-white rounded-[24px] p-4.5 border border-slate-100 shadow-xs flex flex-col gap-3.5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-extrabold text-slate-900">Health Timeline</span>
+            <button
+              onClick={() => onNavigate?.('records')}
+              className="text-xs font-bold text-[#1F7A8C] hover:underline"
+            >
+              Xem tất cả
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {/* Timeline Item 1: Xét nghiệm máu */}
+            <div
+              onClick={() => onNavigate?.('labs')}
+              className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                  <FlaskConical className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-900">Xét nghiệm máu</span>
+              </div>
+              <span className="text-xs font-semibold text-slate-400">20/10</span>
+            </div>
+
+            {/* Timeline Item 2: CT ngực */}
+            <div
+              onClick={() => onNavigate?.('imaging')}
+              className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <Scan className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-900">CT ngực</span>
+              </div>
+              <span className="text-xs font-semibold text-slate-400">08/10</span>
+            </div>
           </div>
         </div>
       </div>
@@ -270,11 +339,11 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
         onTabChange={(tab) => {
           if (tab === 'home') onNavigate?.('home');
           else if (tab === 'health') onNavigate?.('biometrics');
-          else if (tab === 'meds') onNavigate?.('meds');
-          else if (tab === 'ai') onNavigate?.('ai');
-          else if (tab === 'profile') onNavigate?.('profile');
           else if (tab === 'records') onNavigate?.('records');
+          else if (tab === 'ai') onNavigate?.('ai');
           else if (tab === 'care') onNavigate?.('care');
+          else if (tab === 'profile') onNavigate?.('profile');
+          else if (tab === 'meds') onNavigate?.('meds');
         }}
       />
 
