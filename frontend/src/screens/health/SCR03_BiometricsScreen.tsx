@@ -30,16 +30,17 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
     successMsg,
   } = useBiometricsLogic(activeMemberId);
 
-  // Dữ liệu biểu đồ cột 7 ngày mẫu (chiều cao % các thanh)
-  const chartBars = [
-    { height: '60%', value: '138', day: '20' },
-    { height: '55%', value: '135', day: '21' },
-    { height: '65%', value: '133', day: '22' },
-    { height: '58%', value: '132', day: '23' },
-    { height: '62%', value: '133', day: '24' },
-    { height: '54%', value: '130', day: '25' },
-    { height: '70%', value: '131', day: '26', isLatest: true },
-  ];
+  const isNoData = activeMetricObj.value === '--' || activeMetricObj.value === '--/--';
+  const latestRecordedAt = filteredHistory[0]?.recordedAt || null;
+
+  // Dữ liệu biểu đồ cột 7 ngày tính thực tế từ lịch sử đo
+  const chartBars = filteredHistory.length > 0
+    ? filteredHistory.slice(0, 7).reverse().map((item, idx, arr) => ({
+        height: `${Math.min(100, Math.max(30, 40 + idx * 10))}%`,
+        value: item.value,
+        isLatest: idx === arr.length - 1,
+      }))
+    : [];
 
   return (
     <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-24">
@@ -122,8 +123,10 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
           {/* Top row */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-extrabold text-slate-800">{activeMetricObj.name} · 7 ngày</span>
-            <span className="px-3 py-1 rounded-full bg-[#EAF8F0] text-[#166534] text-xs font-extrabold">
-              Mức 1 · Tốt
+            <span className={`px-3 py-1 rounded-full text-xs font-extrabold ${
+              isNoData ? 'bg-slate-100 text-slate-600' : 'bg-[#EAF8F0] text-[#166534]'
+            }`}>
+              {isNoData ? 'Chưa có số đo' : 'Mức 1 · Tốt'}
             </span>
           </div>
 
@@ -135,7 +138,7 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
 
           {/* Subtitle */}
           <span className="text-xs text-slate-400 font-medium -mt-1">
-            Lần đo mới nhất: 07:15 · 26/10/2026
+            {latestRecordedAt ? `Lần đo mới nhất: ${latestRecordedAt}` : 'Chưa có lần đo nào'}
           </span>
 
           {/* Legend */}
@@ -152,23 +155,33 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
 
           {/* 7-Day Bar Chart */}
           <div className="h-28 flex items-end justify-between px-3 pt-2 pb-1 border-b border-slate-50">
-            {chartBars.map((bar, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end">
-                <div
-                  style={{ height: bar.height }}
-                  className={`w-4.5 rounded-full transition-all ${
-                    bar.isLatest ? 'bg-[#2563EB]' : 'bg-[#BFDBFE]'
-                  }`}
-                />
+            {chartBars.length > 0 ? (
+              chartBars.map((bar, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end flex-1 max-w-[36px]">
+                  <div
+                    style={{ height: bar.height }}
+                    className={`w-4.5 rounded-full transition-all ${
+                      bar.isLatest ? 'bg-[#2563EB]' : 'bg-[#BFDBFE]'
+                    }`}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                Chưa có dữ liệu đo trong 7 ngày qua
               </div>
-            ))}
+            )}
           </div>
 
           {/* Callout box */}
           <div className="bg-[#F0FDF4] border border-emerald-100/70 rounded-2xl p-3 flex items-start gap-2 text-xs">
             <span className="text-teal-600 font-bold shrink-0 mt-0.5">✦</span>
             <span className="text-slate-800 font-medium leading-relaxed">
-              Huyết áp tâm thu giảm từ 138 xuống 131 mmHg trong 7 ngày, trong mục tiêu.
+              {filteredHistory.length >= 2
+                ? `Diễn biến ${activeMetricObj.name}: từ ${filteredHistory[filteredHistory.length - 1].value} sang ${filteredHistory[0].value} ${activeMetricObj.unit} — xu hướng ổn định.`
+                : filteredHistory.length === 1
+                ? `Đã ghi nhận 1 lần đo ${activeMetricObj.name}: ${filteredHistory[0].value} ${activeMetricObj.unit}. Hãy tiếp tục theo dõi đều đặn.`
+                : `Chưa có đủ số đo để phân tích xu hướng. Nhấn nút bên dưới để nhập số đo mới.`}
             </span>
           </div>
 
@@ -250,74 +263,9 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
                 </div>
               ))
             ) : (
-              // Default fallback entries matching mockup Image 1
-              <>
-                <div className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <div className="font-extrabold text-slate-900 text-sm">
-                      131/82 <span className="text-xs font-normal text-slate-400">mmHg</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      07:15 · 26/10/2026 · Đồng bộ thiết bị
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-50 text-[#1F7A8C]">
-                    Thiết bị
-                  </span>
-                </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <div className="font-extrabold text-slate-900 text-sm">
-                      130/81 <span className="text-xs font-normal text-slate-400">mmHg</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      07:15 · 25/10/2026 · Đồng bộ thiết bị
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-50 text-[#1F7A8C]">
-                    Thiết bị
-                  </span>
-                </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <div className="font-extrabold text-slate-900 text-sm">
-                      133/84 <span className="text-xs font-normal text-slate-400">mmHg</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      07:15 · 24/10/2026 · Đồng bộ thiết bị
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-50 text-[#1F7A8C]">
-                    Thiết bị
-                  </span>
-                </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <div className="font-extrabold text-slate-900 text-sm">
-                      132/83 <span className="text-xs font-normal text-slate-400">mmHg</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      07:15 · 23/10/2026 · Đồng bộ thiết bị
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-50 text-[#1F7A8C]">
-                    Thiết bị
-                  </span>
-                </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <div className="font-extrabold text-slate-900 text-sm">
-                      138/88 <span className="text-xs font-normal text-slate-400">mmHg</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      07:15 · 22/10/2026 · Đồng bộ thiết bị
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-50 text-[#1F7A8C]">
-                    Thiết bị
-                  </span>
-                </div>
-              </>
+              <div className="py-8 text-center text-xs text-slate-400 font-medium">
+                Chưa có lịch sử đo cho chỉ số này. Nhấn nút bên trên để ghi nhận số đo mới.
+              </div>
             )}
           </div>
         </div>

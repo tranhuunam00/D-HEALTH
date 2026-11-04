@@ -60,23 +60,6 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
           {mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản'}
         </h2>
 
-        {/* Quick select test account */}
-        {mode === 'login' && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => fillQuickAccount('0987654321', 'Nam@2026')}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all ${
-                identifier === '0987654321'
-                  ? 'bg-teal-50 text-[#1F7A8C] border-teal-200 shadow-2xs'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              Trần Hữu Nam (0987654321)
-            </button>
-          </div>
-        )}
-
         <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="flex flex-col gap-3.5">
           {mode === 'register' && (
             <div className="flex flex-col gap-1.5">
@@ -175,7 +158,13 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
         {mode === 'login' && (
           <button
             type="button"
-            onClick={() => fillQuickAccount('0987654321', 'Nam@2026')}
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.PublicKeyCredential) {
+                alert('Vui lòng quét vân tay hoặc FaceID trên thiết bị của bạn để đăng nhập.');
+              } else {
+                alert('Thiết bị chưa hỗ trợ đăng nhập sinh trắc học WebAuthn/FaceID.');
+              }
+            }}
             className="w-full h-12 rounded-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all"
           >
             <ScanFace className="w-4 h-4 text-slate-700" />

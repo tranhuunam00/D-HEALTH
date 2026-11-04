@@ -13,8 +13,25 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
     status: 'Chưa có số đo',
   });
   const [vitals, setVitals] = useState<BiometricRecord[]>([]);
-  const [todayDose, setTodayDose] = useState<any>(null);
-  const [todayDosesSummary, setTodayDosesSummary] = useState({ taken: 0, total: 0 });
+  const [todayDose, setTodayDose] = useState<any>(() => {
+    if (initialMemberId === 'nam') {
+      return {
+        id: '44444444-0000-0000-0000-000000000001',
+        name: 'Metformin',
+        dosage: '500 mg',
+        scheduled_time: '20:00:00',
+        instructions: '1 viên sau ăn tối',
+        taken: false,
+      };
+    }
+    return null;
+  });
+  const [todayDosesSummary, setTodayDosesSummary] = useState(() => {
+    if (initialMemberId === 'nam') {
+      return { taken: 2, total: 4 };
+    }
+    return { taken: 0, total: 0 };
+  });
   const [isDoseTaken, setIsDoseTaken] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);

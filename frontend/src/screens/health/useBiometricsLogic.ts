@@ -135,12 +135,15 @@ export function useBiometricsLogic(memberId = 'nam') {
   const latestBmiRec = history.find((h) => h.type === 'bmi');
   const latestWeightRec = history.find((h) => h.type === 'weight');
 
+  const latestStepsRec = history.find((h) => h.type === 'steps');
+  const latestSleepRec = history.find((h) => h.type === 'sleep');
+
   const metricsSummaries: readonly MetricSummary[] = [
     {
       id: 'bp',
       code: 'HA',
       name: 'Huyết áp',
-      value: latestBpRec ? latestBpRec.value : '131/82',
+      value: latestBpRec ? latestBpRec.value : '--/--',
       unit: 'mmHg',
       codeBg: 'bg-sky-100',
       codeColor: 'text-sky-700',
@@ -149,7 +152,7 @@ export function useBiometricsLogic(memberId = 'nam') {
       id: 'hr',
       code: 'NT',
       name: 'Nhịp tim',
-      value: latestHrRec ? latestHrRec.value : '71',
+      value: latestHrRec ? latestHrRec.value : '--',
       unit: 'bpm',
       codeBg: 'bg-rose-100',
       codeColor: 'text-rose-700',
@@ -158,7 +161,7 @@ export function useBiometricsLogic(memberId = 'nam') {
       id: 'spo2',
       code: 'O2',
       name: 'SpO₂',
-      value: latestSpo2Rec ? latestSpo2Rec.value : '98',
+      value: latestSpo2Rec ? latestSpo2Rec.value : '--',
       unit: '%',
       codeBg: 'bg-cyan-100',
       codeColor: 'text-cyan-700',
@@ -167,7 +170,7 @@ export function useBiometricsLogic(memberId = 'nam') {
       id: 'temp',
       code: 'T°',
       name: 'Nhiệt độ',
-      value: latestTempRec ? latestTempRec.value.replace('.', ',') : '36,7',
+      value: latestTempRec ? latestTempRec.value.replace('.', ',') : '--',
       unit: '°C',
       codeBg: 'bg-amber-100',
       codeColor: 'text-amber-700',
@@ -176,7 +179,7 @@ export function useBiometricsLogic(memberId = 'nam') {
       id: 'resp',
       code: 'NTh',
       name: 'Nhịp thở',
-      value: latestRespRec ? latestRespRec.value : '16',
+      value: latestRespRec ? latestRespRec.value : '--',
       unit: 'l/p',
       codeBg: 'bg-emerald-100',
       codeColor: 'text-emerald-700',
@@ -185,7 +188,7 @@ export function useBiometricsLogic(memberId = 'nam') {
       id: 'bmi',
       code: 'BMI',
       name: 'BMI',
-      value: latestBmiRec ? latestBmiRec.value.replace('.', ',') : (latestWeightRec ? '23,9' : '23,9'),
+      value: latestBmiRec ? latestBmiRec.value.replace('.', ',') : '--',
       unit: 'kg/m²',
       codeBg: 'bg-amber-100',
       codeColor: 'text-amber-800',
@@ -194,7 +197,7 @@ export function useBiometricsLogic(memberId = 'nam') {
       id: 'steps',
       code: 'BC',
       name: 'Bước chân',
-      value: '8,6k',
+      value: latestStepsRec ? latestStepsRec.value : '--',
       unit: 'bước',
       codeBg: 'bg-indigo-100',
       codeColor: 'text-indigo-700',
@@ -203,7 +206,7 @@ export function useBiometricsLogic(memberId = 'nam') {
       id: 'sleep',
       code: 'GN',
       name: 'Giấc ngủ',
-      value: '6,4',
+      value: latestSleepRec ? latestSleepRec.value : '--',
       unit: 'giờ',
       codeBg: 'bg-purple-100',
       codeColor: 'text-purple-700',

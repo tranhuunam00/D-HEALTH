@@ -30,4 +30,14 @@ describe('useBiometricsLogic Hook TDD', () => {
     });
     expect(result.current.isEntrySheetOpen).toBe(false);
   });
+
+  it('không tự động bịa số đo mặc định khi CSDL chưa có dữ liệu (Zero Mock Rule)', () => {
+    const { result } = renderHook(() => useBiometricsLogic('empty-user-id'));
+    const bp = result.current.metricsSummaries.find((m) => m.id === 'bp');
+    const hr = result.current.metricsSummaries.find((m) => m.id === 'hr');
+    const spo2 = result.current.metricsSummaries.find((m) => m.id === 'spo2');
+    expect(bp?.value).toBe('--/--');
+    expect(hr?.value).toBe('--');
+    expect(spo2?.value).toBe('--');
+  });
 });

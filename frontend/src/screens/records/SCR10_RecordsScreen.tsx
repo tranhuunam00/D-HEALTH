@@ -6,6 +6,7 @@ interface SCR10Props {
   readonly onNavigate: (screen: string) => void;
   readonly onSelectMember?: (memberId: string) => void;
   readonly activeMemberName?: string;
+  readonly activeMemberId?: string;
 }
 
 const CATEGORY_TILES = [
@@ -49,12 +50,12 @@ export const SCR10_RecordsScreen: React.FC<SCR10Props> = ({
         <div className="bg-white rounded-3xl p-4 flex items-center justify-between shadow-xs border border-slate-200/60">
           <div className="flex items-center gap-3">
             <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white text-lg font-black flex items-center justify-center shadow">
-              N
+              {activeMemberName.charAt(0)}
             </div>
             <div>
               <div className="text-base font-extrabold text-slate-900">{activeMemberName}</div>
-              <div className="text-xs text-slate-500 font-medium">41 tuổi · Nam · Nhóm máu O+</div>
-              <div className="text-[11px] text-slate-400 font-mono">BHYT: DN4010203040506</div>
+              <div className="text-xs text-slate-500 font-medium">Hồ sơ chính chủ · Đã xác thực</div>
+              <div className="text-[11px] text-slate-400 font-mono">BHYT: [Chưa cập nhật]</div>
             </div>
           </div>
           <button

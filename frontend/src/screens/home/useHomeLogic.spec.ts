@@ -29,4 +29,12 @@ describe('useHomeLogic Hook', () => {
     });
     expect(result.current.isVitalsSheetOpen).toBe(false);
   });
+
+  it('không tự động bịa số đo khi chưa có trong CSDL (Zero Mock Rule)', () => {
+    const { result } = renderHook(() => useHomeLogic('empty-user-member'));
+    expect(result.current.latestBp).toBe('--/--');
+    expect(result.current.latestHr).toBe('--');
+    expect(result.current.latestWeight).toBe('--');
+    expect(result.current.latestGlucose).toBe('--');
+  });
 });
