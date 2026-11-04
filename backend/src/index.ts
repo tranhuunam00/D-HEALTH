@@ -9,6 +9,9 @@ import { apiLimiter } from './infrastructure/security/rate-limiters';
 import { createAuthRouter } from './presentation/routes/auth.routes';
 import { createAdminUsersRouter } from './presentation/routes/admin-users.routes';
 import { createUserProfileRouter } from './presentation/routes/user-profile.routes';
+import { createBiometricsRouter } from './presentation/routes/biometrics.routes';
+import { createPrescriptionsRouter } from './presentation/routes/prescriptions.routes';
+import { createClinicalReportsRouter } from './presentation/routes/clinical-reports.routes';
 import { MinioStorageService } from './infrastructure/storage/minio-storage.service';
 import { createStorageRouter } from './presentation/routes/storage.routes';
 
@@ -33,6 +36,9 @@ const pool = new Pool({
 app.use('/api/auth', createAuthRouter(pool));
 app.use('/api/admin/users', createAdminUsersRouter(pool));
 app.use('/api/user/profile', createUserProfileRouter(pool));
+app.use('/api/biometrics', createBiometricsRouter(pool));
+app.use('/api/prescriptions', createPrescriptionsRouter(pool));
+app.use('/api/clinical-reports', createClinicalReportsRouter(pool));
 
 // 2. MinIO S3 Client & Storage Service
 const isDockerEnv = process.env.IS_DOCKER === 'true' || process.env.NODE_ENV === 'production';
