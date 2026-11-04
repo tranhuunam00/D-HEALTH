@@ -164,7 +164,13 @@ export default function App() {
           />
         );
       case 'chronic':
-        return <SCR09_ChronicScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
+        return (
+          <SCR09_ChronicScreen
+            onNavigate={(s) => setCurrentScreen(s as any)}
+            activeMemberName={activeMemberName}
+            activeMemberId={activeMemberId}
+          />
+        );
       case 'records':
         return (
           <SCR10_RecordsScreen

@@ -1,29 +1,24 @@
-import React, { useState } from 'react';
-import { Calendar, CheckSquare, Square, HeartPulse, ChevronRight, Activity } from 'lucide-react';
+import React from 'react';
+import { User } from 'lucide-react';
 import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
 import { HomeBottomNav } from '../home/HomeBottomNav';
+import { useChronicLogic } from './useChronicLogic';
+import { CardioConditionCard } from './components/CardioConditionCard';
+import { NextTasksCard } from './components/NextTasksCard';
+import { DiabetesConditionCard } from './components/DiabetesConditionCard';
 
 interface SCR09Props {
   readonly onNavigate: (screen: string) => void;
   readonly activeMemberName?: string;
-}
-
-interface ChecklistItem {
-  readonly id: string;
-  readonly text: string;
-  readonly done: boolean;
+  readonly activeMemberId?: string;
 }
 
 export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
+  activeMemberId = 'nam',
 }) => {
-  const [tasks, setTasks] = useState<readonly ChecklistItem[]>([
-    { id: '1', text: 'Đo huyết áp 2 lần/ngày (sáng và tối)', done: true },
-    { id: '2', text: 'Uống thuốc Amlodipine 5mg sau ăn sáng', done: true },
-    { id: '3', text: 'Xét nghiệm HbA1c và lipid máu trước tái khám', done: false },
-    { id: '4', text: 'Đi bộ tối thiểu 30 phút mỗi ngày', done: false },
-  ]);
+  const { conditions, tasks, loading, toggleTask } = useChronicLogic(activeMemberId);
 
   const handleSelectHealthTab = (tab: HealthTabId) => {
     if (tab === 'biometrics') onNavigate('biometrics');
@@ -31,112 +26,60 @@ export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
     else if (tab === 'imaging') onNavigate('imaging');
   };
 
-  const toggleTask = (id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-    );
-  };
+  const cardioCondition = conditions.find(
+    (c) => c.condition_name.includes('Tim') || c.id.includes('tim')
+  ) || conditions[0];
+
+  const diabetesCondition = conditions.find(
+    (c) => c.condition_name.includes('Đái') || c.id.includes('dai')
+  ) || conditions[1];
 
   return (
-    <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-20">
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
+    <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-24">
+      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-6 flex flex-col gap-3">
         {/* 1. Header Pills */}
-        <div className="flex gap-1.5 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        <div className="flex gap-2 items-center flex-wrap shrink-0">
+          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             Hôm nay: 26/10/2026
           </span>
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-            Hồ sơ: <b>{activeMemberName}</b>
+          <span className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-2xs">
+            <User className="w-3.5 h-3.5 text-slate-300" />
+            Hồ sơ sức khoẻ: <b>{activeMemberName}</b>
           </span>
         </div>
 
-        {/* 2. Tiêu đề */}
-        <span className="text-[28px] font-extrabold tracking-tight">Sức khoẻ</span>
+        {/* 2. Tiêu đề Sức khoẻ */}
+        <h1 className="text-[26px] font-black tracking-tight text-slate-900 leading-none mt-0.5">
+          Sức khoẻ
+        </h1>
 
         {/* 3. Category Tabs */}
         <HealthCategoryTabs activeTab="chronic" onSelectTab={handleSelectHealthTab} />
 
-        {/* 4. Disease Cockpit Card 1: Tăng huyết áp */}
-        <div className="bg-white rounded-3xl p-4 flex flex-col gap-3 shadow-xs border border-slate-200/60">
-          <div className="flex justify-between items-start gap-2">
-            <div>
-              <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <HeartPulse className="w-4 h-4 text-rose-500" />
-                Tăng huyết áp vô căn (nguyên phát)
-              </div>
-              <span className="text-xs text-slate-400 font-mono">ICD-10: I10 · Bác sĩ theo dõi: TS.BS Nguyễn Văn An</span>
-            </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-              Ổn định
-            </span>
-          </div>
+        {/* 4. Loading State hoặc Content */}
+        {loading && conditions.length === 0 ? (
+          <div className="py-12 text-center text-xs text-slate-400">Đang tải hồ sơ bệnh mạn tính...</div>
+        ) : (
+          <>
+            {/* 5. Thẻ Bệnh mạn tính 1: Tim mạch (Màu đỏ sẫm) */}
+            <CardioConditionCard condition={cardioCondition} />
 
-          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-            <div>
-              <span className="text-[11px] text-slate-400 font-semibold block">MỤC TIÊU ĐIỀU TRỊ</span>
-              <span className="font-extrabold text-slate-900">&lt; 130/80 mmHg</span>
-            </div>
-            <div className="text-right">
-              <span className="text-[11px] text-slate-400 font-semibold block">TRUNG BÌNH 7 NGÀY</span>
-              <span className="font-extrabold text-emerald-700">128/82 mmHg</span>
-            </div>
-          </div>
+            {/* 6. Thẻ Việc cần làm tiếp theo */}
+            <NextTasksCard
+              tasks={tasks}
+              onToggleTask={toggleTask}
+              nextCheckupDate={cardioCondition?.next_checkup_date}
+            />
 
-          {/* Checklist việc cần làm tiếp theo */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-bold text-slate-900">Việc cần làm tiếp theo</span>
-            <div className="space-y-1.5 text-xs">
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  onClick={() => toggleTask(task.id)}
-                  className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition"
-                >
-                  {task.done ? (
-                    <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <Square className="w-4 h-4 text-slate-400 shrink-0" />
-                  )}
-                  <span className={`text-xs ${task.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}`}>
-                    {task.text}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => onNavigate('care')}
-            className="h-10 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition active:scale-95"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Đặt lịch tái khám định kỳ (15/11)</span>
-          </button>
-        </div>
-
-        {/* 5. Disease Cockpit Card 2: Đái tháo đường */}
-        <div className="bg-white rounded-3xl p-4 flex flex-col gap-2 shadow-xs border border-slate-200/60">
-          <div className="flex justify-between items-start gap-2">
-            <div>
-              <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <Activity className="w-4 h-4 text-amber-500" />
-                Đái tháo đường type 2
-              </div>
-              <span className="text-xs text-slate-400 font-mono">ICD-10: E11 · Mục tiêu: HbA1c &lt; 7.0%</span>
-            </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
-              Cần theo dõi
-            </span>
-          </div>
-        </div>
+            {/* 7. Thẻ Bệnh mạn tính 2: Đái tháo đường */}
+            <DiabetesConditionCard condition={diabetesCondition} />
+          </>
+        )}
       </div>
 
-      {/* 6. Bottom Navigation */}
-      <HomeBottomNav
-        activeTab="health"
-        onTabChange={(tab) => onNavigate(tab)}
-      />
+      {/* 8. Bottom Navigation Bar */}
+      <HomeBottomNav activeTab="health" onNavigate={onNavigate} />
     </div>
   );
 };
