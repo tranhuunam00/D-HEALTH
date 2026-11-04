@@ -5,8 +5,8 @@ import { useDevicesLogic } from './useDevicesLogic';
 describe('useDevicesLogic Hook TDD', () => {
   it('khởi tạo với danh sách thiết bị ban đầu và đếm số thiết bị đã kết nối', () => {
     const { result } = renderHook(() => useDevicesLogic());
-    expect(result.current.devices.length).toBeGreaterThan(0);
-    expect(result.current.connectedCount).toBe(2);
+    expect(result.current.devices.length).toBe(11);
+    expect(result.current.connectedCount).toBe(3);
     expect(result.current.isScanning).toBe(false);
   });
 
@@ -23,6 +23,6 @@ describe('useDevicesLogic Hook TDD', () => {
     act(() => {
       result.current.toggleDeviceConnection('omron-bp');
     });
-    expect(result.current.connectedCount).toBe(1);
+    expect(result.current.connectedCount).toBe(2);
   });
 });

@@ -119,7 +119,7 @@ export default function App() {
           />
         );
       case 'devices':
-        return <SCR04_DevicesScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return <SCR04_DevicesScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
       case 'labs':
         return (
           <SCR05_LabsScreen

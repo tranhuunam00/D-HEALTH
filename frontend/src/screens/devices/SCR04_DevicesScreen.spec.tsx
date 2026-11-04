@@ -10,8 +10,14 @@ describe('SCR04_DevicesScreen Mobile View TDD', () => {
     expect(screen.getByText('Kết nối thiết bị')).toBeDefined();
     expect(screen.getByText(/thiết bị đang kết nối/)).toBeDefined();
     expect(screen.getByText('Quét tìm thiết bị mới')).toBeDefined();
-    expect(screen.getByText('Omron HEM-7600T')).toBeDefined();
-    expect(screen.getByText('Apple Watch Series 9')).toBeDefined();
+    expect(screen.getByText('Nền tảng sức khoẻ')).toBeDefined();
+    expect(screen.getByText('Apple Health')).toBeDefined();
+    expect(screen.getByText('Google Health Connect')).toBeDefined();
+    expect(screen.getByText('Đồng hồ thông minh')).toBeDefined();
+    expect(screen.getByText('Apple Watch')).toBeDefined();
+    expect(screen.getByText('Thiết bị y tế')).toBeDefined();
+    expect(screen.getByText('Máy đo huyết áp')).toBeDefined();
+    expect(screen.getByText(/D-Health chỉ đọc những loại dữ liệu/)).toBeDefined();
   });
 
   it('gọi onNavigate khi bấm nút quay lại', () => {
