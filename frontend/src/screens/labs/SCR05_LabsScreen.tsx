@@ -1,7 +1,6 @@
 import React from 'react';
-import { Camera, ChevronRight, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import { useLabsLogic, LabCategory } from './useLabsLogic';
-import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
+import { ChevronRight, User, Plus, Check } from 'lucide-react';
+import { useLabsLogic, LabSpecialtyCode, TRACKED_METRICS_CONFIG } from './useLabsLogic';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 
 interface SCR05Props {
@@ -10,11 +9,13 @@ interface SCR05Props {
   readonly activeMemberId?: string;
 }
 
-const CATEGORY_CHIPS: readonly { id: LabCategory; label: string }[] = Object.freeze([
+const SPECIALTY_PILLS: readonly { id: LabSpecialtyCode; label: string }[] = Object.freeze([
   { id: 'all', label: 'Tất cả' },
-  { id: 'biochemistry', label: 'Sinh hoá' },
-  { id: 'hematology', label: 'Huyết học' },
-  { id: 'urinalysis', label: 'Nước tiểu' },
+  { id: 'HH', label: 'HH' },
+  { id: 'SH', label: 'SH' },
+  { id: 'VS', label: 'VS' },
+  { id: 'PT', label: 'PT' },
+  { id: 'DT', label: 'DT' },
 ]);
 
 export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
@@ -22,111 +23,242 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
   activeMemberName = 'Trần Hữu Nam',
   activeMemberId = 'nam',
 }) => {
-  const { selectedCategory, setSelectedCategory, filteredReports } = useLabsLogic(activeMemberId);
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    trackedMetricIds,
+    toggleTrackedMetric,
+    filteredReports,
+    activeTrackedMetrics,
+  } = useLabsLogic(activeMemberId);
 
-  const handleSelectHealthTab = (tab: HealthTabId) => {
-    if (tab === 'biometrics') onNavigate('biometrics');
-    else if (tab === 'imaging') onNavigate('imaging');
-    else if (tab === 'chronic') onNavigate('chronic');
+  const getBadgeStyle = (code: 'SH' | 'HH' | 'VS' | 'PT' | 'DT') => {
+    switch (code) {
+      case 'SH': return 'bg-sky-100 text-sky-700';
+      case 'HH': return 'bg-rose-100 text-rose-700';
+      case 'VS': return 'bg-emerald-100 text-emerald-700';
+      case 'PT': return 'bg-purple-100 text-purple-700';
+      case 'DT': return 'bg-amber-100 text-amber-700';
+      default: return 'bg-sky-100 text-sky-700';
+    }
+  };
+
+  const renderTrendChart = (points: readonly number[], isAmber: boolean) => {
+    const min = Math.min(...points) * 0.9;
+    const max = Math.max(...points) * 1.1;
+    const range = max - min || 1;
+    const strokeColor = isAmber ? '#D97706' : '#0D9488';
+    const fillColor = isAmber ? 'url(#amberGrad)' : 'url(#tealGrad)';
+
+    const coords = points.map((val, idx) => {
+      const x = 20 + idx * 60;
+      const y = 70 - ((val - min) / range) * 50;
+      return { x, y };
+    });
+
+    const pathD = coords.reduce((acc, c, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`, '');
+    const areaD = `${pathD} L ${coords[coords.length - 1].x} 80 L ${coords[0].x} 80 Z`;
+
+    return (
+      <svg className="w-full h-20 overflow-visible" viewBox="0 0 280 85">
+        <defs>
+          <linearGradient id="tealGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0D9488" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#D97706" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#D97706" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* Reference Dashed Line */}
+        <line x1="10" y1="42" x2="270" y2="42" stroke="#CBD5E1" strokeDasharray="3 3" strokeWidth="1" />
+        {/* Area fill */}
+        <path d={areaD} fill={fillColor} />
+        {/* Line */}
+        <path d={pathD} fill="none" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Points */}
+        {coords.map((c, i) => (
+          <circle key={i} cx={c.x} cy={c.y} r="3.5" fill="#FFFFFF" stroke={strokeColor} strokeWidth="2" />
+        ))}
+      </svg>
+    );
   };
 
   return (
-    <div className="w-full min-h-screen relative bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-20">
+    <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-24">
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
-        {/* 1. Header Pills */}
+        {/* 1. Header Badges */}
         <div className="flex gap-1.5 items-center flex-wrap shrink-0">
           <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Hôm nay: 26/10/2026
           </span>
           <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-            Hồ sơ: <b>{activeMemberName}</b>
+            <User className="w-3.5 h-3.5" />
+            Hồ sơ sức khoẻ: <b>{activeMemberName}</b>
           </span>
         </div>
 
-        {/* 2. Tiêu đề */}
-        <span className="text-[28px] font-extrabold tracking-tight">Sức khoẻ</span>
+        {/* 2. Tiêu đề Sức khoẻ */}
+        <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-tight pt-1">
+          Sức khoẻ
+        </h1>
 
-        {/* 3. Category Tabs */}
-        <HealthCategoryTabs activeTab="labs" onSelectTab={handleSelectHealthTab} />
-
-        {/* 4. Sub-category Horizontal Carousel Chips */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 shrink-0 no-scrollbar">
-          {CATEGORY_CHIPS.map((chip) => (
-            <button
-              key={chip.id}
-              onClick={() => setSelectedCategory(chip.id)}
-              className={`h-7 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition ${
-                selectedCategory === chip.id
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {chip.label}
-            </button>
-          ))}
+        {/* 3. Category Tabs 4 nhóm */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <button
+            onClick={() => onNavigate('biometrics')}
+            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
+          >
+            Sinh trắc
+          </button>
+          <button className="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white shadow-xs">
+            Xét nghiệm
+          </button>
+          <button
+            onClick={() => onNavigate('imaging')}
+            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
+          >
+            CĐHA
+          </button>
+          <button
+            onClick={() => onNavigate('chronic')}
+            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 transition"
+          >
+            Bệnh mạn tính
+          </button>
         </div>
 
-        {/* 5. Nút Nhập kết quả XN nhanh (Camera OCR) */}
-        <button
-          onClick={() => onNavigate('camera-ocr')}
-          className="h-12 rounded-2xl bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition"
-        >
-          <Camera className="w-4 h-4" />
-          <span>Nhập kết quả xét nghiệm (Chụp ảnh / File)</span>
-        </button>
+        {/* 4. Section: Kết quả xét nghiệm */}
+        <div className="flex flex-col gap-2">
+          <h2 className="text-sm font-black text-slate-900 px-1">Kết quả xét nghiệm</h2>
 
-        {/* 6. Danh sách phiếu xét nghiệm */}
-        <div className="flex flex-col gap-2.5">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-900 px-1">
-            <span>Danh sách phiếu xét nghiệm ({filteredReports.length})</span>
-          </div>
-
-          <div className="flex flex-col gap-2.5">
-            {filteredReports.map((report) => (
-              <div
-                key={report.id}
-                onClick={() => onNavigate('lab-detail', report.id)}
-                className="bg-white rounded-3xl p-4 flex flex-col gap-2.5 shadow-xs border border-slate-200/60 cursor-pointer hover:border-[#1F7A8C]/50 transition"
+          {/* Horizontal Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            {SPECIALTY_PILLS.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setSelectedCategory(p.id)}
+                className={`px-3.5 py-1.5 rounded-full text-xs transition ${
+                  selectedCategory === p.id
+                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                    : 'bg-white text-slate-600 font-semibold border border-slate-200 hover:bg-slate-50'
+                }`}
               >
-                <div className="flex justify-between items-start gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-2xl bg-teal-50 text-[#1F7A8C] flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-slate-900">{report.title}</div>
-                      <div className="text-xs text-slate-500 font-medium">
-                        {report.facility} · {report.testDate}
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-600 font-medium truncate flex-1 pr-2">
-                    {report.summary}
-                  </span>
-                  {report.abnormalCount > 0 ? (
-                    <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                      <AlertCircle className="w-3 h-3 text-amber-600" />
-                      {report.abnormalCount} vượt ngưỡng
-                    </span>
-                  ) : (
-                    <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      <CheckCircle className="w-3 h-3 text-emerald-600" />
-                      Bình thường
-                    </span>
-                  )}
-                </div>
-              </div>
+                {p.label}
+              </button>
             ))}
           </div>
+
+          <span className="text-[11px] text-slate-400 font-medium px-1 -mt-0.5">
+            HH Huyết học · SH Sinh hoá · VS Vi sinh · PT Sinh học phân tử · DT Di truyền
+          </span>
+
+          {/* List Card with internal scroll */}
+          <div className="bg-white rounded-[24px] shadow-xs border border-slate-100 overflow-hidden flex flex-col">
+            <div className="max-h-[290px] overflow-y-auto divide-y divide-slate-100">
+              {filteredReports.map((report) => (
+                <div
+                  key={report.id}
+                  onClick={() => onNavigate('lab-detail', report.id)}
+                  className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 ${getBadgeStyle(report.categoryBadge)}`}>
+                      {report.categoryBadge}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-bold text-slate-900 truncate">{report.title}</span>
+                      <span className="text-xs text-slate-400 font-medium truncate">{report.summary}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-slate-400 font-medium">{report.testDate}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-2.5 text-center text-[11px] text-slate-400 font-medium bg-slate-50/50 border-t border-slate-100">
+              {filteredReports.length} kết quả · hiển thị 5 mới nhất, kéo trong khung để xem thêm
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Section: Chỉ số cần theo dõi */}
+        <div className="flex flex-col gap-2.5 pt-1">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-black text-slate-900">Chỉ số cần theo dõi</h2>
+            <span className="text-xs text-slate-500 font-semibold">
+              Đã chọn {activeTrackedMetrics.length}/{TRACKED_METRICS_CONFIG.length}
+            </span>
+          </div>
+
+          {/* Tracked chips */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            {TRACKED_METRICS_CONFIG.map((metric) => {
+              const isTracked = trackedMetricIds.includes(metric.id);
+              return (
+                <button
+                  key={metric.id}
+                  onClick={() => toggleTrackedMetric(metric.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs transition flex items-center gap-1 shrink-0 ${
+                    isTracked
+                      ? 'bg-slate-900 text-white font-bold shadow-xs'
+                      : 'bg-white text-slate-700 font-semibold border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {isTracked ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                  <span>{metric.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Trend Line Cards for Active Tracked Metrics */}
+          {activeTrackedMetrics.map((m) => {
+            const isWarning = m.levelType === 'warning';
+            return (
+              <div
+                key={m.id}
+                className="bg-white rounded-[26px] p-5 shadow-xs border border-slate-100 flex flex-col gap-3 relative"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-black text-slate-900">{m.label}</span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      isWarning
+                        ? 'bg-[#FEF3C7] text-[#D97706]'
+                        : 'bg-[#EAF8F0] text-[#166534]'
+                    }`}
+                  >
+                    {m.level}
+                  </span>
+                </div>
+
+                <div className="flex items-baseline">
+                  <span className="text-4xl font-black text-slate-900 tracking-tight">{m.value}</span>
+                  <span className="text-xs font-medium text-slate-500 ml-1.5">{m.unit}</span>
+                </div>
+
+                {/* Trend Chart */}
+                {renderTrendChart(m.points, isWarning)}
+
+                {/* Callout Insight */}
+                <div className="bg-[#EAF8F0] border border-teal-100/70 rounded-2xl p-3 flex items-start gap-2">
+                  <span className="text-teal-700 text-xs font-black mt-0.5">✦</span>
+                  <span className="text-xs font-bold text-slate-800 leading-relaxed">{m.insight}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* 7. Bottom Navigation */}
+      {/* Bottom Navigation */}
       <HomeBottomNav
         activeTab="health"
         onTabChange={(tab) => onNavigate(tab)}

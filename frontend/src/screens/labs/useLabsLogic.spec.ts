@@ -9,12 +9,21 @@ describe('useLabsLogic Hook TDD', () => {
     expect(result.current.reports.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('lọc danh sách phiếu xét nghiệm theo chuyên khoa sinh hoá', () => {
+  it('lọc danh sách phiếu xét nghiệm theo chuyên khoa sinh hoá SH', () => {
     const { result } = renderHook(() => useLabsLogic());
     act(() => {
-      result.current.setSelectedCategory('biochemistry');
+      result.current.setSelectedCategory('SH');
     });
-    expect(result.current.selectedCategory).toBe('biochemistry');
-    expect(result.current.filteredReports.every(r => r.category === 'biochemistry')).toBe(true);
+    expect(result.current.selectedCategory).toBe('SH');
+    expect(result.current.filteredReports.every((r) => r.categoryBadge === 'SH')).toBe(true);
+  });
+
+  it('hỗ trợ toggle bật tắt chỉ số theo dõi', () => {
+    const { result } = renderHook(() => useLabsLogic());
+    expect(result.current.trackedMetricIds).toContain('hba1c');
+    act(() => {
+      result.current.toggleTrackedMetric('hba1c');
+    });
+    expect(result.current.trackedMetricIds).not.toContain('hba1c');
   });
 });

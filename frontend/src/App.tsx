@@ -54,6 +54,8 @@ export default function App() {
     return 'home';
   });
 
+  const [selectedLabReportId, setSelectedLabReportId] = useState<string | null>(null);
+
   useEffect(() => {
     const verifySession = async () => {
       try {
@@ -125,11 +127,21 @@ export default function App() {
           <SCR05_LabsScreen
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s, id) => {
+              if (id) setSelectedLabReportId(id);
+              setCurrentScreen(s as any);
+            }}
           />
         );
       case 'lab-detail':
-        return <SCR06_LabDetailScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
+        return (
+          <SCR06_LabDetailScreen
+            reportId={selectedLabReportId}
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
+            onNavigate={(s) => setCurrentScreen(s as any)}
+          />
+        );
       case 'imaging':
         return (
           <SCR07_ImagingScreen
