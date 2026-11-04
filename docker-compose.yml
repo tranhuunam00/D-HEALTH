@@ -1,0 +1,132 @@
+services:
+  # -------------------------------------------------------------
+  # 1. Cơ sở dữ liệu tập trung (PostgreSQL 16)
+  # -------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: dhealth-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-dhealth_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dhealth_secret_2026}
+      POSTGRES_DB: ${DB_NAME:-dhealth_db}
+    ports:
+      - "${DB_PORT:-7003}:5432"
+    volumes:
+      - dhealth-pgdata:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dhealth_user} -d ${DB_NAME:-dhealth_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dhealth-net
+
+  # -------------------------------------------------------------
+  # 2. Kho lưu trữ tệp y tế S3 (MinIO Object Storage)
+  # -------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: dhealth-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dhealth_minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-dhealth_minio_secret_2026}
+    ports:
+      - "${MINIO_PORT:-7004}:9000"         # S3 API
+      - "${MINIO_CONSOLE_PORT:-7005}:9001" # Web Admin Console
+    volumes:
+      - dhealth-minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dhealth-net
+
+  # -------------------------------------------------------------
+  # 3. Tự động khởi tạo Buckets MinIO khi khởi động
+  # -------------------------------------------------------------
+  minio-create-buckets:
+    image: minio/mc:latest
+    container_name: dhealth-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set dhealth_s3 http://minio:9000 ${MINIO_ROOT_USER:-dhealth_minio_admin} ${MINIO_ROOT_PASSWORD:-dhealth_minio_secret_2026};
+      /usr/bin/mc mb --ignore-existing dhealth_s3/dhealth-reports;
+      /usr/bin/mc mb --ignore-existing dhealth_s3/dhealth-dicom;
+      /usr/bin/mc mb --ignore-existing dhealth_s3/dhealth-avatars;
+      /usr/bin/mc mb --ignore-existing dhealth_s3/dhealth-prescriptions;
+      /usr/bin/mc anonymous set download dhealth_s3/dhealth-avatars;
+      /usr/bin/mc anonymous set download dhealth_s3/dhealth-reports;
+      echo 'D-Health MinIO Buckets initialized successfully!';
+      exit 0;
+      "
+    networks:
+      - dhealth-net
+
+  # -------------------------------------------------------------
+  # 4. D-Health Backend API (Node.js Express / Clean Architecture)
+  # -------------------------------------------------------------
+  backend:
+    container_name: dhealth-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-dhealth_user}
+      DB_PASSWORD: ${DB_PASSWORD:-dhealth_secret_2026}
+      DB_NAME: ${DB_NAME:-dhealth_db}
+      DATABASE_URL: postgresql://${DB_USER:-dhealth_user}:${DB_PASSWORD:-dhealth_secret_2026}@postgres:5432/${DB_NAME:-dhealth_db}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-dhealth_minio_admin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-dhealth_minio_secret_2026}
+      MINIO_USE_SSL: "false"
+      JWT_SECRET: ${JWT_SECRET:-dhealth_jwt_super_secret_2026}
+    ports:
+      - "${BACKEND_PORT:-7002}:5000"
+    networks:
+      - dhealth-net
+
+  # -------------------------------------------------------------
+  # 5. D-Health Frontend Web / Mobile Client (Nginx + React SPA)
+  # -------------------------------------------------------------
+  frontend:
+    container_name: dhealth-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-7001}:80"
+    networks:
+      - dhealth-net
+
+volumes:
+  dhealth-pgdata:
+    driver: local
+  dhealth-minio-data:
+    driver: local
+
+networks:
+  dhealth-net:
+    driver: bridge
