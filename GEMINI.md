@@ -8,7 +8,7 @@
 ## 0. KỶ LUẬT TÁI THẨM ĐỊNH KỸ NĂNG & QUY CHUẨN ĐỊNH KỲ (PERIODIC 30-MINUTE REVIEW MANDATE)
 - **Chu kỳ bắt buộc**: Cứ sau **mỗi 30 phút** làm việc liên tục hoặc trước khi bắt đầu bất kỳ một Task/Phase/Màn hình mới nào, AI Agent **BẮT BUỘC PHẢI ĐỌC LẠI TOÀN BỘ 100% CÁC SKILLS VÀ RULES**:
   - Đọc lại toàn bộ `GEMINI.md` và `.specify/memory/constitution.md`.
-  - Đọc lại toàn bộ danh mục skills trong hệ thống (`code-convention`, `fe-development`, `spec-kit`, `web-security-auditor`).
+  - Đọc lại toàn bộ danh mục skills trong hệ thống (`code-convention`, `fe-development`, `spec-kit`, `web-security-auditor`, `db-migration`).
 - **Mục đích bất biến**: Triệt tiêu hoàn toàn hiện tượng quên ngữ cảnh (Context Drift), ngăn ngừa sinh mã tuỳ tiện ("vibe coding"), duy trì tính nghiêm ngặt tuyệt đối của TDD 4 chiều, kiến trúc DDD, chuẩn thiết bị và an toàn dữ liệu y tế.
 - **Cam kết hành động**: Tuyệt đối không sinh code khi chưa kiểm chứng lại sự phù hợp với toàn bộ rule và skill.
 
@@ -87,3 +87,26 @@
   - Tuân thủ Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân y tế.
 - **Git Commit**:
   - Tuân thủ chuẩn Conventional Commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
+
+---
+
+## 5. NGUYÊN TẮC BẮT BUỘC VỀ DATABASE MIGRATION & RÀ SOÁT TÁC ĐỘNG (DATABASE MIGRATION MANDATE)
+- **Zero-Direct-Schema-Edit (Cấm sửa trực tiếp DB & Cấm sửa Migration cũ)**:
+  - Mọi thay đổi schema (thêm/sửa/xóa bảng, cột, kiểu dữ liệu, index, trigger, enum, seed) **BẮT BUỘC PHẢI TẠO 1 FILE MIGRATION MỚI** theo thứ tự tăng dần (`XXX_descriptive_name.up.sql` và `XXX_descriptive_name.down.sql`).
+  - Tuyệt đối cấm chạy lệnh DDL bằng tay trực tiếp trên CSDL.
+  - Tuyệt đối cấm sửa đổi các file migration đã committed hoặc đã apply (Lịch sử bất biến - Immutable History).
+- **Rà soát tác động toàn diện mã nguồn trước khi Apply (Pre-Migration Codebase Impact Analysis Protocol)**:
+  - Trước khi apply hoặc tạo migration, AI Coding Agent và Lập trình viên **BẮT BUỘC PHẢI RÀ SOÁT TOÀN DIỆN MÃ NGUỒN THEO MA TRẬN 5 LỚP**:
+    1. **Domain Layer**: Entity properties, Value Objects (self-validating), Domain Events, Invariants.
+    2. **Infrastructure Layer**: SQL queries (`SELECT`, `INSERT`, `UPDATE`), Repositories, Entity-Row Mappers.
+    3. **Application & API Layer**: DTOs (Request/Response), Controller validation schemas (Zod/Joi), API Contracts.
+    4. **Frontend Client Layer**: TypeScript interfaces, API services, TanStack Queries, UI Components, Form inputs, State 5 trạng thái (`Loading`, `Empty`, `Error`, `Data`, `Offline`).
+    5. **Spec-Kit & Documentation**: Cập nhật `specs/.../data-model.md` và `specs/.../spec.md`.
+- **Mô hình Expand-and-Contract (Zero-Downtime Migration)**:
+  - Thêm cột `NOT NULL`: Bắt buộc tạo nullable trước hoặc có `DEFAULT`, chạy script backfill dữ liệu cũ rồi mới áp đặt `NOT NULL`.
+  - Đổi tên cột (Rename): Không đổi tên trực tiếp; áp dụng mô hình 3 pha (Expand -> Migrate code -> Contract).
+  - Tạo Index trên bảng lớn: Luôn sử dụng `CREATE INDEX CONCURRENTLY` trong PostgreSQL.
+- **Tính khả nghịch 2 chiều (Two-Way Reversibility & Ledger)**:
+  - Bắt buộc có cặp file UP và DOWN. Phải kiểm thử thành công chu kỳ `UP` $\rightarrow$ `DOWN` $\rightarrow$ `UP` trên môi trường dev trước khi merge.
+  - Quản lý trạng thái và mã băm SHA-256 qua bảng `_migrations`.
+

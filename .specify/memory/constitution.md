@@ -10,7 +10,7 @@
 ### 0. KỶ LUẬT TÁI THẨM ĐỊNH KỸ NĂNG & QUY CHUẨN ĐỊNH KỲ (PERIODIC 30-MINUTE REVIEW MANDATE)
 1. **Chu kỳ bắt buộc**: Cứ sau **mỗi 30 phút** làm việc liên tục hoặc trước khi bắt đầu bất kỳ một Task/Phase/Màn hình mới nào, AI Agent **BẮT BUỘC PHẢI ĐỌC LẠI TOÀN BỘ 100% CÁC SKILLS VÀ RULES**:
    - Đọc lại `GEMINI.md` và `.specify/memory/constitution.md`.
-   - Đọc lại toàn bộ danh mục skills (`code-convention`, `fe-development`, `spec-kit`, `web-security-auditor`).
+   - Đọc lại toàn bộ danh mục skills (`code-convention`, `fe-development`, `spec-kit`, `web-security-auditor`, `db-migration`).
 2. **Mục đích bất biến**: Triệt tiêu hoàn toàn hiện tượng quên ngữ cảnh (Context Drift), ngăn ngừa sinh mã tuỳ tiện ("vibe coding"), duy trì tính nghiêm ngặt tuyệt đối của TDD 4 chiều, kiến trúc DDD, chuẩn thiết bị và an toàn dữ liệu y tế.
 3. **Cam kết hành động**: Tuyệt đối không sinh code khi chưa kiểm chứng lại sự phù hợp với toàn bộ rule và skill.
 
@@ -65,6 +65,20 @@
 4. **Zero PII Logging**:
    - Tuyệt đối không log thông tin nhạy cảm của bệnh nhân (CCCD, Họ tên, Bệnh nền, Token xác thực) ra console hoặc monitoring logs.
 
+### VI. NGUYÊN TẮC BẤT BIẾN VỀ MIGRATION CƠ SỞ DỮ LIỆU & RÀ SOÁT TÁC ĐỘNG (DATABASE MIGRATION & IMPACT AUDIT MANDATE)
+1. **Zero-Direct-Schema-Edit (Cấm sửa trực tiếp DB & Cấm sửa Migration cũ)**:
+   - Bất kỳ thay đổi cấu trúc dữ liệu nào **BẮT BUỘC PHẢI TẠO 1 FILE MIGRATION MỚI** (`XXX_name.up.sql` và `XXX_name.down.sql`).
+   - Cấm sửa đổi file migration đã merge hoặc đã apply. Migration là nhật ký bất biến (Immutable History).
+2. **Pre-Migration Codebase Impact Analysis (Giao thức thẩm tra 5 lớp)**:
+   - Trước khi apply migration, bắt buộc phải rà soát mã nguồn: Domain (Entities, Value Objects), Infrastructure (Repositories, SQL, Mappers), Application (DTOs, Validation Zod), Frontend (TypeScript types, TanStack queries, Screens, Forms), Spec-Kit (`data-model.md`, `spec.md`).
+3. **Mô hình Expand-and-Contract & Zero-Downtime**:
+   - Thêm cột `NOT NULL` phải theo 3 pha hoặc có `DEFAULT` để không làm sập dữ liệu hiện có.
+   - Đổi tên cột phải qua giai đoạn đồng bộ dữ liệu (dual-write/trigger), không rename đột ngột.
+   - Tạo Index trên PostgreSQL production bắt buộc dùng `CREATE INDEX CONCURRENTLY`.
+4. **Khả nghịch 2 chiều (Reversibility) & Sổ cái Migration (`_migrations`)**:
+   - Bắt buộc kiểm thử thành công chu kỳ: `UP` $\rightarrow$ `DOWN` (Rollback sạch) $\rightarrow$ `UP` lại trên dev database.
+   - Quản lý trạng thái và mã băm SHA-256 qua bảng `_migrations`.
+
 ---
 
 ## 2. CỔNG KIỂM SOÁT HIẾN PHÁP (CONSTITUTION CHECK GATES)
@@ -78,6 +92,7 @@ Mọi Kế hoạch triển khai (`plan.md`) trước khi được chuyển thàn
 - [ ] **Gate 4 (DDD Architecture)**: Đã đóng gói các thuộc tính nhạy cảm thành Value Objects bất biến và xác định đúng Aggregate Root?
 - [ ] **Gate 5 (Device Experience Validation)**: Màn hình người dùng cuối đã ưu tiên Mobile-First (Thumb Zone, Bottom Sheet, In-frame $\le 5$ mục) và màn Admin đã chuẩn PC-First (High-density grid, Multi-panel dashboard)?
 - [ ] **Gate 6 (Decree 13 Compliance)**: Đã thiết lập cơ chế Consent Gate cho thành viên $\ge 18$ tuổi và che chắn PII?
+- [ ] **Gate 7 (DB Migration & Codebase Impact Audit)**: Mọi thay đổi schema đều có migration mới (UP/DOWN), tuân thủ Expand-and-Contract, đã hoàn tất rà soát tác động 5 lớp (Domain, Repo, DTO, Frontend, Spec) và kiểm thử rollback sạch sẽ?
 
 ---
 
@@ -85,4 +100,4 @@ Mọi Kế hoạch triển khai (`plan.md`) trước khi được chuyển thàn
 - **Hiến pháp này có giá trị pháp lý cao nhất trong dự án**.
 - Mọi Pull Request, mã nguồn sinh ra bởi AI hoặc lập trình viên nếu vi phạm bất kỳ điều khoản nào của Hiến pháp sẽ bị từ chối sáp nhập (Rejected).
 
-**Phiên bản**: `1.1.0` | **Ngày cập nhật**: `2026-11-04` | **Tổ chức**: `D-HEALTH Engineering Team`
+**Phiên bản**: `1.2.0` | **Ngày cập nhật**: `2026-11-04` | **Tổ chức**: `D-HEALTH Engineering Team`
