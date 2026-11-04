@@ -43,11 +43,11 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     full_name: propMemberName || user?.fullName || 'Trần Hữu Nam',
   };
 
-  const displayBp = latestBp !== '--/--' ? latestBp : '131/82';
-  const displayHr = latestHr !== '--' ? latestHr : '71';
-  const displayWeight = latestWeight !== '--' ? latestWeight : '72,5';
-  const displayGlucose = latestGlucose !== '--' ? latestGlucose : '6,6';
-  const displayScore = healthScore.total > 0 ? healthScore.total : 78;
+  const displayBp = latestBp;
+  const displayHr = latestHr;
+  const displayWeight = latestWeight;
+  const displayGlucose = latestGlucose;
+  const displayScore = healthScore.total > 0 ? healthScore.total : '--';
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] pb-24 relative flex flex-col font-sans select-none">
@@ -98,7 +98,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
         >
           {/* Top-Right Status Badge (Black pill) */}
           <span className="absolute right-4 top-4 bg-slate-900 text-white rounded-full px-3 py-1 text-xs font-bold shadow-2xs">
-            {healthScore.status === 'Chưa có số đo' ? 'Ổn định' : healthScore.status}
+            {healthScore.status || 'Chưa có số đo'}
           </span>
 
           <svg width="260" height="135" viewBox="0 0 300 168">

@@ -33,7 +33,11 @@ export function createBiometricsRouter(pool: Pool): Router {
     }
 
     try {
-      const bType = biometricType === 'blood_pressure' ? 'bp' : biometricType === 'heart_rate' ? 'hr' : biometricType;
+      const bType = (biometricType === 'blood_pressure' || biometricType === 'bp') ? 'bp'
+        : (biometricType === 'heart_rate' || biometricType === 'hr') ? 'hr'
+        : (biometricType === 'temperature' || biometricType === 'temp') ? 'temp'
+        : (biometricType === 'respiration' || biometricType === 'resp') ? 'resp'
+        : biometricType;
       const numSys = systolic ? Number(systolic) : null;
       const numDia = diastolic ? Number(diastolic) : null;
       const numVal = valueNumeric ? Number(valueNumeric) : (numSys || null);

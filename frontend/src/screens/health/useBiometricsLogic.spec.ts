@@ -3,10 +3,10 @@ import { renderHook, act } from '@testing-library/react';
 import { useBiometricsLogic } from './useBiometricsLogic';
 
 describe('useBiometricsLogic Hook TDD', () => {
-  it('khởi tạo với chỉ số active là huyết áp bp và 5 bản ghi lịch sử đo', () => {
+  it('khởi tạo với chỉ số active là huyết áp bp và 8 nhóm metrics sinh trắc', () => {
     const { result } = renderHook(() => useBiometricsLogic());
     expect(result.current.activeMetric).toBe('bp');
-    expect(result.current.history.length).toBeLessThanOrEqual(5);
+    expect(result.current.metricsSummaries.length).toBe(8);
     expect(result.current.isEntrySheetOpen).toBe(false);
   });
 

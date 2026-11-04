@@ -30,19 +30,8 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
   return (
     <div className="w-full min-h-screen bg-[#EEF2F6] text-[#111827] flex flex-col font-sans select-none pb-28">
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
-        {/* 1. Header Badges */}
-        <div className="flex gap-1.5 items-center flex-wrap shrink-0">
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
-            Hồ sơ: <b>{activeMemberName}</b>
-          </span>
-        </div>
-
-        {/* 2. Topbar với nút Back */}
-        <div className="flex items-center gap-3">
+        {/* Topbar với nút Back */}
+        <div className="flex items-center gap-3 pt-2">
           <button
             onClick={() => onNavigate('records')}
             aria-label="Quay lại"
@@ -50,14 +39,14 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <span className="text-base font-extrabold text-slate-900 leading-tight">
+          <h1 className="text-lg font-black text-slate-900 leading-tight">
             Nhập kết quả cận lâm sàng
-          </span>
+          </h1>
         </div>
 
-        {/* 3. Bước 1: LOẠI KẾT QUẢ */}
+        {/* LOẠI KẾT QUẢ */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">1. LOẠI KẾT QUẢ</span>
+          <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">LOẠI KẾT QUẢ</span>
           <div className="grid grid-cols-3 gap-1 bg-slate-200/80 p-1 rounded-2xl" role="tablist">
             {[
               { id: 'lab', label: 'Xét nghiệm' },
@@ -80,9 +69,9 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
           <span className="text-[11px] text-slate-500 px-1">CĐHA: chẩn đoán hình ảnh · GPB: giải phẫu bệnh</span>
         </div>
 
-        {/* 4. Bước 2: CÁCH NHẬP */}
+        {/* CÁCH NHẬP */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">2. CÁCH NHẬP</span>
+          <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">CÁCH NHẬP</span>
           <div className="grid grid-cols-3 gap-2" role="tablist">
             {[
               { id: 'manual', label: 'Nhập thủ công', icon: Edit3 },
@@ -111,12 +100,12 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
           </div>
         </div>
 
-        {/* 5. Bước 3: NHẬP DỮ LIỆU */}
-        <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">3. NHẬP DỮ LIỆU</span>
+        {/* NHẬP DỮ LIỆU */}
+        <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">NHẬP DỮ LIỆU</span>
 
         {/* Form chung (ngày, bác sĩ, cơ sở y tế) khi nhập thủ công */}
         {logic.method === 'manual' && (
-          <div className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex flex-col gap-2.5">
+          <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-100 flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className="text-slate-500 text-xs font-bold block mb-1">Ngày thực hiện *</label>
@@ -124,7 +113,7 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
                   type="date"
                   value={logic.testDate}
                   onChange={(e) => logic.setTestDate(e.target.value)}
-                  className="w-full h-10 px-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-white focus:outline-none"
                 />
               </div>
               <div>
@@ -133,17 +122,17 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
                   value={logic.doctorName}
                   onChange={(e) => logic.setDoctorName(e.target.value)}
                   placeholder="Họ tên bác sĩ"
-                  className="w-full h-10 px-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-white focus:outline-none"
                 />
               </div>
             </div>
             <div>
-              <label className="text-slate-500 text-xs font-bold block mb-1">Nơi thực hiện</label>
+              <label className="text-slate-500 text-xs font-bold block mb-1">Cơ sở thực hiện</label>
               <input
                 value={logic.facilityName}
                 onChange={(e) => logic.setFacilityName(e.target.value)}
                 placeholder="Tên bệnh viện / phòng khám"
-                className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-white focus:outline-none"
               />
             </div>
           </div>

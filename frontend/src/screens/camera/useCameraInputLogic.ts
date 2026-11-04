@@ -124,31 +124,57 @@ export function useCameraInputLogic(initialMemberId = 'nam') {
     setMarkers((prev) => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)));
   }, []);
 
+  const getBaseUrl = () => {
+    return typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+      ? window.location.origin
+      : 'http://localhost';
+  };
+
+  const buildTitle = () => {
+    if (kind === 'lab') return `Xét nghiệm ${curCode || 'SH'} (${testDate})`;
+    if (kind === 'img') return `Báo cáo ${modality} ${organ === 'other' ? organOther : organ}`;
+    return `Giải phẫu bệnh ${sampleSite} (${specimenCode || 'Tiêu bản'})`;
+  };
+
   const handleSave = async (onSuccess: () => void) => {
     setIsSaving(true);
     try {
-      const title =
-        kind === 'lab'
-          ? `Xét nghiệm ${classificationAnalysis.sugCode} (${testDate})`
-          : kind === 'img'
-          ? `Báo cáo ${modality} ${organ === 'other' ? organOther : organ}`
-          : `Giải phẫu bệnh ${sampleSite} (${specimenCode || 'Tiêu bản'})`;
+      const baseUrl = getBaseUrl();
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
 
-      await fetch('/api/clinical-reports', {
+      const validRows = rows.filter((r) => r.name && String(r.value).trim() !== '');
+      const body = {
+        memberId: initialMemberId,
+        kind: kind === 'lab' ? 'lab' : kind === 'img' ? 'imaging' : 'pathology',
+        category: curCode,
+        title: buildTitle(),
+        performedAt: testDate,
+        facilityName,
+        doctorName,
+        conclusion,
+        rows: validRows.length > 0 ? validRows : rows,
+        lesions,
+        markers,
+        specimenCode,
+        histologicGrade,
+        pTNM,
+        resectionMargin,
+        organ: organ === 'other' ? organOther : organ,
+      };
+
+      const res = await fetch(`${baseUrl}/api/clinical-reports`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          memberId: initialMemberId,
-          kind: kind === 'lab' ? 'lab' : kind === 'img' ? 'imaging' : 'pathology',
-          category: curCode,
-          title,
-          performedAt: testDate,
-          facilityName,
-          doctorName,
-          conclusion,
-        }),
+        headers,
+        body: JSON.stringify(body),
       });
-      onSuccess();
+
+      if (res.ok) {
+        onSuccess();
+      }
     } catch (err) {
       console.error('Lỗi lưu kết quả cận lâm sàng:', err);
     } finally {

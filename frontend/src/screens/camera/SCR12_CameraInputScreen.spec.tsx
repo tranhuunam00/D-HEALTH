@@ -8,17 +8,17 @@ describe('SCR12_CameraInputScreen Mobile View TDD', () => {
     render(<SCR12_CameraInputScreen onNavigate={vi.fn()} />);
 
     expect(screen.getByText('Nhập kết quả cận lâm sàng')).toBeDefined();
-    expect(screen.getByText('1. LOẠI KẾT QUẢ')).toBeDefined();
+    expect(screen.getByText('LOẠI KẾT QUẢ')).toBeDefined();
     expect(screen.getByText('Xét nghiệm')).toBeDefined();
     expect(screen.getByText('CĐHA')).toBeDefined();
     expect(screen.getByText('GPB')).toBeDefined();
 
-    expect(screen.getByText('2. CÁCH NHẬP')).toBeDefined();
+    expect(screen.getByText('CÁCH NHẬP')).toBeDefined();
     expect(screen.getByText('Nhập thủ công')).toBeDefined();
     expect(screen.getByText('Từ link CSYT')).toBeDefined();
     expect(screen.getByText('AI Camera')).toBeDefined();
 
-    expect(screen.getByText('3. NHẬP DỮ LIỆU')).toBeDefined();
+    expect(screen.getByText('NHẬP DỮ LIỆU')).toBeDefined();
     expect(screen.getByText(/Ngày thực hiện/)).toBeDefined();
     expect(screen.getByText('Chỉ số xét nghiệm')).toBeDefined();
     expect(screen.getByRole('button', { name: /Thêm chỉ số/i })).toBeDefined();

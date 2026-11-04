@@ -28,4 +28,5 @@ export interface ManualVitalsInput {
   glucoseContext?: 'fasting' | 'postprandial' | 'random';
   weightKg?: number;
   heightCm?: number;
+  temperature?: number;
 }

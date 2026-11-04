@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, X, AlertTriangle } from 'lucide-react';
+import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react';
 import { LabMetricRow, ClassificationCategory, CLASSIFICATION_LABELS } from '../camera-input.types';
 
 interface LabManualSectionProps {
@@ -34,70 +34,72 @@ export const LabManualSection: React.FC<LabManualSectionProps> = ({
   return (
     <div className="flex flex-col gap-3">
       {/* 1. Dynamic Lab Rows Card */}
-      <div className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex flex-col gap-2.5">
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-100 flex flex-col gap-3">
         <div className="flex justify-between items-baseline">
           <span className="text-sm font-extrabold text-slate-900">Chỉ số xét nghiệm</span>
           <span className="text-xs text-slate-500 font-semibold">{rows.length} chỉ số</span>
         </div>
 
         {rows.map((row, index) => (
-          <div key={index} className="grid grid-cols-[1.5fr_0.9fr_0.8fr_34px] gap-1.5 items-center">
-            <select
-              aria-label="Tên chỉ số"
-              value={row.name}
-              onChange={(e) => onUpdateRow(index, { name: e.target.value })}
-              className="h-10 px-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50 focus:outline-none"
-            >
-              <option value="LDL-C">LDL-C</option>
-              <option value="HbA1c">HbA1c</option>
-              <option value="Glucose đói">Glucose đói</option>
-              <option value="Creatinin">Creatinin</option>
-              <option value="Hemoglobin (Hb)">Hemoglobin (Hb)</option>
-              <option value="Bạch cầu (WBC)">Bạch cầu (WBC)</option>
-              <option value="Tiểu cầu (PLT)">Tiểu cầu (PLT)</option>
-              <option value="Cấy nước tiểu">Cấy nước tiểu</option>
-              <option value="HBV DNA (PCR)">HBV DNA (PCR)</option>
-              <option value="Gen CYP2C19">Gen CYP2C19</option>
-            </select>
+          <div key={index} className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
+              <select
+                aria-label="Tên chỉ số"
+                value={row.name}
+                onChange={(e) => onUpdateRow(index, { name: e.target.value })}
+                className="w-full h-11 px-3 pr-7 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-white focus:outline-none appearance-none"
+              >
+                <option value="LDL-C">LDL-C</option>
+                <option value="HbA1c">HbA1c</option>
+                <option value="Glucose đói">Glucose đói</option>
+                <option value="Creatinin">Creatinin</option>
+                <option value="Hemoglobin (Hb)">Hemoglobin (Hb)</option>
+                <option value="Bạch cầu (WBC)">Bạch cầu (WBC)</option>
+                <option value="Tiểu cầu (PLT)">Tiểu cầu (PLT)</option>
+                <option value="Cấy nước tiểu">Cấy nước tiểu</option>
+                <option value="HBV DNA (PCR)">HBV DNA (PCR)</option>
+                <option value="Gen CYP2C19">Gen CYP2C19</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-3.5 pointer-events-none" />
+            </div>
 
             <input
               aria-label="Giá trị"
               placeholder="Giá trị"
               value={row.value}
               onChange={(e) => onUpdateRow(index, { value: e.target.value })}
-              className="h-10 px-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+              className="w-24 h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-white focus:outline-none shrink-0"
             />
 
-            <input
-              aria-label="Đơn vị"
-              placeholder="Đơn vị"
-              value={row.unit}
-              onChange={(e) => onUpdateRow(index, { unit: e.target.value })}
-              className="h-10 px-2 rounded-xl border border-slate-200 text-xs text-slate-500 bg-slate-50 focus:outline-none"
-            />
+            <div className="h-11 px-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-xs font-bold text-slate-600 shrink-0">
+              {row.unit || 'mmol/L'}
+            </div>
 
-            <button
-              type="button"
-              aria-label="Xoá chỉ số"
-              onClick={() => onRemoveRow(index)}
-              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            {rows.length > 1 && (
+              <button
+                type="button"
+                aria-label="Xoá chỉ số"
+                onClick={() => onRemoveRow(index)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         ))}
 
         <button
           type="button"
           onClick={onAddRow}
-          className="h-10 rounded-xl border-1.5 border-dashed border-slate-300 hover:border-slate-400 text-[#1F5F6C] text-xs font-bold flex items-center justify-center gap-1 transition"
+          className="h-9 text-[#1F7A8C] text-xs font-bold flex items-center gap-1.5 transition hover:opacity-80 w-fit"
         >
-          <Plus className="w-4 h-4" /> Thêm chỉ số
+          <Plus className="w-4 h-4" />
+          <span>Thêm chỉ số</span>
         </button>
       </div>
 
-      {/* 2. Classification Suggestion Card (BR-110, BR-111, BR-112, BR-113) */}
-      {showCls && (
+      {/* 2. Classification Suggestion Card (Optional detail if overridden or mixed) */}
+      {showCls && (mixed || overridden) && (
         <div className={`bg-white rounded-2xl p-3.5 shadow-sm border flex flex-col gap-2.5 transition ${
           overridden ? 'border-amber-300 ring-2 ring-amber-100' : 'border-teal-200'
         }`}>
@@ -138,27 +140,10 @@ export const LabManualSection: React.FC<LabManualSectionProps> = ({
             })}
           </div>
 
-          <span className="text-xs font-bold text-slate-800">
-            Lưu vào nhóm: {curCode} · {CLASSIFICATION_LABELS[curCode]}
-          </span>
-
           {mixed && (
             <div className="bg-amber-50 rounded-xl p-2.5 text-xs text-amber-800 flex items-start gap-1.5 leading-relaxed">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <span>Phiếu có chỉ số thuộc nhiều nhóm ({mixList}). Nên tách thành phiếu riêng cho từng nhóm.</span>
-            </div>
-          )}
-
-          {overridden && (
-            <div className="flex items-center justify-between gap-2 bg-amber-50 rounded-xl p-2.5 text-xs text-amber-900">
-              <span className="flex-1 leading-tight">Bạn đã đổi từ {sugCode} sang {curCode}.</span>
-              <button
-                type="button"
-                onClick={onResetCls}
-                className="px-2.5 py-1 rounded-lg border border-amber-600 text-amber-900 font-bold bg-white text-[11px] shrink-0"
-              >
-                Dùng đề xuất
-              </button>
             </div>
           )}
         </div>

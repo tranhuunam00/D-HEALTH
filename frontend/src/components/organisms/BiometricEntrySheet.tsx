@@ -16,6 +16,8 @@ export const BiometricEntrySheet: React.FC<BiometricEntrySheetProps> = ({ isOpen
   const [heartRate, setHeartRate] = useState('');
   const [spo2, setSpo2] = useState('');
   const [glucose, setGlucose] = useState('');
+  const [temperature, setTemperature] = useState('');
+  const [weightKg, setWeightKg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +27,8 @@ export const BiometricEntrySheet: React.FC<BiometricEntrySheetProps> = ({ isOpen
       heartRate: heartRate ? parseInt(heartRate, 10) : undefined,
       spo2: spo2 ? parseInt(spo2, 10) : undefined,
       glucose: glucose ? parseFloat(glucose) : undefined,
+      temperature: temperature ? parseFloat(temperature) : undefined,
+      weightKg: weightKg ? parseFloat(weightKg) : undefined,
     });
   };
 
@@ -62,6 +66,25 @@ export const BiometricEntrySheet: React.FC<BiometricEntrySheetProps> = ({ isOpen
             type="number"
             value={spo2}
             onChange={(e) => setSpo2(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Nhiệt độ cơ thể (°C)"
+            placeholder="36.7"
+            type="number"
+            step="0.1"
+            value={temperature}
+            onChange={(e) => setTemperature(e.target.value)}
+          />
+          <Input
+            label="Cân nặng (kg)"
+            placeholder="72.5"
+            type="number"
+            step="0.1"
+            value={weightKg}
+            onChange={(e) => setWeightKg(e.target.value)}
           />
         </div>
 
