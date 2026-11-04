@@ -155,6 +155,101 @@ app.get('/api/reports/:memberId', async (req: Request, res: Response) => {
   }
 });
 
+// ====================================================================
+// ADMIN TỔNG MASTER DATA ENDPOINTS (DYNAMIC CATALOGS)
+// ====================================================================
+
+// 1. Danh sách cơ sở y tế đối tác (Master Facilities)
+app.get('/api/facilities', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT * FROM master_facilities WHERE is_active = true ORDER BY name ASC');
+    res.json({ data: result.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Danh sách bác sĩ chuyên khoa (Master Doctors)
+app.get('/api/doctors', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`
+      SELECT d.*, f.name AS facility_name, dep.name AS department_name
+      FROM master_doctors d
+      LEFT JOIN master_facilities f ON d.facility_id = f.id
+      LEFT JOIN master_departments dep ON d.department_id = dep.id
+      WHERE d.is_active = true
+      ORDER BY d.full_name ASC
+    `);
+    res.json({ data: result.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Từ điển thuốc quốc gia (Master Medications)
+app.get('/api/medications', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT * FROM master_medications WHERE is_active = true ORDER BY brand_name ASC');
+    res.json({ data: result.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Danh mục bệnh mạn tính (Master Chronic Conditions - SCR-08)
+app.get('/api/conditions', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT * FROM master_chronic_conditions WHERE is_active = true ORDER BY name ASC');
+    res.json({ data: result.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. Thẻ cấp cứu & Liên hệ khẩn cấp (SCR-16)
+app.get('/api/emergency/:memberId', async (req: Request, res: Response) => {
+  const { memberId } = req.params;
+  try {
+    const cardRes = await pool.query('SELECT * FROM emergency_cards WHERE member_id = $1', [memberId]);
+    const contactsRes = await pool.query('SELECT * FROM emergency_contacts WHERE member_id = $1 ORDER BY priority_order ASC', [memberId]);
+    res.json({ 
+      data: {
+        card: cardRes.rows[0] || null,
+        contacts: contactsRes.rows
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. Thống kê toàn cảnh cho Admin Tổng (Super Admin Dashboard Stats)
+app.get('/api/admin/overview', async (req: Request, res: Response) => {
+  try {
+    const [usersCount, membersCount, facilitiesCount, doctorsCount, medsCount, reportsCount] = await Promise.all([
+      pool.query('SELECT count(*) FROM users'),
+      pool.query('SELECT count(*) FROM family_members'),
+      pool.query('SELECT count(*) FROM master_facilities'),
+      pool.query('SELECT count(*) FROM master_doctors'),
+      pool.query('SELECT count(*) FROM master_medications'),
+      pool.query('SELECT count(*) FROM clinical_reports'),
+    ]);
+
+    res.json({
+      data: {
+        totalUsers: parseInt(usersCount.rows[0].count, 10),
+        totalMembers: parseInt(membersCount.rows[0].count, 10),
+        totalFacilities: parseInt(facilitiesCount.rows[0].count, 10),
+        totalDoctors: parseInt(doctorsCount.rows[0].count, 10),
+        totalMedications: parseInt(medsCount.rows[0].count, 10),
+        totalClinicalReports: parseInt(reportsCount.rows[0].count, 10),
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`D-Health Backend API running on port ${port}`);
   initMinioBuckets().catch((err) => console.error('[MinIO] Bucket init error:', err));

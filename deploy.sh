@@ -50,10 +50,17 @@ docker compose ps
 # 6. Dọn dẹp images rác
 docker image prune -f || true
 
-# 7. Cấu hình Nginx Host và cấp SSL nếu có quyền root
-echo -e "${YELLOW}[5/5] Kiểm tra cấu hình Nginx Reverse Proxy & SSL cho dhealth.home-care.vn...${NC}"
-if [ "$EUID" -eq 0 ] && [ -f setup-ssl.sh ]; then
-    bash setup-ssl.sh || true
+# 7. Cấu hình Nginx Host và cấp SSL
+echo -e "${YELLOW}[5/5] Cấu hình Nginx Reverse Proxy & SSL cho dhealth.home-care.vn...${NC}"
+if [ -f setup-ssl.sh ]; then
+    if [ "$EUID" -eq 0 ]; then
+        bash setup-ssl.sh || true
+    elif command -v sudo >/dev/null 2>&1; then
+        echo -e "${YELLOW}Đang kích hoạt cấu hình Nginx & SSL bằng sudo...${NC}"
+        sudo bash setup-ssl.sh || true
+    else
+        echo -e "${YELLOW}⚠️ Cần quyền root/sudo để cấu hình Nginx. Vui lòng chạy: sudo bash setup-ssl.sh${NC}"
+    fi
 fi
 
 echo ""

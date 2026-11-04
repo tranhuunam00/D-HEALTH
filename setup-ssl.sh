@@ -95,10 +95,10 @@ if [ -d "/etc/nginx/sites-available" ]; then
   ln -sf "$DEST_CONF" "/etc/nginx/sites-enabled/${CONF_NAME}"
   
   # Xóa default site nếu tồn tại để tránh Nginx hiển thị trang "Welcome to nginx!"
-  if [ -f "/etc/nginx/sites-enabled/default" ]; then
-    echo -e "${YELLOW}Gỡ bỏ default site Nginx để tránh xung đột domain...${NC}"
-    rm -f "/etc/nginx/sites-enabled/default"
-  fi
+  echo -e "${YELLOW}Gỡ bỏ default site Nginx để tránh xung đột domain...${NC}"
+  rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+  rm -f /etc/nginx/sites-enabled/*default* 2>/dev/null || true
+  rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
   
   echo -e "${GREEN}✓ Đã gắn cấu hình vào /etc/nginx/sites-available/ và sites-enabled/${NC}"
 elif [ -d "/etc/nginx/conf.d" ]; then

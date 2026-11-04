@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, ShieldCheck, HeartPulse, User, Database, HardDrive, Smartphone, CheckCircle, RefreshCw } from 'lucide-react';
+import { Activity, ShieldCheck, HeartPulse, User, Database, HardDrive, Smartphone, CheckCircle, RefreshCw, Building2, Stethoscope, Pill } from 'lucide-react';
 
 interface HealthData {
   status: string;
@@ -20,11 +20,21 @@ interface Member {
   gender: string;
 }
 
+interface AdminOverview {
+  totalUsers: number;
+  totalMembers: number;
+  totalFacilities: number;
+  totalDoctors: number;
+  totalMedications: number;
+  totalClinicalReports: number;
+}
+
 export default function App() {
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [activeMem, setActiveMem] = useState<string>('me');
+  const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
 
   const checkHealth = async () => {
     setLoading(true);
@@ -38,6 +48,11 @@ export default function App() {
       if (memRes.ok) {
         const mData = await memRes.json();
         setMembers(mData.data || []);
+      }
+      const adminRes = await fetch('/api/admin/overview');
+      if (adminRes.ok) {
+        const aData = await adminRes.json();
+        setAdminOverview(aData.data || null);
       }
     } catch (err) {
       console.error("Health check error:", err);
@@ -133,6 +148,64 @@ export default function App() {
                 <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   Online
                 </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Admin Tổng Master Data & Catalogs */}
+          <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-purple-400" />
+                Quản Trị Master Data (Admin Tổng)
+              </h2>
+              <span className="text-[10px] bg-purple-500/20 text-purple-300 font-semibold px-2 py-0.5 rounded-full border border-purple-500/30">
+                Admin Configurable
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+                  <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                  Bệnh viện / CSYT
+                </div>
+                <div className="text-xl font-bold text-white">{adminOverview?.totalFacilities || 5} <span className="text-xs font-normal text-slate-400">cơ sở</span></div>
+              </div>
+
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+                  <Stethoscope className="w-3.5 h-3.5 text-emerald-400" />
+                  Bác sĩ chuyên khoa
+                </div>
+                <div className="text-xl font-bold text-white">{adminOverview?.totalDoctors || 3} <span className="text-xs font-normal text-slate-400">bác sĩ</span></div>
+              </div>
+
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+                  <Pill className="w-3.5 h-3.5 text-amber-400" />
+                  Dược thư quốc gia
+                </div>
+                <div className="text-xl font-bold text-white">{adminOverview?.totalMedications || 5} <span className="text-xs font-normal text-slate-400">thuốc</span></div>
+              </div>
+
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+                  <Activity className="w-3.5 h-3.5 text-rose-400" />
+                  Bệnh mạn tính ICD-10
+                </div>
+                <div className="text-xl font-bold text-white">4 <span className="text-xs font-normal text-slate-400">phác đồ</span></div>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 text-xs text-slate-400 space-y-1.5">
+              <div className="flex justify-between">
+                <span>• Fix Cứng (Enums):</span>
+                <span className="text-slate-300 font-medium">Nhóm máu, Chuẩn SI, RECIST 1.1</span>
+              </div>
+              <div className="flex justify-between">
+                <span>• Admin Cài Đặt:</span>
+                <span className="text-purple-300 font-medium">CSYT, Bác sĩ, Dược thư, Ngưỡng đo</span>
               </div>
             </div>
           </div>
