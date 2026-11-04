@@ -681,6 +681,128 @@ CREATE INDEX idx_audit_actor ON audit_logs(actor_id, created_at DESC);
 
 ---
 
+
+### PHÂN HỆ 8: CHĂM SÓC MỞ RỘNG, LỊCH HẸN & TRỢ LÝ AI (EXTENDED CARE & AI)
+*Các bảng dữ liệu được bổ sung qua kết quả Thẩm định Pháp y 100% dòng text trên 17 màn hình (Migration 002).*
+
+#### 28. Bảng `appointments` (Lịch Hẹn Khám & Tái Khám Bệnh Mạn Tính - SCR-09, SCR-14, SCR-17)
+- **Mục đích**: Lưu trữ toàn bộ lịch hẹn khám bệnh trực tiếp, khám định kỳ bệnh mạn tính và tái khám chuyên khoa.
+- **DDL Schema**:
+```sql
+CREATE TABLE IF NOT EXISTS appointments (
+    id VARCHAR(50) PRIMARY KEY,
+    member_id VARCHAR(50) NOT NULL REFERENCES family_members(id) ON DELETE CASCADE,
+    doctor_id VARCHAR(50) REFERENCES master_doctors(id) ON DELETE SET NULL,
+    doctor_name VARCHAR(100),
+    facility_id VARCHAR(50) REFERENCES master_facilities(id) ON DELETE SET NULL,
+    facility_name VARCHAR(150),
+    department_name VARCHAR(100),
+    appointment_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    purpose TEXT,
+    status VARCHAR(20) DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'confirmed', 'completed', 'cancelled')),
+    remind_before_hours INT DEFAULT 24,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_appointments_member ON appointments(member_id, appointment_date ASC);
+```
+
+#### 29. Bảng `share_grants` (Phân Quyền Chia Sẻ Hồ Sơ Y Tế & Bác Sĩ Gia Đình - SCR-14, SCR-06, SCR-08, SCR-11)
+- **Mục đích**: Quản trị minh bạch danh tính những bác sĩ, người thân đang được phép truy cập hồ sơ bệnh án số và thời hạn hiệu lực (Nghị định 13/2023/NĐ-CP).
+- **DDL Schema**:
+```sql
+CREATE TABLE IF NOT EXISTS share_grants (
+    id VARCHAR(50) PRIMARY KEY,
+    member_id VARCHAR(50) NOT NULL REFERENCES family_members(id) ON DELETE CASCADE,
+    grantee_type VARCHAR(20) NOT NULL CHECK (grantee_type IN ('doctor', 'family_member', 'caregiver', 'hospital')),
+    grantee_id VARCHAR(50),
+    grantee_name VARCHAR(100) NOT NULL,
+    grantee_role VARCHAR(100),
+    grantee_org VARCHAR(150),
+    grantee_phone VARCHAR(20),
+    grantee_email VARCHAR(100),
+    grantee_avatar_url TEXT,
+    scope VARCHAR(50) DEFAULT 'full' CHECK (scope IN ('full', 'biometrics_only', 'labs_only', 'imaging_only', 'meds_only', 'emergency_only')),
+    granted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'expired', 'revoked')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_share_grants_member ON share_grants(member_id, status);
+```
+
+#### 30. Bảng `patient_chronic_conditions` (Quản Lý Bệnh Mạn Tính Cá Nhân & Mục Tiêu Lâm Sàng - SCR-09)
+- **Mục đích**: Theo dõi bệnh lý nền mạn tính của từng cá nhân (Tăng huyết áp, Đái tháo đường, Rối loạn lipid máu), phân tầng nguy cơ và theo dõi mục tiêu lâm sàng.
+- **DDL Schema**:
+```sql
+CREATE TABLE IF NOT EXISTS patient_chronic_conditions (
+    id VARCHAR(50) PRIMARY KEY,
+    member_id VARCHAR(50) NOT NULL REFERENCES family_members(id) ON DELETE CASCADE,
+    condition_id VARCHAR(50) REFERENCES master_chronic_conditions(id) ON DELETE SET NULL,
+    condition_name VARCHAR(100) NOT NULL,
+    icd10_code VARCHAR(20),
+    diagnosed_date DATE,
+    risk_level VARCHAR(20) DEFAULT 'medium' CHECK (risk_level IN ('low', 'medium', 'high', 'critical')),
+    trend_status VARCHAR(50) DEFAULT 'stable',
+    status_summary VARCHAR(100),
+    next_checkup_date DATE,
+    action_items JSONB DEFAULT '[]'::jsonb,
+    target_metrics JSONB DEFAULT '{}'::jsonb,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_patient_chronic_member ON patient_chronic_conditions(member_id, is_active);
+```
+
+#### 31. Bảng `vaccination_records` (Sổ Tiêm Chủng Điện Tử & Lịch Sử Vaccine - SCR-10)
+- **Mục đích**: Lưu trữ thông tin tiêm chủng vaccine trọn đời trong Hộ chiếu y tế số (Medical Passport).
+- **DDL Schema**:
+```sql
+CREATE TABLE IF NOT EXISTS vaccination_records (
+    id VARCHAR(50) PRIMARY KEY,
+    member_id VARCHAR(50) NOT NULL REFERENCES family_members(id) ON DELETE CASCADE,
+    vaccine_name VARCHAR(150) NOT NULL,
+    dose_number INT DEFAULT 1,
+    administered_date DATE NOT NULL,
+    facility_name VARCHAR(150),
+    lot_number VARCHAR(50),
+    next_due_date DATE,
+    reactions TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_vaccination_member ON vaccination_records(member_id, administered_date DESC);
+```
+
+#### 32. Bảng `ai_conversations` & `ai_chat_messages` (Trợ Lý AI Y Tế Đa Ngữ Cảnh & Trích Dẫn Y Khoa - SCR-13)
+- **Mục đích**: Quản lý các phiên hội thoại và tin nhắn hỏi đáp sức khoẻ hai chiều với AI, lưu vết trích dẫn bằng chứng y khoa.
+- **DDL Schema**:
+```sql
+CREATE TABLE IF NOT EXISTS ai_conversations (
+    id VARCHAR(50) PRIMARY KEY,
+    member_id VARCHAR(50) NOT NULL REFERENCES family_members(id) ON DELETE CASCADE,
+    title VARCHAR(150),
+    context_type VARCHAR(50) DEFAULT 'general',
+    context_reference_id VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ai_chat_messages (
+    id VARCHAR(50) PRIMARY KEY,
+    conversation_id VARCHAR(50) NOT NULL REFERENCES ai_conversations(id) ON DELETE CASCADE,
+    sender_type VARCHAR(20) NOT NULL CHECK (sender_type IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    citations JSONB DEFAULT '[]'::jsonb,
+    disclaimer TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_conv ON ai_chat_messages(conversation_id, created_at ASC);
+```
+
+
+---
+
 ## 📊 PHẦN 4: MA TRẬN PHÂN ĐỊNH: FIX CỨNG (ENUM) VS ADMIN CÀI ĐẶT (MASTER CONFIG)
 
 | Tên Dữ Liệu | Thuộc Màn Hình | Loại Dữ Liệu | Vị Trí Lưu Trữ | Lý Do Phân Loại |
