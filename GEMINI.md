@@ -15,7 +15,9 @@
 ---
 
 ## 1. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT)
-- **Quy tắc mọi hàm mới (Function Testing Mandate)**: Bất cứ hàm mới nào (Utility function, Service method, Domain Entity method, Use Case, API Handler) khi được tạo ra **BẮT BUỘC PHẢI CÓ FILE TEST ĐI KÈM** (`*.spec.ts` hoặc `*.test.ts`). Tuyệt đối không bàn giao hàm mà thiếu unit test.
+- **Quy tắc 100% mọi hàm mới bắt buộc có test (100% Function Testing Mandate)**: 
+  - Bất cứ hàm mới nào (Utility function, Helper, Service method, Domain Entity method, Value Object method, Use Case, API Handler) khi được tạo ra **BẮT BUỘC 100% PHẢI CÓ FILE TEST ĐI KÈM** (`*.spec.ts` hoặc `*.test.ts`).
+  - **Không có test = Không nghiệm thu (Definition of Done = Failed)**. Tuyệt đối không bàn giao bất kỳ hàm nào mà thiếu unit test.
 - **Ma trận kiểm thử 4 chiều bắt buộc cho mỗi hàm**:
   1. **INPUT**:
      - Kiểm thử dữ liệu hợp lệ (Happy path).
@@ -26,9 +28,9 @@
      - Đảm bảo hàm **không làm thay đổi (mutate)** tham số truyền vào (Immutability).
   3. **ERROR (DẠNG LỖI & NGOẠI LỆ)**:
      - Kiểm thử đầy đủ các nhánh ném ngoại lệ (`throw new ValidationError`, `throw new NotFoundError`, v.v.).
-     - Xác nhận chính xác **lớp lỗi**, **mã lỗi (`code`)**, **thông báo lỗi (`message`)** và **chi tiết trường lỗi (`details`)**.
+     - Xác nhận chính xác **lớp lỗi (`instanceof`)**, **mã lỗi (`code`)**, **thông báo lỗi (`message`)** và **chi tiết trường lỗi (`details`)**.
   4. **LOGIC NGHIỆP VỤ & INVARIANTS**:
-     - Kiểm thử đúng công thức tính toán, ngưỡng phân loại, logic rẽ nhánh nghiệp vụ.
+     - Kiểm thử đúng công thức tính toán y khoa, ngưỡng phân loại, logic rẽ nhánh nghiệp vụ.
      - Kiểm thử tính độc lập của test (không phụ thuộc thứ tự thực thi).
 - **Cấu trúc viết test**: Sử dụng cú pháp **AAA (Arrange - Act - Assert)** rõ ràng cho từng test case.
 
@@ -78,10 +80,21 @@
 - **Kiến trúc phân tầng (Clean Architecture)**:
   - `Controller / Screen` (Chỉ nhận input & trả output) ➔ `Service / Use Case` (Nghiệp vụ) ➔ `Repository` (Đọc/ghi DB).
   - Không viết business logic hoặc query DB trong Controller / Screen.
-- **Clean Code**:
-  - Áp dụng **Guard Clauses & Early Return** để giảm độ lồng `if/else` (không lồng quá 2 cấp).
+- **Quy chuẩn Định lượng về Độ Dài Hàm & Số Tham Số (Function Constraints)**:
+  - **Độ dài hàm**: Tối đa **$\le 30$ dòng code** (hàm nghiệp vụ/thuật toán phức tạp tối đa **$50$ dòng**). Vượt quá ngưỡng $\rightarrow$ **Bắt buộc phân tách** thành helper functions hoặc sub-services.
+  - **Số lượng tham số**: Tối đa **$\le 3$ tham số**. Nếu nhận từ 4 tham số trở lên $\rightarrow$ **Bắt buộc đóng gói** thành Parameter Object / Interface DTO.
+  - **Độ dài dòng (Line Length)**: Tối đa **100 – 120 ký tự**.
+  - **Độ sâu lồng khối**: Tối đa **$\le 2$ cấp** lồng nhau (`if`, `for`, `while`). Áp dụng **Guard Clauses & Early Return** để làm phẳng logic.
+- **Quy chuẩn Định lượng về Độ Dài File & Phân Tách File (File Constraints & Separation)**:
+  - **File nghiệp vụ (Service, Entity, Controller, Repo)**: Tối đa **$\le 200 - 300$ dòng code**. Tuyệt đối cấm "God Object" file vượt quá **400 - 500 dòng**.
+  - **File màn hình UI**: Tối đa **$\le 200$ dòng UI**. Tách riêng Custom Hook (`useScreenLogic.ts`) và các Presentational Components.
+  - **File Unit Test**: Tối đa **$\le 300 - 400$ dòng**. Tách nhiều file spec theo kịch bản nếu cần.
+  - **Nguyên tắc "1 File / 1 Trách nhiệm chính (1 Primary Export)"**: Mỗi file chỉ chịu trách nhiệm duy nhất cho 1 Entity, 1 Value Object, 1 Service, 1 Hook hoặc 1 Component.
+  - **Cấm file "thùng rác" (No Junk-Drawer Files)**: Tuyệt đối cấm các file `utils.ts`, `helpers.ts` gom nhét hỗn tạp; chia theo module: `date-formatter.ts`, `crypto-helper.ts`.
+  - **Tách riêng Types & Constants**: Types đặt trong `types/` hoặc `*.types.ts`; Hằng số/Enums đặt trong `constants/` hoặc `*.constants.ts`.
+- **Clean Code & Invariants**:
   - Không sử dụng **Magic Numbers** và **Hardcoded Strings**; mọi ngưỡng và hằng số phải đặt trong file `constants` hoặc `config`.
-  - Hàm phải ngắn gọn, tuân thủ nguyên tắc Single Responsibility Principle (SRP).
+  - Tuân thủ nghiêm ngặt nguyên tắc Single Responsibility Principle (SRP).
 - **Bảo mật & Logging**:
   - Tuyệt đối không log thông tin nhạy cảm (PII, Token, Dữ liệu y tế, Mật khẩu).
   - Tuân thủ Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân y tế.

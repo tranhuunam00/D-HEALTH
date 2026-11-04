@@ -20,11 +20,13 @@
 3. **Sửa lỗi từ gốc (Spec-First Debugging)**: Khi phát hiện sai lệch hành vi, trước hết phải cập nhật Spec và Plan, sau đó mới tiến hành sửa code và test.
 
 ### II. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT - NON-NEGOTIABLE)
-1. **Quy tắc mọi hàm mới (Function Testing Mandate)**: Bất kỳ hàm mới nào (Utility, Domain Service, Entity Method, Use Case, API Handler) khi được tạo ra **BẮT BUỘC PHẢI CÓ FILE TEST ĐI KÈM** (`*.spec.ts` hoặc `*.test.ts`).
+1. **Quy tắc 100% mọi hàm mới bắt buộc có test (100% Function Testing Mandate)**:
+   - Bất kỳ hàm mới nào (Utility, Helper, Domain Service, Entity Method, Value Object Method, Use Case, API Handler) khi được tạo ra **BẮT BUỘC 100% PHẢI CÓ FILE TEST ĐI KÈM** (`*.spec.ts` hoặc `*.test.ts`).
+   - **Không có test = Không nghiệm thu (Definition of Done = Failed)**. Tuyệt đối không chấp nhận bất kỳ mã nguồn chức năng nào được viết mà thiếu file kiểm thử tương ứng.
 2. **Ma trận kiểm thử 4 chiều bắt buộc**:
    - **INPUT**: Happy path, Giá trị biên (Boundary: 0, số âm, chuỗi rỗng `""`, min, max, mảng rỗng `[]`), Dữ liệu thiếu/rác (`null`, `undefined`, NaN, sai định dạng).
    - **OUTPUT**: Khớp tuyệt đối kiểu dữ liệu, bảo toàn tính bất biến (Immutability).
-   - **ERROR**: Khẳng định đúng class lỗi, mã lỗi (`code`), thông điệp (`message`) và trường vi phạm (`details`).
+   - **ERROR**: Khẳng định đúng class lỗi (`instanceof`), mã lỗi (`code`), thông điệp (`message`) và trường vi phạm (`details`).
    - **LOGIC NGHIỆP VỤ & INVARIANTS**: Đúng công thức y khoa (WHO, AHA, ESC, RECIST 1.1, ADA, LOINC), tính độc lập giữa các test case.
 3. **Cú pháp Arrange - Act - Assert (AAA)**: Trình bày mạch lạc, không gộp nhiều assert mơ hồ trong một test case.
 
@@ -79,6 +81,20 @@
    - Bắt buộc kiểm thử thành công chu kỳ: `UP` $\rightarrow$ `DOWN` (Rollback sạch) $\rightarrow$ `UP` lại trên dev database.
    - Quản lý trạng thái và mã băm SHA-256 qua bảng `_migrations`.
 
+### VII. NGUYÊN TẮC QUY CHUẨN ĐỘ DÀI HÀM, ĐỘ DÀI FILE & PHÂN TÁCH MÃ NGUỒN (CODE CONVENTION & DECOMPOSITION)
+1. **Quy chuẩn Định lượng về Độ Dài Hàm & Tham Số**:
+   - Hàm thông thường: Tối đa **$\le 30$ dòng code**; hàm nghiệp vụ/thuật toán phức tạp: tối đa **$50$ dòng code**. Vượt quá $\rightarrow$ Bắt buộc tách helper function hoặc sub-service.
+   - Số lượng tham số: Tối đa **$\le 3$ tham số**. Từ 4 tham số trở lên $\rightarrow$ Bắt buộc đóng gói thành Parameter Object / Interface DTO.
+   - Độ dài dòng: Tối đa **100 – 120 ký tự**.
+   - Mức độ lồng ghép: Tối đa **$\le 2$ cấp** lồng nhau (`if`, `for`, `while`). Áp dụng Guard Clauses & Early Return để làm phẳng code.
+2. **Quy chuẩn Định lượng về Độ Dài File & Trách Nhiệm Duy Nhất (SRP)**:
+   - File nghiệp vụ (Domain, Service, Repo, Controller): Tối đa **$\le 200 - 300$ dòng code**. Cấm tuyệt đối các file "God Object" vượt quá $400 - 500$ dòng.
+   - File màn hình UI: Tối đa **$\le 200$ dòng code UI**. Bắt buộc tách logic sang Custom Hook riêng (`useDailyCheckin.ts`) và các Presentational Components con.
+   - File Unit Test: Tối đa **$\le 300 - 400$ dòng code**. Tách nhiều file spec theo kịch bản nếu cần.
+   - **Nguyên tắc "1 File / 1 Trách nhiệm chính (1 Primary Export)"**: 1 Entity/file, 1 Value Object/file, 1 Service/file, 1 Hook/file.
+   - **Triệt tiêu file "thùng rác"**: Cấm tạo `utils.ts`, `helpers.ts` gom nhét hỗn tạp. Tách theo module: `date-formatter.ts`, `crypto-helper.ts`.
+   - **Tách riêng Types & Hằng số**: Types đặt trong `types/` hoặc `*.types.ts`; Hằng số đặt trong `constants/` hoặc `*.constants.ts`.
+
 ---
 
 ## 2. CỔNG KIỂM SOÁT HIẾN PHÁP (CONSTITUTION CHECK GATES)
@@ -88,11 +104,12 @@ Mọi Kế hoạch triển khai (`plan.md`) trước khi được chuyển thàn
 - [ ] **Gate 0 (30-Minute Review Verified)**: Đã đọc lại toàn bộ skills và hiến pháp kỹ thuật trong vòng 30 phút gần nhất?
 - [ ] **Gate 1 (Spec Alignment)**: Đã có file `spec.md` với đầy đủ User Stories được phân cấp ưu tiên (P1, P2, P3) và Acceptance Criteria (Given-When-Then)?
 - [ ] **Gate 2 (Data Feasibility)**: Mọi trường dữ liệu hiển thị đã được định vị chính xác nguồn gốc (Bảng nào, Cột nào, Cách nhập liệu nào) và không có trường default vô căn cứ?
-- [ ] **Gate 3 (TDD Matrix Prepared)**: Đã chuẩn bị sẵn ma trận kiểm thử 4 chiều (Input / Output / Error / Logic) cho toàn bộ các hàm mới?
+- [ ] **Gate 3 (TDD Matrix Prepared)**: Đã chuẩn bị sẵn ma trận kiểm thử 4 chiều (Input / Output / Error / Logic) cho 100% các hàm mới?
 - [ ] **Gate 4 (DDD Architecture)**: Đã đóng gói các thuộc tính nhạy cảm thành Value Objects bất biến và xác định đúng Aggregate Root?
 - [ ] **Gate 5 (Device Experience Validation)**: Màn hình người dùng cuối đã ưu tiên Mobile-First (Thumb Zone, Bottom Sheet, In-frame $\le 5$ mục) và màn Admin đã chuẩn PC-First (High-density grid, Multi-panel dashboard)?
 - [ ] **Gate 6 (Decree 13 Compliance)**: Đã thiết lập cơ chế Consent Gate cho thành viên $\ge 18$ tuổi và che chắn PII?
 - [ ] **Gate 7 (DB Migration & Codebase Impact Audit)**: Mọi thay đổi schema đều có migration mới (UP/DOWN), tuân thủ Expand-and-Contract, đã hoàn tất rà soát tác động 5 lớp (Domain, Repo, DTO, Frontend, Spec) và kiểm thử rollback sạch sẽ?
+- [ ] **Gate 8 (Code Convention & Size Limits)**: Hàm $\le 30$ dòng, tham số $\le 3$, file $\le 200-300$ dòng (màn hình $\le 200$ dòng), 1 file 1 trách nhiệm chính, không có file rác `utils.ts`?
 
 ---
 
@@ -100,4 +117,4 @@ Mọi Kế hoạch triển khai (`plan.md`) trước khi được chuyển thàn
 - **Hiến pháp này có giá trị pháp lý cao nhất trong dự án**.
 - Mọi Pull Request, mã nguồn sinh ra bởi AI hoặc lập trình viên nếu vi phạm bất kỳ điều khoản nào của Hiến pháp sẽ bị từ chối sáp nhập (Rejected).
 
-**Phiên bản**: `1.2.0` | **Ngày cập nhật**: `2026-11-04` | **Tổ chức**: `D-HEALTH Engineering Team`
+**Phiên bản**: `1.3.0` | **Ngày cập nhật**: `2026-11-04` | **Tổ chức**: `D-HEALTH Engineering Team`

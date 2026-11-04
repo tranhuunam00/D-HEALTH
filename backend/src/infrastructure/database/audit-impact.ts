@@ -240,3 +240,4 @@ export function auditMigrationImpact(migrationNameArg?: string): void {
 // CLI entrypoint
 const arg = process.argv[2];
 auditMigrationImpact(arg);
+

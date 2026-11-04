@@ -331,3 +331,4 @@ dhealth/
 2. **CẤM CHẠY SCRIPT KHÔNG CÓ ROLLBACK**: Không bao giờ viết file `.up.sql` mà bỏ qua file `.down.sql`.
 3. **CẤM DROP COLUMN MÀ CHƯA XÓA CODE TRƯỚC ĐÓ**: Xóa cột trong DB khi backend hoặc frontend vẫn còn câu lệnh `SELECT col` sẽ làm sập API ngay lập tức.
 4. **CẤM BỎ QUA KIỂM TRA FRONTEND**: Luôn nhớ rằng dữ liệu DB cuối cùng sẽ phục vụ người dùng. Đổi tên trường hoặc kiểu dữ liệu ở DB mà không kiểm tra màn hình Mobile/Desktop sẽ làm trắng màn hình người dùng (White Screen of Death).
+

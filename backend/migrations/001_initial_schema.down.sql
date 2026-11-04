@@ -42,3 +42,4 @@ DROP TABLE IF EXISTS roles CASCADE;
 
 -- 4. Bảng sổ cái Migration
 DROP TABLE IF EXISTS _migrations CASCADE;
+

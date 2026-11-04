@@ -303,3 +303,4 @@ Usage:
   tsx migrator.ts create <name> Create a new UP/DOWN migration template
   `);
 }
+
