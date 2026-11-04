@@ -1,0 +1,200 @@
+import { Router, Request, Response } from 'express';
+import { Pool } from 'pg';
+import { hashPassword, verifyPassword } from '../../infrastructure/security/password-hasher';
+import { generateToken } from '../../infrastructure/security/token-provider';
+import { authLimiter } from '../../infrastructure/security/rate-limiters';
+import { parseGooglePayload, generateRandomOAuthSecret } from '../../application/services/google-auth.service';
+import { authenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
+
+export function createAuthRouter(pool: Pool): Router {
+  const router = Router();
+
+  // Áp dụng Rate Limiting chống Brute-Force (Tối đa 5 lần / 15 phút)
+  router.use(authLimiter);
+
+  // 1. ĐĂNG KÝ TÀI KHOẢN (REGISTER)
+  router.post('/register', async (req: Request, res: Response) => {
+    const { phoneNumber, email, password, fullName } = req.body;
+    if (!phoneNumber || !password || !fullName) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Vui lòng điền đủ họ tên, số điện thoại và mật khẩu.' },
+      });
+    }
+
+    try {
+      const hash = await hashPassword(password);
+      const userRes = await pool.query(
+        `INSERT INTO users (phone_number, email, password_hash)
+         VALUES ($1, $2, $3)
+         RETURNING id, phone_number, email, created_at`,
+        [phoneNumber, email || null, hash]
+      );
+      const newUser = userRes.rows[0];
+
+      // Tự động tạo hồ sơ thành viên chính chủ (Relationship: owner)
+      const memberId = `mem_${newUser.id.toString().substring(0, 8)}`;
+      await pool.query(
+        `INSERT INTO family_members (id, user_id, full_name, relationship, gender, birth_date, is_above_18, consent_approved)
+         VALUES ($1, $2, $3, 'owner', 'Khác', '1990-01-01', true, true)`,
+        [memberId, newUser.id, fullName]
+      );
+
+      const token = generateToken({ userId: newUser.id, role: 'PATIENT', email: newUser.email });
+      setAuthCookie(res, token);
+
+      return res.status(201).json({
+        success: true,
+        data: { user: newUser, token, activeMemberId: memberId },
+      });
+    } catch (err: any) {
+      if (err.code === '23505') {
+        return res.status(409).json({
+          success: false,
+          error: { code: 'CONFLICT', message: 'Số điện thoại hoặc Email đã được đăng ký.' },
+        });
+      }
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
+  // 2. ĐĂNG NHẬP MẬT KHẨU (LOGIN)
+  router.post('/login', async (req: Request, res: Response) => {
+    const { identifier, password } = req.body; // identifier: phone hoặc email
+    if (!identifier || !password) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Vui lòng nhập tài khoản và mật khẩu.' },
+      });
+    }
+
+    try {
+      const result = await pool.query(
+        `SELECT * FROM users WHERE phone_number = $1 OR email = $1 LIMIT 1`,
+        [identifier]
+      );
+      const user = result.rows[0];
+
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          error: { code: 'INVALID_CREDENTIALS', message: 'Số điện thoại/Email hoặc mật khẩu không đúng.' },
+        });
+      }
+
+      // Kiểm tra tài khoản có đang bị tạm khóa do nhập sai nhiều lần
+      if (user.locked_until && new Date(user.locked_until) > new Date()) {
+        return res.status(403).json({
+          success: false,
+          error: { code: 'ACCOUNT_LOCKED', message: 'Tài khoản đang tạm khóa do nhập sai quá nhiều lần.' },
+        });
+      }
+
+      const isMatch = await verifyPassword(password, user.password_hash);
+      if (!isMatch) {
+        await pool.query(`UPDATE users SET failed_attempts = failed_attempts + 1 WHERE id = $1`, [user.id]);
+        return res.status(401).json({
+          success: false,
+          error: { code: 'INVALID_CREDENTIALS', message: 'Số điện thoại/Email hoặc mật khẩu không đúng.' },
+        });
+      }
+
+      // Reset số lần thử sai
+      await pool.query(`UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = $1`, [user.id]);
+
+      const token = generateToken({ userId: user.id, role: 'PATIENT', email: user.email });
+      setAuthCookie(res, token);
+
+      return res.json({
+        success: true,
+        data: {
+          user: { id: user.id, phoneNumber: user.phone_number, email: user.email },
+          token,
+        },
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: err.message } });
+    }
+  });
+
+  // 3. ĐĂNG NHẬP GOOGLE OAUTH (GOOGLE AUTH)
+  router.post('/google', async (req: Request, res: Response) => {
+    try {
+      const profile = parseGooglePayload(req.body);
+      let userRes = await pool.query(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [profile.email]);
+      let user = userRes.rows[0];
+
+      if (!user) {
+        // Tự động tạo tài khoản bệnh nhân từ Google profile
+        const fakePass = generateRandomOAuthSecret();
+        const hash = await hashPassword(fakePass);
+        const autoPhone = `gg_${profile.googleId.substring(0, 10)}`;
+
+        const insertRes = await pool.query(
+          `INSERT INTO users (phone_number, email, password_hash)
+           VALUES ($1, $2, $3)
+           RETURNING id, phone_number, email`,
+          [autoPhone, profile.email, hash]
+        );
+        user = insertRes.rows[0];
+
+        // Tạo hồ sơ thành viên chính chủ kèm avatar từ Google
+        const memberId = `mem_${user.id.toString().substring(0, 8)}`;
+        await pool.query(
+          `INSERT INTO family_members (id, user_id, full_name, relationship, gender, birth_date, avatar_url, is_above_18, consent_approved)
+           VALUES ($1, $2, $3, 'owner', 'Khác', '1995-01-01', $4, true, true)`,
+          [memberId, user.id, profile.fullName, profile.avatarUrl || null]
+        );
+      }
+
+      const token = generateToken({ userId: user.id, role: 'PATIENT', email: user.email });
+      setAuthCookie(res, token);
+
+      return res.json({
+        success: true,
+        data: {
+          user: { id: user.id, email: user.email, fullName: profile.fullName, avatarUrl: profile.avatarUrl },
+          token,
+        },
+      });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: { code: 'GOOGLE_AUTH_FAILED', message: err.message } });
+    }
+  });
+
+  // 4. LẤY THÔNG TIN NGƯỜI DÙNG ĐANG ĐĂNG NHẬP (ME)
+  router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, phone_number, email, is_ekyc_verified, created_at FROM users WHERE id = $1`,
+        [req.user?.userId]
+      );
+      if (!result.rows[0]) {
+        return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Không tìm thấy tài khoản.' } });
+      }
+      return res.json({ success: true, data: result.rows[0] });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
+  // 5. ĐĂNG XUẤT (LOGOUT)
+  router.post('/logout', (req: Request, res: Response) => {
+    res.clearCookie('dhealth_token');
+    return res.json({ success: true, message: 'Đăng xuất thành công.' });
+  });
+
+  return router;
+}
+
+/**
+ * Gắn cookie JWT bảo mật theo chuẩn Web Security Auditor
+ */
+function setAuthCookie(res: Response, token: string): void {
+  res.cookie('dhealth_token', token, {
+    httpOnly: true, // Chống XSS đọc trộm
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', // Chống CSRF
+    maxAge: 12 * 60 * 60 * 1000, // 12 tiếng
+  });
+}

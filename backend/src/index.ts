@@ -1,21 +1,32 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
 import * as Minio from 'minio';
 import dotenv from 'dotenv';
+import { apiLimiter } from './infrastructure/security/rate-limiters';
+import { createAuthRouter } from './presentation/routes/auth.routes';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+// Security Middlewares (Web Security Auditor)
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(cookieParser());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use('/api/', apiLimiter);
 
 // 1. PostgreSQL Connection Pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://dhealth_user:dhealth_secret_2026@postgres:5432/dhealth_db',
 });
+
+// Gắn Module Xác thực & Đăng nhập (Auth & Security Routes)
+app.use('/api/auth', createAuthRouter(pool));
 
 // 2. MinIO S3 Client
 const minioClient = new Minio.Client({
