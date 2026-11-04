@@ -30,17 +30,18 @@
    - Bất kỳ hàm mới nào (Utility, Helper, Domain Service, Entity Method, Value Object Method, Use Case, API Handler) khi được tạo ra **BẮT BUỘC 100% PHẢI CÓ FILE TEST ĐI KÈM** (`*.spec.ts` hoặc `*.test.ts`).
    - **Không có test = Không nghiệm thu (Definition of Done = Failed)**. Tuyệt đối không chấp nhận bất kỳ mã nguồn chức năng nào được viết mà thiếu file kiểm thử tương ứng.
 3. **Kỷ luật chạy lại toàn bộ test trước mỗi lần commit (100% Full-Suite Test Pass Mandate Before Commit)**:
-   - Trước mỗi lần thực hiện lệnh `git commit`, **BẮT BUỘC PHẢI CHẠY LẠI TOÀN BỘ TEST SUITE CỦA CẢ HỆ THỐNG** (Cả Backend và Frontend):
-     ```bash
-     npm --prefix backend test && npm --prefix frontend test
-     ```
+   - Trước mỗi lần thực hiện lệnh `git commit`, **BẮT BUỘC PHẢI CHẠY LẠI TOÀN BỘ TEST SUITE CỦA CẢ HỆ THỐNG** (`npm test`).
    - **100% tất cả các test suites phải PASSED (Exit code = 0)**. Dù chỉ có **1 test bị FAIL**, **TUYỆT ĐỐI CẤM COMMIT**.
-4. **Ma trận kiểm thử 4 chiều bắt buộc**:
-   - **INPUT**: Happy path, Giá trị biên (Boundary: 0, số âm, chuỗi rỗng `""`, min, max, mảng rỗng `[]`), Dữ liệu thiếu/rác (`null`, `undefined`, NaN, sai định dạng).
-   - **OUTPUT**: Khớp tuyệt đối kiểu dữ liệu, bảo toàn tính bất biến (Immutability).
-   - **ERROR**: Khẳng định đúng class lỗi (`instanceof`), mã lỗi (`code`), thông điệp (`message`) và trường vi phạm (`details`).
+4. **Kiểm thử tích hợp bắt buộc (Integration Testing Mandate)**:
+   - Ngoài Unit Test cho từng function riêng lẻ, **BẮT BUỘC PHẢI CÓ CÁC BỘ TEST TÍCH HỢP (`*.integration.spec.ts`)**:
+     - **Backend API Integration Tests**: Kiểm thử toàn diện luồng gọi HTTP thực (`supertest`) qua các tầng Route -> Middleware -> Service -> DB -> Contract, bao gồm luồng Auth, Role-based Access, CRUD người dùng và xử lý lỗi đồng bộ.
+     - **Frontend User Flow Integration Tests**: Kiểm thử luồng tương tác người dùng và 5 trạng thái State (`Loading`, `Empty`, `Error`, `Data`, `Offline`).
+5. **Ma trận kiểm thử 4 chiều bắt buộc (Đặc biệt chú trọng Giá trị biên & Dạng lỗi)**:
+   - **INPUT & BIÊN (BOUNDARY CASES)**: Happy path, Giá trị biên (Số 0, số âm, chuỗi rỗng `""`, khoảng trắng, min, max, mảng rỗng `[]`), Dữ liệu thiếu/rác (`null`, `undefined`, NaN, sai định dạng).
+   - **OUTPUT & BẤT BIẾN**: Khớp tuyệt đối kiểu dữ liệu, bảo toàn tính bất biến (Immutability).
+   - **ERROR (DẠNG LỖI & NGOẠI LỆ)**: Khẳng định đúng class lỗi (`instanceof`), mã lỗi (`code`), mã HTTP Status (400, 401, 403, 404, 409, 429, 500), thông điệp (`message`) và trường vi phạm (`details`).
    - **LOGIC NGHIỆP VỤ & INVARIANTS**: Đúng công thức y khoa (WHO, AHA, ESC, RECIST 1.1, ADA, LOINC), tính độc lập giữa các test case.
-5. **Cú pháp Arrange - Act - Assert (AAA)**: Trình bày mạch lạc, không gộp nhiều assert mơ hồ trong một test case.
+6. **Cú pháp Arrange - Act - Assert (AAA)**: Trình bày mạch lạc, không gộp nhiều assert mơ hồ trong một test case.
 
 ### III. NGUYÊN TẮC THIẾT KẾ HƯỚNG MIỀN (TACTICAL DDD)
 1. **Ubiquitous Language (Ngôn ngữ phổ biến)**: Đồng bộ 100% thuật ngữ giữa BA (`5_6291670095529781835.md`), Mã nguồn và CSDL: `BiometricRecord`, `AdherenceCalculator`, `MedicationPlan`, `DoseSchedule`, `EmergencyCard`, `Condition`, `ImagingStudy`, `ClinicalReport`.
@@ -116,7 +117,7 @@ Mọi Kế hoạch triển khai (`plan.md`) trước khi được chuyển thàn
 - [ ] **Gate 0 (30-Minute Review Verified)**: Đã đọc lại toàn bộ skills và hiến pháp kỹ thuật trong vòng 30 phút gần nhất?
 - [ ] **Gate 1 (Spec Alignment)**: Đã có file `spec.md` với đầy đủ User Stories được phân cấp ưu tiên (P1, P2, P3) và Acceptance Criteria (Given-When-Then)?
 - [ ] **Gate 2 (Data Feasibility)**: Mọi trường dữ liệu hiển thị đã được định vị chính xác nguồn gốc (Bảng nào, Cột nào, Cách nhập liệu nào) và không có trường default vô căn cứ?
-- [ ] **Gate 3 (TDD Matrix & One-By-One Execution)**: Đã chuẩn bị ma trận 4 chiều (Input / Output / Error / Logic) cho 100% các hàm mới, cam kết viết test từng hàm một và chạy lại toàn bộ test trước mỗi commit?
+- [ ] **Gate 3 (TDD Matrix, Boundary/Error & Integration Testing)**: Đã kiểm thử đầy đủ 4 chiều (Input biên, Output, Error ngoại lệ, Logic) cho 100% các hàm mới, có test tích hợp luồng (*.integration.spec.ts), cam kết viết test từng hàm một và chạy lại toàn bộ test trước mỗi commit?
 - [ ] **Gate 4 (DDD Architecture)**: Đã đóng gói các thuộc tính nhạy cảm thành Value Objects bất biến và xác định đúng Aggregate Root?
 - [ ] **Gate 5 (Device Experience Validation)**: Màn hình người dùng cuối đã ưu tiên Mobile-First (Thumb Zone, Bottom Sheet, In-frame $\le 5$ mục) và màn Admin đã chuẩn PC-First (High-density grid, Multi-panel dashboard)?
 - [ ] **Gate 6 (Decree 13 Compliance)**: Đã thiết lập cơ chế Consent Gate cho thành viên $\ge 18$ tuổi và che chắn PII?

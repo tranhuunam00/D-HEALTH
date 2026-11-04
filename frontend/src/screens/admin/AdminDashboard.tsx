@@ -1,10 +1,10 @@
 import React from 'react';
-import { Building2, Stethoscope, Pill, ShieldCheck, Database, RefreshCw, Activity, Search, Users, UserCheck } from 'lucide-react';
+import { Building2, Stethoscope, Pill, ShieldCheck, Database, RefreshCw, Activity, Search, Users, UserCheck, HardDrive } from 'lucide-react';
 import { useAdminLogic } from './useAdminLogic';
 import { AdminUserManagement } from './AdminUserManagement';
 
 export const AdminDashboard: React.FC = () => {
-  const { stats, facilities, doctors, medications, activeTab, setActiveTab, loading, refresh } = useAdminLogic();
+  const { stats, health, facilities, doctors, medications, activeTab, setActiveTab, loading, refresh } = useAdminLogic();
 
   return (
     <div className="w-full min-h-screen bg-[#070D1E] text-slate-100 flex">
@@ -45,12 +45,23 @@ export const AdminDashboard: React.FC = () => {
           </nav>
         </div>
 
-        <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            PostgreSQL 31 Bảng Active
+        <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-400 space-y-2">
+          <div className="flex items-center justify-between text-emerald-400 font-bold">
+            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> PostgreSQL 16</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Active</span>
           </div>
-          <p className="text-[10px] text-slate-500">Phân định: Fix Enums & Admin Master Data</p>
+          <div className="flex items-center justify-between text-purple-400 font-bold pt-1.5 border-t border-slate-800">
+            <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> MinIO S3</span>
+            <a
+              href="http://103.90.227.173:7105"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[10px] text-purple-300 hover:text-purple-200 underline"
+            >
+              Console 7105 ↗
+            </a>
+          </div>
+          <p className="text-[9px] text-slate-500 font-mono truncate" title={health.minio}>S3: {health.minio}</p>
         </div>
       </aside>
 

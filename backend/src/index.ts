@@ -9,6 +9,8 @@ import { apiLimiter } from './infrastructure/security/rate-limiters';
 import { createAuthRouter } from './presentation/routes/auth.routes';
 import { createAdminUsersRouter } from './presentation/routes/admin-users.routes';
 import { createUserProfileRouter } from './presentation/routes/user-profile.routes';
+import { MinioStorageService } from './infrastructure/storage/minio-storage.service';
+import { createStorageRouter } from './presentation/routes/storage.routes';
 
 dotenv.config();
 
@@ -32,62 +34,30 @@ app.use('/api/auth', createAuthRouter(pool));
 app.use('/api/admin/users', createAdminUsersRouter(pool));
 app.use('/api/user/profile', createUserProfileRouter(pool));
 
-// 2. MinIO S3 Client
+// 2. MinIO S3 Client & Storage Service
+const isDockerEnv = process.env.IS_DOCKER === 'true' || process.env.NODE_ENV === 'production';
+const minioEndpoint = process.env.MINIO_ENDPOINT || (isDockerEnv ? 'minio' : '127.0.0.1');
+const minioPort = parseInt(process.env.MINIO_PORT || (isDockerEnv ? '9000' : '7104'), 10);
+
 const minioClient = new Minio.Client({
-  endPoint: process.env.MINIO_ENDPOINT || 'minio',
-  port: parseInt(process.env.MINIO_PORT || '9000', 10),
+  endPoint: minioEndpoint,
+  port: minioPort,
   useSSL: process.env.MINIO_USE_SSL === 'true',
   accessKey: process.env.MINIO_ACCESS_KEY || 'dhealth_minio_admin',
   secretKey: process.env.MINIO_SECRET_KEY || 'dhealth_minio_secret_2026',
 });
 
+const storageService = new MinioStorageService(minioClient, minioEndpoint, minioPort);
+app.use('/api/storage', createStorageRouter(storageService));
+
 // Auto-initialize required S3 buckets on startup
-const REQUIRED_BUCKETS = ['dhealth-reports', 'dhealth-dicom', 'dhealth-avatars', 'dhealth-prescriptions'];
-
-async function initMinioBuckets(retries = 15, delayMs = 2000): Promise<void> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      for (const bucket of REQUIRED_BUCKETS) {
-        const exists = await minioClient.bucketExists(bucket);
-        if (!exists) {
-          await minioClient.makeBucket(bucket);
-          console.log(`[MinIO] Bucket created: ${bucket}`);
-
-          // Set public read policy for avatars and reports
-          if (bucket === 'dhealth-avatars' || bucket === 'dhealth-reports') {
-            const policy = JSON.stringify({
-              Version: '2012-10-17',
-              Statement: [
-                {
-                  Effect: 'Allow',
-                  Principal: { AWS: ['*'] },
-                  Action: ['s3:GetObject'],
-                  Resource: [`arn:aws:s3:::${bucket}/*`],
-                },
-              ],
-            });
-            try {
-              await minioClient.setBucketPolicy(bucket, policy);
-            } catch {
-              // Ignore policy error if unsupported in local mode
-            }
-          }
-        }
-      }
-      console.log('✓ [MinIO] All S3 Buckets initialized successfully!');
-      return;
-    } catch (err: any) {
-      console.log(`[MinIO] Waiting for S3 storage (attempt ${attempt}/${retries}): ${err.message}`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
-  console.warn('⚠️ [MinIO] Could not initialize buckets after maximum attempts. Continuing...');
-}
+storageService.ensureBuckets()
+  .then(() => console.log('✓ [MinIO] All S3 Buckets initialized successfully!'))
+  .catch((err) => console.warn(`⚠️ [MinIO] Bucket init notice: ${err.message}`));
 
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
   let dbStatus = 'disconnected';
-  let minioStatus = 'disconnected';
   let memberCount = 0;
 
   try {
@@ -98,12 +68,10 @@ app.get('/api/health', async (req: Request, res: Response) => {
     dbStatus = `error: ${err.message}`;
   }
 
-  try {
-    const buckets = await minioClient.listBuckets();
-    minioStatus = `connected (${buckets.length} buckets)`;
-  } catch (err: any) {
-    minioStatus = `error: ${err.message}`;
-  }
+  const storageHealth = await storageService.checkHealth();
+  const minioStatus = storageHealth.status === 'connected'
+    ? `connected (${storageHealth.buckets.length} buckets)`
+    : `error: ${storageHealth.error || 'unreachable'}`;
 
   res.json({
     status: 'ok',
@@ -267,5 +235,4 @@ app.get('/api/admin/overview', async (req: Request, res: Response) => {
 
 app.listen(port, () => {
   console.log(`D-Health Backend API running on port ${port}`);
-  initMinioBuckets().catch((err) => console.error('[MinIO] Bucket init error:', err));
 });

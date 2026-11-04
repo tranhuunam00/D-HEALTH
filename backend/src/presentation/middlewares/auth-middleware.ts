@@ -48,7 +48,8 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
 /**
  * Middleware phân quyền theo vai trò (RBAC)
  */
-export function requireRole(...allowedRoles: string[]) {
+export function requireRole(...roles: (string | string[])[]) {
+  const allowedRoles = roles.flat();
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({

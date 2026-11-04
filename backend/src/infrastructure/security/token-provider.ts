@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 export interface TokenPayload {
   userId: string;
-  role: 'ADMIN' | 'DOCTOR' | 'PATIENT' | 'FAMILY';
+  role: 'ADMIN' | 'DOCTOR' | 'PATIENT' | 'FAMILY' | 'super_admin' | 'clinical_admin' | 'doctor' | 'patient';
   email?: string;
   iat?: number;
   exp?: number;

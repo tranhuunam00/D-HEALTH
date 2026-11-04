@@ -27,20 +27,24 @@
 - **Kỷ luật chạy lại toàn bộ test trước mỗi lần commit (100% Full-Suite Test Pass Mandate Before Commit)**:
   - Trước mỗi lần thực hiện lệnh `git commit`, **BẮT BUỘC PHẢI CHẠY LẠI TOÀN BỘ TEST SUITE CỦA CẢ HỆ THỐNG** (Cả Backend và Frontend):
     ```bash
-    npm --prefix backend test && npm --prefix frontend test
+    npm test   # (Chạy cả npm --prefix backend test && npm --prefix frontend test)
     ```
   - **100% tất cả các test suites phải PASSED (Exit code = 0)**. Dù chỉ có **1 test bị FAIL**, **TUYỆT ĐỐI CẤM COMMIT**.
-- **Ma trận kiểm thử 4 chiều bắt buộc cho mỗi hàm**:
-  1. **INPUT**:
+- **Kiểm thử tích hợp bắt buộc (Integration Testing Mandate)**:
+  - Bên cạnh Unit Test cho từng hàm riêng lẻ, dự án **BẮT BUỘC PHẢI CÓ CÁC BỘ TEST TÍCH HỢP (`*.integration.spec.ts`)**:
+    - **Backend API Integration Tests**: Kiểm thử toàn vẹn luồng tương tác thực giữa các tầng (Route -> Middleware -> Service -> Database -> Response Contract) thông qua HTTP server (sử dụng `supertest`), bao gồm kịch bản Auth, CRUD, Role Guard và xử lý lỗi đồng bộ.
+    - **Frontend Flow Integration Tests**: Kiểm thử tương tác hoàn chỉnh của người dùng (nhập form -> validate -> gọi API -> cập nhật State 5 pha: `Loading`, `Empty`, `Error`, `Data`, `Offline`).
+- **Ma trận kiểm thử 4 chiều bắt buộc cho mỗi hàm (Đặc biệt chú trọng Biên & Ngoại lệ)**:
+  1. **INPUT & BIÊN (BOUNDARY CASES)**:
      - Kiểm thử dữ liệu hợp lệ (Happy path).
-     - Kiểm thử giá trị biên (Boundary): số 0, số âm, chuỗi rỗng `""`, min, max, mảng rỗng `[]`.
-     - Kiểm thử dữ liệu rác/thiếu: `null`, `undefined`, sai định dạng, NaN.
-  2. **OUTPUT**:
+     - **Kiểm thử giá trị biên bắt buộc**: Số 0, số âm, ngưỡng min, ngưỡng max, chuỗi rỗng `""`, khoảng trắng `"   "`, mảng rỗng `[]`, số thập phân, NaN.
+     - Kiểm thử dữ liệu rác/thiếu: `null`, `undefined`, sai định dạng, dữ liệu vượt quá giới hạn độ dài.
+  2. **OUTPUT & BẤT BIẾN**:
      - Kết quả trả về phải khớp tuyệt đối contract và kiểu dữ liệu.
      - Đảm bảo hàm **không làm thay đổi (mutate)** tham số truyền vào (Immutability).
-  3. **ERROR (DẠNG LỖI & NGOẠI LỆ)**:
-     - Kiểm thử đầy đủ các nhánh ném ngoại lệ (`throw new ValidationError`, `throw new NotFoundError`, v.v.).
-     - Xác nhận chính xác **lớp lỗi (`instanceof`)**, **mã lỗi (`code`)**, **thông báo lỗi (`message`)** và **chi tiết trường lỗi (`details`)**.
+  3. **ERROR (DẠNG LỖI & NGOẠI LỆ BẮT BUỘC)**:
+     - Kiểm thử đầy đủ các nhánh ném ngoại lệ (`throw new ValidationError`, `throw new NotFoundError`, `throw new ConflictError`, v.v.).
+     - Xác nhận chính xác **lớp lỗi (`instanceof`)**, **mã lỗi (`code`)**, **mã HTTP Status (400, 401, 403, 404, 409, 429, 500)**, **thông báo lỗi (`message`)** và **chi tiết trường lỗi (`details`)**.
   4. **LOGIC NGHIỆP VỤ & INVARIANTS**:
      - Kiểm thử đúng công thức tính toán y khoa, ngưỡng phân loại, logic rẽ nhánh nghiệp vụ.
      - Kiểm thử tính độc lập của test (không phụ thuộc thứ tự thực thi).
