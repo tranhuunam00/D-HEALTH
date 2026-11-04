@@ -47,7 +47,7 @@ export function useProfileLogic() {
   const handleUpdateProfile = async (payload: Partial<FamilyMember>) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/user/members/${activeMember.id}`, {
+      const res = await fetch(`/api/user/profile/members/${activeMember.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
