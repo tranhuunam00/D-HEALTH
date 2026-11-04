@@ -158,11 +158,11 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
       }
       const medScore = isDoseTaken ? 36 : 30;
       const hr = vitals.find((v: any) => v.biometric_type === 'hr' || v.biometric_type === 'heart_rate');
-      const hrVal = hr ? Number((hr as any).value_numeric || 72) : 72;
-      const hrScore = (hrVal >= 60 && hrVal <= 85) ? 20 : 14;
+      const hrVal = hr ? Number((hr as any).value_numeric || 71) : 71;
+      const hrScore = (hrVal >= 60 && hrVal <= 85) ? 14 : 10;
       const total = bpScore + medScore + hrScore;
       const status: 'Xuất sắc' | 'Ổn định' | 'Cần lưu ý' | 'Nguy cơ' =
-        total >= 90 ? 'Xuất sắc' : total >= 80 ? 'Ổn định' : total >= 65 ? 'Cần lưu ý' : 'Nguy cơ';
+        total >= 85 ? 'Xuất sắc' : total >= 70 ? 'Ổn định' : total >= 50 ? 'Cần lưu ý' : 'Nguy cơ';
       setHealthScore({ total, biometrics: bpScore, medications: medScore, clinical: hrScore, status });
     }
   }, [vitals, isDoseTaken]);
@@ -170,7 +170,7 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
   const bpRec = vitals.find((v: any) => v.biometric_type === 'bp' || v.biometric_type === 'blood_pressure');
   const hrRec = vitals.find((v: any) => v.biometric_type === 'hr' || v.biometric_type === 'heart_rate');
   const weightRec = vitals.find((v: any) => v.biometric_type === 'weight');
-  const glucoseRec = vitals.find((v: any) => v.biometric_type === 'glucose' || v.biometric_type === 'blood_sugar');
+  const glucoseRec = vitals.find((v: any) => v.biometric_type === 'hba1c' || v.biometric_type === 'glucose' || v.biometric_type === 'blood_sugar');
 
   const currentMemberObj = members.find((m) => m.id === activeMemberId);
   const fallbackWeight = currentMemberObj?.weight_kg

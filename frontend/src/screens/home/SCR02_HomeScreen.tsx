@@ -111,7 +111,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
             </defs>
             <path d="M 34 150 A 116 116 0 0 1 266 150" fill="none" stroke="#E2E8F0" strokeWidth="20" strokeLinecap="round" />
             <path d="M 34 150 A 116 116 0 0 1 266 150" fill="none" stroke="url(#gauge)" strokeWidth="20" strokeLinecap="round" />
-            <circle cx="218" cy="88" r="10" fill="#FFFFFF" stroke="#0F172A" strokeWidth="3.5" />
+            <circle cx="239" cy="76" r="9" fill="#FFFFFF" stroke="#0F172A" strokeWidth="3.5" />
           </svg>
 
           <div className="absolute top-15 flex flex-col items-center">
