@@ -100,13 +100,16 @@ export const MedMonthCalendar: React.FC<MedMonthCalendarProps> = ({
       {/* Legend */}
       <div className="flex items-center justify-center gap-3 pt-1 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Đầy đủ
+          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Đủ liều
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-amber-500" /> Bỏ lỡ
+          <span className="w-2 h-2 rounded-full bg-amber-500" /> Quên
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-rose-500" /> Bỏ qua
+          <span className="w-2 h-2 rounded-full bg-rose-500" /> Bỏ liều
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-slate-300" /> Đã lên lịch
         </span>
       </div>
     </div>

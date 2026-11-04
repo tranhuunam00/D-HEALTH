@@ -63,7 +63,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         </button>
 
         <h3 className="text-lg font-bold mb-4">
-          {targetUser ? 'Cập Nhật Người Dùng' : 'Thêm Người Dùng Mới'}
+          {targetUser ? 'Chỉnh Sửa Người Dùng' : 'Thêm Người Dùng Mới'}
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">

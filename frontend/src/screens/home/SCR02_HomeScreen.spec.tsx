@@ -54,7 +54,7 @@ describe('SCR02_HomeScreen Mobile View', () => {
     });
   });
 
-  it('render đầy đủ điểm sức khỏe, nút SOS cấp cứu, 2 vấn đề theo dõi và Health Timeline', async () => {
+  it('render đầy đủ điểm sức khỏe, nút SOS cấp cứu, các nhóm dữ liệu và Health Timeline', async () => {
     render(<SCR02_HomeScreen onOpenEmergency={vi.fn()} />);
 
     await waitFor(() => {
@@ -64,8 +64,8 @@ describe('SCR02_HomeScreen Mobile View', () => {
     expect(screen.getByText('SOS')).toBeDefined();
     expect(screen.getByText('Huyết áp')).toBeDefined();
     expect(screen.getByText('Nhịp tim')).toBeDefined();
-    expect(screen.getByText('2 vấn đề cần theo dõi')).toBeDefined();
-    expect(screen.getByText('9 nhóm dữ liệu')).toBeDefined();
+    expect(screen.getByText('1 vấn đề cần theo dõi')).toBeDefined();
+    expect(screen.getByText('3 nhóm dữ liệu')).toBeDefined();
     expect(screen.getByText('Health Timeline')).toBeDefined();
     expect(screen.getByText('Xem phân tích')).toBeDefined();
     expect(screen.getByRole('button', { name: /Nhập số đo/i })).toBeDefined();
