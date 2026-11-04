@@ -50,3 +50,4 @@ export const LoginSocialActions: React.FC<LoginSocialActionsProps> = ({
     </>
   );
 };
+

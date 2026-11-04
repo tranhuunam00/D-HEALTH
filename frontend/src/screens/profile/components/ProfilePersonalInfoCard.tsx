@@ -101,3 +101,4 @@ export const ProfilePersonalInfoCard: React.FC<ProfilePersonalInfoCardProps> = (
     </div>
   );
 };
+

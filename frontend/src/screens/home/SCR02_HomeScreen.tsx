@@ -33,11 +33,15 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     latestHr,
     latestWeight,
     latestGlucose,
+    issuesCount,
+    dataGroupsCount,
+    aiInsight,
     isDoseTaken,
     isVitalsSheetOpen,
     setIsVitalsSheetOpen,
     todayDose,
     todayDosesSummary,
+    recentReports,
     handleRecordVitals,
     handleTakeDose,
   } = useHomeLogic(propMemberId || user?.activeMemberId || 'nam', user);
@@ -60,6 +64,8 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
         {/* 2. Health Score Arc Card */}
         <HomeHealthScoreCard
           healthScore={healthScore}
+          issuesCount={issuesCount}
+          dataGroupsCount={dataGroupsCount}
           onNavigateBiometrics={() => onNavigate?.('biometrics')}
         />
 
@@ -83,10 +89,14 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
         />
 
         {/* 5. AI Insight Highlight Card */}
-        <HomeAiInsightCard onNavigateAi={() => onNavigate?.('ai')} />
+        <HomeAiInsightCard
+          insightText={aiInsight}
+          onNavigateAi={() => onNavigate?.('ai')}
+        />
 
         {/* 6. Health Timeline */}
         <HomeTimelineCard
+          reports={recentReports}
           onNavigateRecords={() => onNavigate?.('records')}
           onNavigateLabs={() => onNavigate?.('labs')}
           onNavigateImaging={() => onNavigate?.('imaging')}

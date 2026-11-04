@@ -32,3 +32,4 @@ describe('CameraTypeAndMethodTabs Component', () => {
     expect(handleSetMethod).toHaveBeenCalledWith('cam');
   });
 });
+

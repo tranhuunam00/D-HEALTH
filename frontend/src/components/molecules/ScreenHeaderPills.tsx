@@ -9,7 +9,7 @@ export interface ScreenHeaderPillsProps {
 }
 
 export const ScreenHeaderPills: React.FC<ScreenHeaderPillsProps> = ({
-  activeMemberName = 'Trần Minh Khang',
+  activeMemberName = 'Trần Hữu Nam',
   dateText = '26/10/2026',
   onSelectMember,
   className = '',

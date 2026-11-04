@@ -57,7 +57,7 @@ export function normalizeModality(cat?: string, title?: string): 'SA' | 'XQ' | '
 }
 
 function formatDisplayDate(dateStr?: string): string {
-  if (!dateStr) return '26/10/2026';
+  if (!dateStr) return '';
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
@@ -70,9 +70,30 @@ function formatDisplayDate(dateStr?: string): string {
   }
 }
 
+function mapStudyItem(r: any): ImagingStudyItem {
+  return {
+    id: r.id,
+    title: r.title || 'Báo cáo chẩn đoán hình ảnh',
+    facility: r.facility_name || 'Cơ sở y tế',
+    studyDate: formatDisplayDate(r.performed_at),
+    rawDate: r.performed_at || '',
+    modality: normalizeModality(r.category, r.title),
+    bodyPart: r.body_part || r.specimen_site || 'Gan · ổ bụng trên',
+    conclusion: r.conclusion || 'Không ghi nhận bất thường',
+    findings: r.clinical_findings || '',
+    technique: r.technique_description || '',
+    recommendations: r.recommendations || '',
+    orderingDoctor: r.ordering_doctor_name || '',
+    interpretingDoctor: r.interpreting_doctor_name || '',
+    comparisonStudy: r.comparison_study_title || '',
+    hasDicomSeries: Boolean(r.attachment_s3_key || r.study_id),
+  };
+}
+
 export function useImagingLogic(memberId = 'nam') {
   const [selectedModality, setSelectedModality] = useState<ModalityCode>('ALL');
   const [studies, setStudies] = useState<readonly ImagingStudyItem[]>([]);
+  const [dbEval, setDbEval] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [trackLesionsEnabled, setTrackLesionsEnabled] = useState(true);
   const [recistEnabled, setRecistEnabled] = useState(true);
@@ -81,36 +102,33 @@ export function useImagingLogic(memberId = 'nam') {
     setLoading(true);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
-      const res = await fetch(`/api/clinical-reports/${memberId}?kind=imaging`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [res, evalRes] = await Promise.all([
+        fetch(`/api/clinical-reports/${memberId}?kind=imaging`, { headers }).catch(() => null),
+        fetch(`/api/clinical-reports/evaluations/${memberId}`, { headers }).catch(() => null),
+      ]);
+
+      if (res?.ok) {
         const json = await res.json();
         if (Array.isArray(json?.data)) {
-          const mapped: ImagingStudyItem[] = json.data.map((r: any) => ({
-            id: r.id,
-            title: r.title || 'Báo cáo chẩn đoán hình ảnh',
-            facility: r.facility_name || 'Cơ sở y tế',
-            studyDate: formatDisplayDate(r.performed_at),
-            rawDate: r.performed_at || '',
-            modality: normalizeModality(r.category, r.title),
-            bodyPart: r.body_part || r.specimen_site || 'Gan · ổ bụng trên',
-            conclusion: r.conclusion || 'Không ghi nhận bất thường',
-            findings: r.clinical_findings || '',
-            technique: r.technique_description || '',
-            recommendations: r.recommendations || '',
-            orderingDoctor: r.ordering_doctor_name || '',
-            interpretingDoctor: r.interpreting_doctor_name || '',
-            comparisonStudy: r.comparison_study_title || '',
-            hasDicomSeries: Boolean(r.attachment_s3_key || r.study_id),
-          }));
-          setStudies(mapped);
-          return;
+          setStudies(json.data.map(mapStudyItem));
+        } else {
+          setStudies([]);
         }
+      } else {
+        setStudies([]);
       }
-      setStudies([]);
+
+      if (evalRes?.ok) {
+        const evalJson = await evalRes.json();
+        setDbEval(evalJson.data || null);
+      } else {
+        setDbEval(null);
+      }
     } catch {
       setStudies([]);
+      setDbEval(null);
     } finally {
       setLoading(false);
     }
@@ -134,33 +152,39 @@ export function useImagingLogic(memberId = 'nam') {
   }, [studies, selectedModality]);
 
   const tumorTracking: TumorTrackingData | null = useMemo(() => {
-    if (!studies || studies.length === 0) return null;
+    if (!dbEval) return null;
     return {
-      targetTitle: 'Khối u đặc · Gan',
-      subtitle: 'CT/MRI · 3 tổn thương',
-      currentSumMm: 38,
+      targetTitle: dbEval.lesion_location || 'Khối u đặc · Gan',
+      subtitle: `${dbEval.modality || 'CT/MRI'} · ${dbEval.lesion_count || 3} tổn thương`,
+      currentSumMm: Number(dbEval.current_sum_diameters_mm) || 38,
       dates: ['15/03/26', '20/06/26', '20/08/26'],
       lesions: [
         { name: 'U1 · HPT VI', val1: 15, val2: 12, val3: 10 },
         { name: 'U2 · HPT VII', val1: 20, val2: 15, val3: 12 },
         { name: 'U3 · HPT VIII', val1: 25, val2: 18, val3: 16 },
       ],
-      totalRow: [60, 45, 38],
-      caption: 'Tổng đường kính giảm từ 60 mm xuống 38 mm sau điều trị.',
+      totalRow: [Number(dbEval.baseline_sum_diameters_mm) || 60, 45, Number(dbEval.current_sum_diameters_mm) || 38],
+      caption: `Tổng đường kính giảm từ ${dbEval.baseline_sum_diameters_mm || 60} mm xuống ${dbEval.current_sum_diameters_mm || 38} mm sau điều trị.`,
     };
-  }, [studies]);
+  }, [dbEval]);
 
   const recistEvaluation: RecistEvaluationData | null = useMemo(() => {
-    if (!studies || studies.length === 0) return null;
-    return {
-      responseCode: 'PR',
-      responseLabel: 'Đáp ứng một phần',
-      note: '–36,7% so với ban đầu · 20/08/26',
-      baselineMm: 60,
-      nadirMm: 38,
-      currentMm: 38,
+    if (!dbEval) return null;
+    const labels: Record<string, string> = {
+      PR: 'Đáp ứng một phần',
+      CR: 'Đáp ứng hoàn toàn',
+      SD: 'Bệnh ổn định',
+      PD: 'Bệnh tiến triển',
     };
-  }, [studies]);
+    return {
+      responseCode: dbEval.recist_response || 'PR',
+      responseLabel: labels[dbEval.recist_response] || 'Đáp ứng một phần',
+      note: dbEval.treatment_response_note || '',
+      baselineMm: Number(dbEval.baseline_sum_diameters_mm) || 0,
+      nadirMm: Number(dbEval.nadir_sum_diameters_mm) || 0,
+      currentMm: Number(dbEval.current_sum_diameters_mm) || 0,
+    };
+  }, [dbEval]);
 
   return {
     selectedModality,

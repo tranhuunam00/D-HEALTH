@@ -12,7 +12,7 @@ export function createUserProfileRouter(pool: Pool): Router {
     const userId = req.user?.userId;
     try {
       const userRes = await pool.query(
-        `SELECT id, phone_number, email, is_ekyc_verified, created_at FROM users WHERE id = $1`,
+        `SELECT id, phone_number, national_id, email, is_ekyc_verified, created_at FROM users WHERE id = $1`,
         [userId]
       );
       const membersRes = await pool.query(

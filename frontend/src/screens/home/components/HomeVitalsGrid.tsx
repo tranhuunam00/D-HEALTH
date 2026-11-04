@@ -114,3 +114,4 @@ export const HomeVitalsGrid: React.FC<HomeVitalsGridProps> = ({
     </div>
   );
 };
+

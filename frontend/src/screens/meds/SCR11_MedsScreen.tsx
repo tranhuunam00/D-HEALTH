@@ -15,7 +15,7 @@ interface SCR11Props {
 
 export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
   onNavigate,
-  activeMemberName = 'Trần Minh Khang',
+  activeMemberName = 'Trần Hữu Nam',
   activeMemberId = 'nam',
 }) => {
   const {

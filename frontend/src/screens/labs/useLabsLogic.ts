@@ -87,73 +87,10 @@ export const TRACKED_METRICS_CONFIG: readonly TrackedMetric[] = Object.freeze([
   },
 ]);
 
-const INITIAL_REPORTS: readonly LabReportItem[] = Object.freeze([
-  {
-    id: 'rep_nam_01',
-    title: 'Sinh hoá máu',
-    facility: 'Bệnh viện Bạch Mai',
-    testDate: '20/10/2026',
-    categoryBadge: 'SH',
-    abnormalCount: 2,
-    summary: '12 chỉ số · LDL-C, Cholesterol TP tăng',
-    hasAttachment: true,
-  },
-  {
-    id: 'rep_02',
-    title: 'Tổng phân tích tế bào máu',
-    facility: 'Bệnh viện Bạch Mai',
-    testDate: '20/10/2026',
-    categoryBadge: 'HH',
-    abnormalCount: 0,
-    summary: '24 chỉ số · trong giới hạn',
-    hasAttachment: true,
-  },
-  {
-    id: 'rep_03',
-    title: 'HbA1c',
-    facility: 'Bệnh viện Bạch Mai',
-    testDate: '20/10/2026',
-    categoryBadge: 'SH',
-    abnormalCount: 0,
-    summary: '6,6% · đạt mục tiêu',
-    hasAttachment: false,
-  },
-  {
-    id: 'rep_04',
-    title: 'Cấy nước tiểu',
-    facility: 'Phòng khám Đa khoa Medlatec',
-    testDate: '22/08/2026',
-    categoryBadge: 'VS',
-    abnormalCount: 0,
-    summary: 'Không mọc vi khuẩn',
-    hasAttachment: false,
-  },
-  {
-    id: 'rep_05',
-    title: 'HBV DNA định lượng (PCR)',
-    facility: 'Bệnh viện Nhiệt đới TW',
-    testDate: '20/06/2026',
-    categoryBadge: 'PT',
-    abnormalCount: 0,
-    summary: 'Dưới ngưỡng phát hiện (< 20 IU/mL)',
-    hasAttachment: true,
-  },
-  {
-    id: 'rep_06',
-    title: 'Đột biến gen EGFR',
-    facility: 'Bệnh viện K Tân Triều',
-    testDate: '15/05/2026',
-    categoryBadge: 'DT',
-    abnormalCount: 0,
-    summary: 'Âm tính đột biến exon 19, 21',
-    hasAttachment: true,
-  },
-]);
-
 export function useLabsLogic(memberId = 'nam') {
   const [selectedCategory, setSelectedCategory] = useState<LabSpecialtyCode>('all');
   const [trackedMetricIds, setTrackedMetricIds] = useState<string[]>(['hba1c', 'ldlc']);
-  const [reports, setReports] = useState<readonly LabReportItem[]>(INITIAL_REPORTS);
+  const [reports, setReports] = useState<readonly LabReportItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const getBaseUrl = () => {
@@ -182,28 +119,25 @@ export function useLabsLogic(memberId = 'nam') {
       if (res.ok) {
         const json = await res.json();
         const apiRecords = Array.isArray(json.data) ? json.data : [];
-        if (apiRecords.length > 0) {
-          const mapped: LabReportItem[] = apiRecords.map((r: any) => ({
-            id: r.id,
-            title: r.title || 'Phiếu xét nghiệm',
-            facility: r.facility_name || 'Bệnh viện Bạch Mai',
-            testDate: r.performed_at
-              ? new Date(r.performed_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-              : '20/10/2026',
-            categoryBadge: mapCategoryBadge(r.category),
-            abnormalCount: Number(r.abnormal_count || 0),
-            summary: r.conclusion || 'Tất cả chỉ số trong giới hạn tham chiếu',
-            hasAttachment: Boolean(r.attachment_s3_key),
-          }));
-
-          // Merge without duplicate IDs
-          const existingIds = new Set(mapped.map((m) => m.id));
-          const rest = INITIAL_REPORTS.filter((init) => !existingIds.has(init.id));
-          setReports([...mapped, ...rest]);
-        }
+        const mapped: LabReportItem[] = apiRecords.map((r: any) => ({
+          id: r.id,
+          title: r.title || 'Phiếu xét nghiệm',
+          facility: r.facility_name || 'Cơ sở y tế',
+          testDate: r.performed_at
+            ? new Date(r.performed_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            : '',
+          categoryBadge: mapCategoryBadge(r.category),
+          abnormalCount: Number(r.abnormal_count || 0),
+          summary: r.conclusion || 'Tất cả chỉ số trong giới hạn tham chiếu',
+          hasAttachment: Boolean(r.attachment_s3_key),
+        }));
+        setReports(mapped);
+      } else {
+        setReports([]);
       }
     } catch (err) {
-      console.error('Lỗi tải phiếu xét nghiệm:', err);
+      console.error('Lỗi tải phiếu xét nghiệm từ database:', err);
+      setReports([]);
     } finally {
       setLoading(false);
     }

@@ -17,7 +17,7 @@ interface SCR14Props {
 
 export const SCR14_CareScreen: React.FC<SCR14Props> = ({
   onNavigate,
-  activeMemberName = 'Trần Minh Khang',
+  activeMemberName = 'Trần Hữu Nam',
   activeMemberId = 'nam',
 }) => {
   const {
@@ -57,20 +57,38 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
         )}
 
         {/* 3. Lịch hẹn sắp tới (Upcoming Appointment) */}
-        <AppointmentCard
-          month={upcomingAppointment.month}
-          date={upcomingAppointment.date}
-          title={upcomingAppointment.title}
-          timeDoctor={upcomingAppointment.timeDoctor}
-        />
+        {upcomingAppointment ? (
+          <AppointmentCard
+            month={upcomingAppointment.month}
+            date={upcomingAppointment.date}
+            title={upcomingAppointment.title}
+            timeDoctor={upcomingAppointment.timeDoctor}
+          />
+        ) : (
+          <div className="bg-white rounded-3xl p-4 border border-slate-100 text-center text-xs text-slate-400">
+            Không có lịch khám sắp tới
+          </div>
+        )}
 
         {/* 4. My Care Team (Horizontal Chips) */}
-        <CareTeamRow
-          team={careTeam}
-          selectedId={selectedMemberId}
-          onSelectMember={setSelectedMemberId}
-          onAddDoctor={() => setIsAddDoctorOpen(true)}
-        />
+        {careTeam.length > 0 ? (
+          <CareTeamRow
+            team={careTeam}
+            selectedId={selectedMemberId}
+            onSelectMember={setSelectedMemberId}
+            onAddDoctor={() => setIsAddDoctorOpen(true)}
+          />
+        ) : (
+          <div className="bg-white rounded-3xl p-4 border border-slate-100 text-center text-xs text-slate-400 flex items-center justify-between">
+            <span>Chưa có bác sĩ trong đội ngũ</span>
+            <button
+              onClick={() => setIsAddDoctorOpen(true)}
+              className="text-[#1F7A8C] font-bold text-xs hover:underline"
+            >
+              + Thêm bác sĩ
+            </button>
+          </div>
+        )}
 
         {/* 5. Doctor Profile Card */}
         {selectedMember && (
@@ -96,11 +114,8 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
         onSubmit={handleAddDoctor}
       />
 
-      {/* 7. Bottom Navigation */}
-      <HomeBottomNav
-        activeTab="care"
-        onTabChange={(tab) => onNavigate(tab)}
-      />
+      {/* Bottom Nav */}
+      <HomeBottomNav activeTab="care" onTabChange={(tab) => onNavigate(tab)} />
     </div>
   );
 };

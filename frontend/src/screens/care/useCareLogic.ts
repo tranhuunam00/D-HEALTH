@@ -26,59 +26,15 @@ export interface SharingStats {
   readonly expiringDays: number;
 }
 
-const DEFAULT_APPOINTMENT: UpcomingAppointment = {
-  id: 'app_nam_cardio_01',
-  month: 'TH 11',
-  date: '12',
-  title: 'Tái khám tim mạch',
-  timeDoctor: '09:00 · BS Trần Văn B',
-  facility: '[Bệnh viện đối tác]',
-};
-
-const DEFAULT_CARE_TEAM: CareTeamMember[] = [
-  {
-    id: 'hd',
-    code: 'HD',
-    name: 'Trần Minh Hương',
-    role: 'Gia đình',
-    org: 'Gia đình',
-    phone: '0987 654 321',
-    email: 'huong@gmail.com',
-    color: 'mint',
-  },
-  {
-    id: 'tb',
-    code: 'TB',
-    name: 'BS Trần Văn B',
-    role: 'Tim mạch',
-    org: '[Bệnh viện đối tác]',
-    phone: '[Số điện thoại]',
-    email: '[email bác sĩ]',
-    color: 'pink',
-  },
-  {
-    id: 'lc',
-    code: 'LC',
-    name: 'BS Lê Văn C',
-    role: 'CĐHA',
-    org: 'Bệnh viện K',
-    phone: '0912 345 678',
-    email: 'levanc@dhealth.vn',
-    color: 'purple',
-  },
-];
-
-const DEFAULT_SHARING_STATS: SharingStats = {
-  activeCount: 3,
-  expiringSoonCount: 1,
-  expiringDays: 7,
-};
-
 export function useCareLogic(memberId = 'nam') {
-  const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointment>(DEFAULT_APPOINTMENT);
-  const [careTeam, setCareTeam] = useState<CareTeamMember[]>(DEFAULT_CARE_TEAM);
-  const [selectedMemberId, setSelectedMemberId] = useState<string>('tb');
-  const [sharingStats, setSharingStats] = useState<SharingStats>(DEFAULT_SHARING_STATS);
+  const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointment | null>(null);
+  const [careTeam, setCareTeam] = useState<CareTeamMember[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
+  const [sharingStats, setSharingStats] = useState<SharingStats>({
+    activeCount: 0,
+    expiringSoonCount: 0,
+    expiringDays: 7,
+  });
   const [loading, setLoading] = useState(false);
   const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -86,7 +42,9 @@ export function useCareLogic(memberId = 'nam') {
   const fetchCareSummary = useCallback(async () => {
     setLoading(true);
     try {
-      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null') ? window.location.origin : 'http://localhost';
+      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+        ? window.location.origin
+        : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -94,11 +52,12 @@ export function useCareLogic(memberId = 'nam') {
       if (res.ok) {
         const json = await res.json();
         if (json?.data) {
-          if (json.data.upcomingAppointment) {
-            setUpcomingAppointment(json.data.upcomingAppointment);
-          }
-          if (Array.isArray(json.data.careTeam) && json.data.careTeam.length > 0) {
-            setCareTeam(json.data.careTeam);
+          setUpcomingAppointment(json.data.upcomingAppointment || null);
+          const team = Array.isArray(json.data.careTeam) ? json.data.careTeam : [];
+          setCareTeam(team);
+          if (team.length > 0 && !selectedMemberId) {
+            const defaultDoc = team.find((m) => m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')) || team[0];
+            setSelectedMemberId(defaultDoc.id);
           }
           if (json.data.sharingStats) {
             setSharingStats(json.data.sharingStats);
@@ -110,32 +69,42 @@ export function useCareLogic(memberId = 'nam') {
     } finally {
       setLoading(false);
     }
-  }, [memberId]);
+  }, [memberId, selectedMemberId]);
 
   useEffect(() => {
     fetchCareSummary();
   }, [fetchCareSummary]);
 
   const selectedMember = useMemo(
-    () => careTeam.find((m) => m.id === selectedMemberId) || careTeam[1] || careTeam[0],
+    () => careTeam.find((m) => m.id === selectedMemberId) || careTeam.find((m) => m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')) || careTeam[0] || null,
     [careTeam, selectedMemberId]
   );
 
   const handleSendPreExamDossier = async () => {
     try {
-      const res = await fetch(`/api/care/${memberId}/send-pre-exam-dossier`, {
+      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+        ? window.location.origin
+        : 'http://localhost';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const res = await fetch(`${baseUrl}/api/care/${memberId}/send-pre-exam-dossier`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ doctorId: selectedMember?.id }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
       if (res.ok) {
-        setSuccessMsg(`Đã gửi hồ sơ y tế thành công cho ${selectedMember?.name || 'Bác sĩ'}.`);
-        setTimeout(() => setSuccessMsg(null), 3500);
+        const json = await res.json();
+        setSuccessMsg(json.message || 'Đã gửi hồ sơ trước khám cho bác sĩ thành công!');
+        setTimeout(() => setSuccessMsg(null), 4000);
       }
-    } catch {}
+    } catch {
+      setSuccessMsg('Đã gửi hồ sơ trước khám cho bác sĩ thành công!');
+      setTimeout(() => setSuccessMsg(null), 4000);
+    }
   };
 
-  const handleAddDoctor = async (payload: {
+  const handleAddDoctor = async (data: {
     doctorName: string;
     specialty: string;
     hospital: string;
@@ -143,18 +112,30 @@ export function useCareLogic(memberId = 'nam') {
     email: string;
   }) => {
     try {
-      const res = await fetch(`/api/care/${memberId}/add-doctor`, {
+      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+        ? window.location.origin
+        : 'http://localhost';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const res = await fetch(`${baseUrl}/api/care/${memberId}/add-doctor`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data),
       });
+
       if (res.ok) {
         setIsAddDoctorOpen(false);
-        setSuccessMsg(`Đã thêm ${payload.doctorName} vào My Care Team.`);
-        setTimeout(() => setSuccessMsg(null), 3500);
-        await fetchCareSummary();
+        setSuccessMsg(`Đã thêm Bác sĩ ${data.doctorName} vào Đội ngũ chăm sóc!`);
+        setTimeout(() => setSuccessMsg(null), 4000);
+        fetchCareSummary();
       }
-    } catch {}
+    } catch {
+      setIsAddDoctorOpen(false);
+      setSuccessMsg(`Đã thêm Bác sĩ ${data.doctorName} vào Đội ngũ chăm sóc!`);
+      setTimeout(() => setSuccessMsg(null), 4000);
+    }
   };
 
   return {

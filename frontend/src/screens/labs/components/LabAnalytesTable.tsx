@@ -21,20 +21,26 @@ export const LabAnalytesTable: React.FC<LabAnalytesTableProps> = ({ analytes }) 
       </div>
 
       <div className="divide-y divide-slate-100">
-        {analytes.map((item, idx) => (
-          <div key={idx} className="grid grid-cols-[1.4fr_1fr_1.2fr] items-center py-2.5 px-1 text-xs">
-            <div>
-              <span className="font-bold text-slate-900 block leading-tight">{item.name}</span>
-              <span className="text-[11px] text-slate-400 block">{item.unit}</span>
-            </div>
-            <div className="text-center font-black text-sm text-slate-900">
-              {item.value}
-            </div>
-            <div className="text-right text-slate-500 font-medium">
-              {item.refRange}
-            </div>
+        {analytes.length === 0 ? (
+          <div className="py-6 text-center text-xs text-slate-400 font-medium">
+            Chưa có chỉ số phân tích chi tiết trong cơ sở dữ liệu
           </div>
-        ))}
+        ) : (
+          analytes.map((item, idx) => (
+            <div key={idx} className="grid grid-cols-[1.4fr_1fr_1.2fr] items-center py-2.5 px-1 text-xs">
+              <div>
+                <span className="font-bold text-slate-900 block leading-tight">{item.name}</span>
+                <span className="text-[11px] text-slate-400 block">{item.unit}</span>
+              </div>
+              <div className="text-center font-black text-sm text-slate-900">
+                {item.value}
+              </div>
+              <div className="text-right text-slate-500 font-medium">
+                {item.refRange}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -29,3 +29,4 @@ describe('CameraCommonManualForm Component', () => {
     expect(setDoctor).toHaveBeenCalledWith('BS Lê Văn C');
   });
 });
+

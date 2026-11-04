@@ -1,9 +1,39 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { SCR11_MedsScreen } from './SCR11_MedsScreen';
 
 describe('SCR11_MedsScreen Mobile View TDD', () => {
+  const mockTodayDoses = [
+    { id: 'd1', name: 'Losartan', dosage: '50 mg', scheduled_time: '07:00:00', status: 'taken', taken: true, timing_instructions: '1 viên · sau ăn sáng' },
+    { id: 'd2', name: 'Metformin', dosage: '500 mg', scheduled_time: '07:00:00', status: 'taken', taken: true, timing_instructions: '1 viên · sau ăn sáng' },
+    { id: 'd3', name: 'Metformin', dosage: '500 mg', scheduled_time: '20:00:00', status: 'pending', taken: false, timing_instructions: '1 viên · sau ăn tối' },
+    { id: 'd4', name: 'Atorvastatin', dosage: '20 mg', scheduled_time: '21:00:00', status: 'pending', taken: false, timing_instructions: '1 viên · trước khi ngủ' },
+  ];
+
+  const mockAdherence = {
+    adherencePercent: 91,
+    takenCount: 109,
+    missedCount: 7,
+    skippedCount: 4,
+    todayTaken: 2,
+    todayTotal: 4,
+    calendarDays: [{ day: 1, status: 'full' }],
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(global, 'fetch').mockImplementation((url: any) => {
+      if (typeof url === 'string' && url.includes('today-doses')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, data: mockTodayDoses }) } as any);
+      }
+      if (typeof url === 'string' && url.includes('adherence-summary')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, data: mockAdherence }) } as any);
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) } as any);
+    });
+  });
+
   it('render 100% chuẩn giao diện: Quản lý dùng thuốc, 3 Tabs, Banner tuân thủ 91%, Calendar và 4 cữ thuốc hôm nay', async () => {
     const handleNav = vi.fn();
 

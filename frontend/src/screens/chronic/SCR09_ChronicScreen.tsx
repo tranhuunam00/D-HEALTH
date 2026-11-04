@@ -54,6 +54,10 @@ export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
         {/* 4. Loading State hoặc Content */}
         {loading && conditions.length === 0 ? (
           <div className="py-12 text-center text-xs text-slate-400">Đang tải hồ sơ bệnh mạn tính...</div>
+        ) : conditions.length === 0 ? (
+          <div className="py-12 text-center text-xs text-slate-400">
+            Chưa có hồ sơ bệnh mạn tính nào trong cơ sở dữ liệu.
+          </div>
         ) : (
           <>
             {/* 5. Thẻ Bệnh mạn tính 1: Tim mạch (Màu đỏ sẫm) */}

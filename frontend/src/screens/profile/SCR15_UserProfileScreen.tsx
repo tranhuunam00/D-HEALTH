@@ -65,7 +65,7 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
 
   const realPhone = user?.phoneNumber && !user.phoneNumber.startsWith('gg_')
     ? user.phoneNumber
-    : '0901234567';
+    : (user?.phone_number || '0988 777 666');
 
   const userEmail = user?.email || 'nam.tran@dhealth.vn';
 

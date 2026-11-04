@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserPlus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Shield } from 'lucide-react';
+import { UserPlus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
 import { useAdminUsersLogic } from './useAdminUsersLogic';
 import { UserFormModal } from './UserFormModal';
 import { DeleteUserModal } from './DeleteUserModal';
@@ -11,6 +11,7 @@ export const AdminUserManagement: React.FC = () => {
     search,
     setSearch,
     loading,
+    error,
     isAddModalOpen,
     setIsAddModalOpen,
     editingUser,
@@ -61,6 +62,13 @@ export const AdminUserManagement: React.FC = () => {
           Thêm Người Dùng
         </button>
       </div>
+
+      {error && (
+        <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-xs flex items-center gap-2">
+          <XCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* 2. High-Density Data Grid Table */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/90 overflow-hidden shadow-2xl">
@@ -143,8 +151,8 @@ export const AdminUserManagement: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <button
+              disabled={meta.page <= 1}
               onClick={() => fetchUsers(meta.page - 1)}
-              disabled={meta.page <= 1 || loading}
               className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-800 text-slate-300"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -153,8 +161,8 @@ export const AdminUserManagement: React.FC = () => {
               Trang <strong className="text-white">{meta.page}</strong> / {meta.totalPages}
             </span>
             <button
+              disabled={meta.page >= meta.totalPages}
               onClick={() => fetchUsers(meta.page + 1)}
-              disabled={meta.page >= meta.totalPages || loading}
               className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-800 text-slate-300"
             >
               <ChevronRight className="w-4 h-4" />
@@ -166,19 +174,29 @@ export const AdminUserManagement: React.FC = () => {
       {/* Modals */}
       <UserFormModal
         isOpen={isAddModalOpen || !!editingUser}
-        initialUser={editingUser}
+        user={editingUser}
         onClose={() => {
           setIsAddModalOpen(false);
           setEditingUser(null);
         }}
-        onSubmit={editingUser ? (d) => handleUpdateUser(editingUser.id, d) : handleCreateUser}
+        onSubmit={async (data) => {
+          if (editingUser) {
+            await handleUpdateUser(editingUser.id, data as any);
+          } else {
+            await handleCreateUser(data);
+          }
+        }}
       />
 
       <DeleteUserModal
         isOpen={!!deletingUser}
         user={deletingUser}
         onClose={() => setDeletingUser(null)}
-        onConfirm={() => deletingUser && handleDeleteUser(deletingUser.id)}
+        onConfirm={async () => {
+          if (deletingUser) {
+            await handleDeleteUser(deletingUser.id);
+          }
+        }}
       />
     </div>
   );

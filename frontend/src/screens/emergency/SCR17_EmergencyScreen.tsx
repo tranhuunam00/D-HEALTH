@@ -13,7 +13,7 @@ export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({
   activeMemberId = 'nam',
   activeMemberName,
 }) => {
-  const { emergencyData } = useEmergencyLogic(activeMemberId, activeMemberName);
+  const { emergencyData, loading } = useEmergencyLogic(activeMemberId, activeMemberName);
 
   return (
     <div className="w-full min-h-screen relative bg-gradient-to-b from-[#3B0D12] via-[#200A0D] to-[#111827] text-white flex flex-col font-sans select-none pb-6">
@@ -33,85 +33,102 @@ export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({
           </div>
         </div>
 
-        {/* 2. Emergency Medical Card */}
-        <div className="bg-white text-slate-900 rounded-[28px] p-5 flex flex-col gap-3.5 shadow-2xl">
-          {/* Patient Bio & Blood Type */}
-          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-            <div>
-              <div className="text-xl font-extrabold text-slate-900">{emergencyData.fullName}</div>
-              <div className="text-xs text-slate-500 font-semibold">
-                Năm sinh: {emergencyData.birthYear} · Giới tính: {emergencyData.gender}
-              </div>
-            </div>
-            <div className="w-16 h-16 rounded-2xl bg-[#DC2626] text-white flex flex-col items-center justify-center shadow-md">
-              <span className="text-[9px] font-bold tracking-wider opacity-90">NHÓM MÁU</span>
-              <span className="text-2xl font-black leading-none">{emergencyData.bloodType}</span>
-            </div>
+        {/* 2. Loading State */}
+        {loading && !emergencyData && (
+          <div className="py-20 text-center text-xs text-rose-200">
+            Đang tải dữ liệu thẻ cấp cứu y tế từ cơ sở dữ liệu...
           </div>
+        )}
 
-          {/* Dị ứng nguy hiểm */}
-          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3 flex items-start gap-2.5">
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-            <div>
-              <div className="text-xs font-bold text-rose-900">DỊ ỨNG NGUY HIỂM</div>
-              <div className="text-xs font-semibold text-rose-700">{emergencyData.allergies}</div>
-            </div>
+        {/* 3. Empty State */}
+        {!loading && !emergencyData && (
+          <div className="bg-white/10 rounded-[28px] p-6 text-center text-xs text-slate-300 flex flex-col items-center gap-3">
+            <AlertTriangle className="w-8 h-8 text-amber-400" />
+            <span>Chưa có thông tin thẻ cấp cứu y tế trong cơ sở dữ liệu cho thành viên này.</span>
           </div>
+        )}
 
-          {/* Bệnh nền mạn tính */}
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-2.5">
-            <HeartPulse className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <div className="text-xs font-bold text-amber-900">BỆNH LÝ MẠN TÍNH</div>
-              <div className="text-xs font-semibold text-amber-800">{emergencyData.conditions}</div>
-            </div>
-          </div>
-
-          {/* Người liên hệ khẩn cấp */}
-          <div className="bg-slate-50 rounded-2xl p-3 flex items-center justify-between border border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-700">
-                <User className="w-4 h-4" />
-              </div>
+        {/* 4. Emergency Medical Card */}
+        {emergencyData && (
+          <div className="bg-white text-slate-900 rounded-[28px] p-5 flex flex-col gap-3.5 shadow-2xl">
+            {/* Patient Bio & Blood Type */}
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
               <div>
-                <div className="text-xs font-bold text-slate-900">
-                  {emergencyData.emergencyContact.name} ({emergencyData.emergencyContact.relationship})
-                </div>
-                <div className="text-xs text-slate-500 font-semibold font-mono">
-                  {emergencyData.emergencyContact.phone}
+                <div className="text-xl font-extrabold text-slate-900">{emergencyData.fullName}</div>
+                <div className="text-xs text-slate-500 font-semibold">
+                  Năm sinh: {emergencyData.birthYear} · Giới tính: {emergencyData.gender}
                 </div>
               </div>
-            </div>
-            <a
-              href={`tel:${emergencyData.emergencyContact.phone.replace(/\s+/g, '')}`}
-              className="p-2 rounded-xl bg-emerald-500 text-white shadow hover:bg-emerald-600 transition"
-              title="Gọi người nhà"
-            >
-              <PhoneCall className="w-4 h-4" />
-            </a>
-          </div>
-
-          {/* Offline QR Code Banner */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 text-white">
-            <div className="flex items-center gap-2.5">
-              <QrCode className="w-6 h-6 text-emerald-400" />
-              <div>
-                <div className="text-xs font-bold">Mã QR Y Tế Cấp Cứu</div>
-                <div className="text-[10px] text-slate-400">Đọc tức thì không cần Internet</div>
+              <div className="w-16 h-16 rounded-2xl bg-[#DC2626] text-white flex flex-col items-center justify-center shadow-md">
+                <span className="text-[9px] font-bold tracking-wider opacity-90">NHÓM MÁU</span>
+                <span className="text-2xl font-black leading-none">{emergencyData.bloodType}</span>
               </div>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-              ECDSA Offline
-            </span>
-          </div>
-        </div>
 
-        {/* 3. Emergency Action Button (115) */}
+            {/* Dị ứng nguy hiểm */}
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3 flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <div className="text-xs font-bold text-rose-900">DỊ ỨNG NGUY HIỂM</div>
+                <div className="text-xs font-semibold text-rose-700">{emergencyData.allergies}</div>
+              </div>
+            </div>
+
+            {/* Bệnh nền mạn tính */}
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-2.5">
+              <HeartPulse className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <div className="text-xs font-bold text-amber-900">BỆNH LÝ MẠN TÍNH</div>
+                <div className="text-xs font-semibold text-amber-800">{emergencyData.conditions}</div>
+              </div>
+            </div>
+
+            {/* Người liên hệ khẩn cấp */}
+            <div className="bg-slate-50 rounded-2xl p-3 flex items-center justify-between border border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-700">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900">
+                    {emergencyData.emergencyContact.name} ({emergencyData.emergencyContact.relationship})
+                  </div>
+                  <div className="text-xs text-slate-500 font-semibold font-mono">
+                    {emergencyData.emergencyContact.phone}
+                  </div>
+                </div>
+              </div>
+              <a
+                href={`tel:${emergencyData.emergencyContact.phone.replace(/\s+/g, '')}`}
+                className="p-2 rounded-xl bg-emerald-500 text-white shadow hover:bg-emerald-600 transition"
+                title="Gọi người nhà"
+              >
+                <PhoneCall className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* Offline QR Code Banner */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 text-white">
+              <div className="flex items-center gap-2.5">
+                <QrCode className="w-6 h-6 text-emerald-400" />
+                <div>
+                  <div className="text-xs font-bold">Mã QR Y Tế Cấp Cứu</div>
+                  <div className="text-[10px] text-slate-400">Đọc tức thì không cần Internet</div>
+                </div>
+              </div>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-1 rounded-lg">
+                CHỮ KÝ ECDSA
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 5. Emergency SOS Dial Action */}
         <a
           href="tel:115"
-          className="h-13 rounded-full bg-[#DC2626] hover:bg-red-700 active:scale-95 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-900/40 transition"
+          className="w-full h-14 bg-gradient-to-r from-[#DC2626] to-[#B91C1C] rounded-2xl flex items-center justify-center gap-3 text-white font-extrabold text-base shadow-lg shadow-red-950 active:scale-95 transition"
         >
-          <PhoneCall className="w-5 h-5" />
+          <PhoneCall className="w-5 h-5 animate-pulse" />
           <span>Gọi Cấp Cứu 115</span>
         </a>
       </div>

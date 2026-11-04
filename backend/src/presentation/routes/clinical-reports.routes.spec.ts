@@ -132,6 +132,34 @@ describe('ClinicalReportsRoutes TDD', () => {
     });
   });
 
+  describe('GET /evaluations/:memberId', () => {
+    it('trả về đánh giá đáp ứng khối u RECIST 1.1 từ CSDL', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'tte_1',
+            study_id: 'std_img_03',
+            organ: 'Gan',
+            recist_response: 'PR',
+            baseline_sum_diameters_mm: 60,
+            current_sum_diameters_mm: 38,
+            treatment_response_note: '–36,7% so với ban đầu',
+          },
+        ],
+      });
+
+      const handler = getHandler('GET', '/evaluations/:memberId');
+      const { req, res } = createReqRes({ params: { memberId: 'nam' } });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.recist_response).toBe('PR');
+      expect(output.data.baseline_sum_diameters_mm).toBe(60);
+    });
+  });
+
   describe('POST /', () => {
     it('tạo mới phiếu kết quả cận lâm sàng thành công', async () => {
       mockPool.query.mockResolvedValueOnce({
@@ -179,8 +207,8 @@ describe('ClinicalReportsRoutes TDD', () => {
             },
           ],
         })
-        .mockResolvedValueOnce({ rows: [] }) // insert imaging_studies
-        .mockResolvedValueOnce({ rows: [] }); // insert tumor_tracking_evaluations
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
 
       const handler = getHandler('POST', '/');
       const { req, res } = createReqRes({

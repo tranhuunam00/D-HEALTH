@@ -27,21 +27,21 @@ export interface PassportCounts {
   readonly facilities: number;
 }
 
-const DEFAULT_COUNTS: PassportCounts = {
-  allergies: 1,
-  chronic: 2,
-  meds: 3,
-  labs: 24,
-  imaging: 7,
-  pathology: 2,
-  documents: 31,
-  doctors: 6,
-  facilities: 4,
-};
+export const ZERO_COUNTS: PassportCounts = Object.freeze({
+  allergies: 0,
+  chronic: 0,
+  meds: 0,
+  labs: 0,
+  imaging: 0,
+  pathology: 0,
+  documents: 0,
+  doctors: 0,
+  facilities: 0,
+});
 
 export function useRecordsLogic(memberId = 'nam') {
   const [member, setMember] = useState<PassportMember | null>(null);
-  const [counts, setCounts] = useState<PassportCounts>(DEFAULT_COUNTS);
+  const [counts, setCounts] = useState<PassportCounts>(ZERO_COUNTS);
   const [loading, setLoading] = useState(false);
 
   const fetchSummary = useCallback(async () => {
@@ -54,7 +54,7 @@ export function useRecordsLogic(memberId = 'nam') {
       if (res.ok) {
         const json = await res.json();
         if (json?.data) {
-          setMember(json.data.member);
+          setMember(json.data.member || null);
           if (json.data.counts) {
             setCounts(json.data.counts);
           }
@@ -62,7 +62,7 @@ export function useRecordsLogic(memberId = 'nam') {
         }
       }
     } catch {
-      // Maintain state
+      // Maintain zero state
     } finally {
       setLoading(false);
     }

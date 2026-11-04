@@ -73,3 +73,4 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
     </div>
   );
 };
+

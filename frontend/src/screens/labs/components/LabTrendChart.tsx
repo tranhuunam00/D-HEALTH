@@ -46,3 +46,4 @@ export const LabTrendChart: React.FC<LabTrendChartProps> = ({ points, isAmber })
     </svg>
   );
 };
+

@@ -12,6 +12,14 @@ export interface ImagingSeriesThumbnailsProps {
 export const ImagingSeriesThumbnails: React.FC<ImagingSeriesThumbnailsProps> = ({
   series,
 }) => {
+  if (series.length === 0) {
+    return (
+      <div className="py-4 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-100 shadow-2xs font-medium">
+        Chưa có chuỗi xung DICOM trong cơ sở dữ liệu
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-3 gap-2">
       {series.map((pulse, idx) => (

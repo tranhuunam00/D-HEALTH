@@ -87,3 +87,4 @@ describe('SCR15_UserProfileScreen Light Mobile View TDD', () => {
     expect(screen.getByText('22.5')).toBeDefined();
   });
 });
+

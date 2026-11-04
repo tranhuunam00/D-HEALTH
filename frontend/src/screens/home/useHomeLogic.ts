@@ -13,26 +13,10 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
     status: 'Chưa có số đo',
   });
   const [vitals, setVitals] = useState<BiometricRecord[]>([]);
-  const [todayDose, setTodayDose] = useState<any>(() => {
-    if (initialMemberId === 'nam') {
-      return {
-        id: '44444444-0000-0000-0000-000000000001',
-        name: 'Metformin',
-        dosage: '500 mg',
-        scheduled_time: '20:00:00',
-        instructions: '1 viên sau ăn tối',
-        taken: false,
-      };
-    }
-    return null;
-  });
-  const [todayDosesSummary, setTodayDosesSummary] = useState(() => {
-    if (initialMemberId === 'nam') {
-      return { taken: 2, total: 4 };
-    }
-    return { taken: 0, total: 0 };
-  });
+  const [todayDose, setTodayDose] = useState<any>(null);
+  const [todayDosesSummary, setTodayDosesSummary] = useState({ taken: 0, total: 0 });
   const [isDoseTaken, setIsDoseTaken] = useState(false);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isVitalsSheetOpen, setIsVitalsSheetOpen] = useState(false);
@@ -52,10 +36,11 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
       const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
       const urlMembers = user?.id ? `/api/members?userId=${user.id}` : '/api/members';
-      const [memRes, bioRes, doseRes] = await Promise.all([
+      const [memRes, bioRes, doseRes, repRes] = await Promise.all([
         fetch(urlMembers, { headers: authHeaders }).catch(() => null),
         fetch(`/api/biometrics/${activeMemberId}`, { headers: authHeaders }).catch(() => null),
         fetch(`/api/prescriptions/${activeMemberId}/today-doses`, { headers: authHeaders }).catch(() => null),
+        fetch(`/api/clinical-reports/${activeMemberId}`, { headers: authHeaders }).catch(() => null),
       ]);
 
       if (memRes?.ok) {
@@ -67,16 +52,7 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
 
       if (bioRes?.ok) {
         const bData = await bioRes.json();
-        let records = Array.isArray(bData.data) ? bData.data : [];
-        if (records.length === 0 && activeMemberId !== 'nam') {
-          const fallbackBio = await fetch('/api/biometrics/nam', { headers: authHeaders }).catch(() => null);
-          if (fallbackBio?.ok) {
-            const fbJson = await fallbackBio.json();
-            if (Array.isArray(fbJson.data) && fbJson.data.length > 0) {
-              records = fbJson.data;
-            }
-          }
-        }
+        const records = Array.isArray(bData.data) ? bData.data : [];
         setVitals(records);
 
         if (records.length === 0) {
@@ -92,16 +68,7 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
 
       if (doseRes?.ok) {
         const dData = await doseRes.json();
-        let list = Array.isArray(dData.data) ? dData.data : [];
-        if (list.length === 0 && activeMemberId !== 'nam') {
-          const fallbackDose = await fetch('/api/prescriptions/nam/today-doses', { headers: authHeaders }).catch(() => null);
-          if (fallbackDose?.ok) {
-            const fbdJson = await fallbackDose.json();
-            if (Array.isArray(fbdJson.data) && fbdJson.data.length > 0) {
-              list = fbdJson.data;
-            }
-          }
-        }
+        const list = Array.isArray(dData.data) ? dData.data : [];
         if (list.length > 0) {
           const upcoming = list.find((d: any) => !d.taken) || list[0];
           setTodayDose(upcoming);
@@ -113,6 +80,12 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
           setTodayDosesSummary({ taken: 0, total: 0 });
           setIsDoseTaken(false);
         }
+      }
+
+      if (repRes?.ok) {
+        const rData = await repRes.json();
+        const rList = Array.isArray(rData.data) ? rData.data : [];
+        setRecentReports(rList.slice(0, 2));
       }
     } catch {
       setErrorMsg('Không thể tải dữ liệu chỉ số. Vui lòng thử lại.');
@@ -150,12 +123,13 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
   const handleTakeDose = () => {
     setIsDoseTaken(true);
     setTodayDosesSummary((prev) => ({ ...prev, taken: Math.min(prev.taken + 1, prev.total || 4) }));
-    const doseId = todayDose?.id || '44444444-0000-0000-0000-000000000001';
-    fetch(`/api/prescriptions/doses/${doseId}/log`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'taken' }),
-    }).catch(() => null);
+    if (todayDose?.id) {
+      fetch(`/api/prescriptions/doses/${todayDose.id}/log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'taken' }),
+      }).catch(() => null);
+    }
   };
 
   const handleQuickCheckin = (mood: string) => {
@@ -223,6 +197,7 @@ export function useHomeLogic(initialMemberId = 'nam', user?: any) {
     checkinStatus,
     todayDose,
     todayDosesSummary,
+    recentReports,
     handleRecordVitals,
     handleTakeDose,
     handleQuickCheckin,

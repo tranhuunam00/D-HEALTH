@@ -46,3 +46,4 @@ export const LabMetadataCard: React.FC<LabMetadataCardProps> = ({
     </div>
   );
 };
+

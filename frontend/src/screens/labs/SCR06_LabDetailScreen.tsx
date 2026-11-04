@@ -11,13 +11,6 @@ interface SCR06Props {
   readonly reportId?: string | null;
 }
 
-const DEFAULT_ANALYTES: readonly AnalyteRow[] = Object.freeze([
-  { name: 'Glucose (đói)', value: '6,1', unit: 'mmol/L', refRange: '3,9 – 6,4' },
-  { name: 'Cholesterol toàn phần', value: '4,8', unit: 'mmol/L', refRange: '3,9 – 5,2' },
-  { name: 'Triglyceride', value: '1,4', unit: 'mmol/L', refRange: '0,4 – 1,7' },
-  { name: 'LDL-C', value: '3,8', unit: 'mmol/L', refRange: '< 2,6' },
-]);
-
 export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
   onNavigate,
   activeMemberName = 'Trần Hữu Nam',
@@ -25,10 +18,12 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
   reportId,
 }) => {
   const [report, setReport] = useState<any>(null);
-  const [analytes, setAnalytes] = useState<readonly AnalyteRow[]>(DEFAULT_ANALYTES);
+  const [analytes, setAnalytes] = useState<readonly AnalyteRow[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
+      setLoading(true);
       try {
         const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
           ? window.location.origin
@@ -59,24 +54,31 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
                 ? `${r.value_numeric}`.replace('.', ',')
                 : (r.value_text || '--'),
               unit: r.unit || 'mmol/L',
-              refRange: r.reference_range || (r.test_name?.includes('Glucose') ? '3,9 – 6,4' : '< 2,6'),
+              refRange: r.reference_range || (r.ref_min !== null && r.ref_max !== null ? `${r.ref_min} – ${r.ref_max}` : (r.ref_max ? `< ${r.ref_max}` : '3,9 – 6,4')),
             }));
             setAnalytes(mapped);
+          } else {
+            setAnalytes([]);
           }
         }
       } catch (err) {
-        console.error('Lỗi tải chi tiết xét nghiệm:', err);
+        console.error('Lỗi tải chi tiết xét nghiệm từ database:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchDetails();
   }, [reportId, activeMemberId]);
 
-  const title = report?.title || 'Sinh hoá máu';
+  const title = report?.title || 'Phiếu xét nghiệm';
   const categoryBadge = report?.category || 'SH';
   const facility = report?.facility_name || 'Bệnh viện Bạch Mai';
   const doctor = report?.ordering_doctor_name || 'BS Trần Văn B';
   const conclusion = report?.conclusion || 'Chỉ số Glucose và Cholesterol trong giới hạn an toàn';
+  const sampleDate = report?.performed_at
+    ? new Date(report.performed_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '20/10/2026';
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-8">
@@ -109,71 +111,85 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
           </span>
         </div>
 
-        {/* 3. Metadata Card */}
-        <LabMetadataCard facility={facility} doctor={doctor} />
-
-        {/* 4. Table Card: Chỉ số, Kết quả, Tham chiếu */}
-        <LabAnalytesTable analytes={analytes} />
-
-        {/* 5. AI Insight Callout */}
-        <div className="bg-[#EAF8F0] border border-teal-100/80 rounded-[22px] p-3.5 flex items-start gap-2.5">
-          <span className="text-teal-700 text-xs font-black mt-0.5">✦</span>
-          <span className="text-xs font-bold text-slate-800 leading-relaxed">
-            10/12 chỉ số trong giới hạn tham chiếu. LDL-C và Cholesterol toàn phần cao hơn mục tiêu, LDL-C tăng 3 lần liên tiếp — nên trao đổi với bác sĩ tim mạch khi tái khám 12/11.
-          </span>
-        </div>
-
-        {/* 6. Nhận xét của bác sĩ */}
-        <div className="bg-white rounded-[24px] p-4 shadow-xs border border-slate-100 flex flex-col gap-1.5">
-          <h2 className="text-sm font-extrabold text-slate-900">Nhận xét của bác sĩ</h2>
-          <p className="text-xs text-slate-600 leading-relaxed font-medium">
-            {conclusion}
-          </p>
-        </div>
-
-        {/* 7. Phiếu kết quả gốc PDF */}
-        <button
-          type="button"
-          onClick={() => alert('Xem file PDF gốc phiếu xét nghiệm')}
-          className="bg-white rounded-[22px] p-3.5 shadow-xs border border-slate-100 flex items-center justify-between hover:bg-slate-50 min-h-[44px] transition"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-black text-[11px]">
-              PDF
-            </span>
-            <span className="text-xs font-bold text-slate-900">Phiếu kết quả gốc</span>
+        {loading ? (
+          <div className="py-12 text-center text-xs text-slate-400 font-medium">
+            Đang tải dữ liệu xét nghiệm từ cơ sở dữ liệu...
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
-        </button>
+        ) : (
+          <>
+            {/* 3. Metadata Card */}
+            <LabMetadataCard
+              facility={facility}
+              doctor={doctor}
+              sampleDate={`${sampleDate} · 07:30`}
+              resultDate={`${sampleDate} · 11:00`}
+              orderCode={report?.id || 'XN-2026-8891'}
+            />
 
-        {/* 8. Nguồn dữ liệu đã xác nhận */}
-        <div className="bg-white rounded-[22px] p-3 shadow-xs border border-slate-100 flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-slate-900">Nhập từ link cơ sở y tế</span>
-            <span className="text-[11px] text-slate-400 font-medium">Bạn đã xác nhận ngày 20/10/2026</span>
-          </div>
-        </div>
+            {/* 4. Table Card: Chỉ số, Kết quả, Tham chiếu */}
+            <LabAnalytesTable analytes={analytes} />
 
-        {/* 9. Bottom Action Buttons */}
-        <div className="flex gap-2.5 pt-2">
-          <button
-            type="button"
-            onClick={() => onNavigate('ai')}
-            className="flex-1 h-12 min-h-[44px] rounded-full bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-xs active:scale-95 transition"
-          >
-            Hỏi trợ lý AI
-          </button>
-          <button
-            type="button"
-            onClick={() => alert('Đã gửi phiếu xét nghiệm cho bác sĩ điều trị')}
-            className="flex-1 h-12 min-h-[44px] rounded-full bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-extrabold shadow-md active:scale-95 transition"
-          >
-            Gửi cho bác sĩ
-          </button>
-        </div>
+            {/* 5. AI Insight Callout */}
+            <div className="bg-[#EAF8F0] border border-teal-100/80 rounded-[22px] p-3.5 flex items-start gap-2.5">
+              <span className="text-teal-700 text-xs font-black mt-0.5">✦</span>
+              <span className="text-xs font-bold text-slate-800 leading-relaxed">
+                {conclusion}
+              </span>
+            </div>
+
+            {/* 6. Nhận xét của bác sĩ */}
+            <div className="bg-white rounded-[24px] p-4 shadow-xs border border-slate-100 flex flex-col gap-1.5">
+              <h2 className="text-sm font-extrabold text-slate-900">Nhận xét của bác sĩ</h2>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                {conclusion}
+              </p>
+            </div>
+
+            {/* 7. Phiếu kết quả gốc PDF */}
+            <button
+              type="button"
+              onClick={() => alert('Xem file PDF gốc phiếu xét nghiệm')}
+              className="bg-white rounded-[22px] p-3.5 shadow-xs border border-slate-100 flex items-center justify-between hover:bg-slate-50 min-h-[44px] transition"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-black text-[11px]">
+                  PDF
+                </span>
+                <span className="text-xs font-bold text-slate-900">Phiếu kết quả gốc</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
+
+            {/* 8. Nguồn dữ liệu đã xác nhận */}
+            <div className="bg-white rounded-[22px] p-3 shadow-xs border border-slate-100 flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-slate-900">Nhập từ cơ sở y tế</span>
+                <span className="text-[11px] text-slate-400 font-medium">Đã đối soát với CSDL Bệnh viện</span>
+              </div>
+            </div>
+
+            {/* 9. Bottom Action Buttons */}
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => onNavigate('ai')}
+                className="flex-1 h-12 min-h-[44px] rounded-full bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-xs active:scale-95 transition"
+              >
+                Hỏi trợ lý AI
+              </button>
+              <button
+                type="button"
+                onClick={() => alert('Đã gửi phiếu xét nghiệm cho bác sĩ điều trị')}
+                className="flex-1 h-12 min-h-[44px] rounded-full bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-extrabold shadow-md active:scale-95 transition"
+              >
+                Gửi cho bác sĩ
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

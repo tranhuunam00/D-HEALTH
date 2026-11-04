@@ -7,7 +7,7 @@ interface CardioConditionCardProps {
 }
 
 function formatDateDisplay(dateStr?: string): string {
-  if (!dateStr) return '12/11/2026';
+  if (!dateStr) return '--/--/----';
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
@@ -20,13 +20,11 @@ function formatDateDisplay(dateStr?: string): string {
 }
 
 export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condition }) => {
-  const metrics = condition?.target_metrics || [
-    { name: 'Huyết áp', status: 'Theo dõi', type: 'warning' },
-    { name: 'LDL-C', status: 'Theo dõi', type: 'warning' },
-    { name: 'HbA1c', status: 'Tốt', type: 'good' },
-    { name: 'Nhịp tim', status: 'Tốt', type: 'good' },
-    { name: 'Cân nặng', status: 'Theo dõi', type: 'warning' },
-  ];
+  if (!condition) {
+    return null;
+  }
+
+  const metrics = condition.target_metrics || [];
 
   return (
     <div className="bg-[#BE123C] text-white rounded-3xl p-4 flex flex-col gap-3.5 shadow-sm">
@@ -38,10 +36,10 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
           </div>
           <div>
             <h2 className="text-lg font-black text-white leading-tight">
-              {condition?.condition_name || 'Tim mạch'}
+              {condition.condition_name}
             </h2>
             <span className="text-xs text-white/90 font-medium block mt-0.5">
-              {condition?.status_summary || 'Nguy cơ trung bình · xu hướng ổn định'}
+              {condition.status_summary || 'Theo dõi định kỳ'}
             </span>
           </div>
         </div>
@@ -61,68 +59,34 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
         </div>
       </div>
 
-      {/* 2. 6 White/Translucent Boxes (2 rows x 3 columns) */}
+      {/* 2. Grid of metrics from Database */}
       <div className="grid grid-cols-3 gap-2">
-        {/* Row 1, Col 1: Huyết áp */}
-        <div className="bg-white rounded-2xl p-2.5 shadow-2xs flex flex-col justify-between h-14">
-          <span className="text-[11px] font-semibold text-slate-600 block">
-            {metrics[0]?.name || 'Huyết áp'}
-          </span>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span>{metrics[0]?.status || 'Theo dõi'}</span>
-          </div>
-        </div>
+        {metrics.map((m, idx) => {
+          const isGood = m.type === 'good';
+          const colorClass = isGood ? 'text-emerald-600' : 'text-amber-600';
+          const bgDotClass = isGood ? 'bg-emerald-500' : 'bg-amber-500';
 
-        {/* Row 1, Col 2: LDL-C */}
-        <div className="bg-white rounded-2xl p-2.5 shadow-2xs flex flex-col justify-between h-14">
-          <span className="text-[11px] font-semibold text-slate-600 block">
-            {metrics[1]?.name || 'LDL-C'}
-          </span>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span>{metrics[1]?.status || 'Theo dõi'}</span>
-          </div>
-        </div>
+          return (
+            <div
+              key={`${m.name}-${idx}`}
+              className="bg-white rounded-2xl p-2.5 shadow-2xs flex flex-col justify-between h-14"
+            >
+              <span className="text-[11px] font-semibold text-slate-600 block truncate">
+                {m.name}
+              </span>
+              <div className={`flex items-center gap-1.5 text-xs font-bold ${colorClass}`}>
+                <span className={`w-2 h-2 rounded-full ${bgDotClass}`} />
+                <span>{m.status || (isGood ? 'Tốt' : 'Theo dõi')}</span>
+              </div>
+            </div>
+          );
+        })}
 
-        {/* Row 1, Col 3: HbA1c */}
-        <div className="bg-white rounded-2xl p-2.5 shadow-2xs flex flex-col justify-between h-14">
-          <span className="text-[11px] font-semibold text-slate-600 block">
-            {metrics[2]?.name || 'HbA1c'}
-          </span>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>{metrics[2]?.status || 'Tốt'}</span>
-          </div>
-        </div>
-
-        {/* Row 2, Col 1: Nhịp tim */}
-        <div className="bg-white rounded-2xl p-2.5 shadow-2xs flex flex-col justify-between h-14">
-          <span className="text-[11px] font-semibold text-slate-600 block">
-            {metrics[3]?.name || 'Nhịp tim'}
-          </span>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>{metrics[3]?.status || 'Tốt'}</span>
-          </div>
-        </div>
-
-        {/* Row 2, Col 2: Cân nặng */}
-        <div className="bg-white rounded-2xl p-2.5 shadow-2xs flex flex-col justify-between h-14">
-          <span className="text-[11px] font-semibold text-slate-600 block">
-            {metrics[4]?.name || 'Cân nặng'}
-          </span>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span>{metrics[4]?.status || 'Theo dõi'}</span>
-          </div>
-        </div>
-
-        {/* Row 2, Col 3: Tái khám */}
+        {/* Tái khám box */}
         <div className="bg-black/20 rounded-2xl p-2.5 flex flex-col justify-between h-14">
           <span className="text-[11px] font-semibold text-white/80 block">Tái khám</span>
           <span className="text-xs font-black text-white block">
-            {formatDateDisplay(condition?.next_checkup_date)}
+            {formatDateDisplay(condition.next_checkup_date)}
           </span>
         </div>
       </div>

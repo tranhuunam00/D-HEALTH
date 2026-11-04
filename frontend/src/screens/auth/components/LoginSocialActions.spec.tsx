@@ -34,3 +34,4 @@ describe('LoginSocialActions Component', () => {
     expect(screen.getByText('Tiếp tục với Google')).toBeDefined();
   });
 });
+

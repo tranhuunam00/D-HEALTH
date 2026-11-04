@@ -14,15 +14,17 @@ export interface ServiceHealthState {
   minio: string;
 }
 
+export const ZERO_ADMIN_STATS: AdminStats = Object.freeze({
+  totalUsers: 0,
+  totalMembers: 0,
+  totalFacilities: 0,
+  totalDoctors: 0,
+  totalMedications: 0,
+  totalClinicalReports: 0,
+});
+
 export function useAdminLogic() {
-  const [stats, setStats] = useState<AdminStats>({
-    totalUsers: 2,
-    totalMembers: 5,
-    totalFacilities: 5,
-    totalDoctors: 3,
-    totalMedications: 5,
-    totalClinicalReports: 1,
-  });
+  const [stats, setStats] = useState<AdminStats>(ZERO_ADMIN_STATS);
   const [health, setHealth] = useState<ServiceHealthState>({
     database: 'Đang kiểm tra...',
     minio: 'Đang kiểm tra...',

@@ -12,7 +12,7 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         full_name: initialUser.fullName || 'Trần Hữu Nam',
         relationship: 'owner',
         gender: 'Nam',
-        birth_date: '1980-03-14',
+        birth_date: '1980-04-12',
         avatar_url: initialUser.avatarUrl,
         blood_type: initialUser.bloodType || 'O+',
         height_cm: initialUser.heightCm ? Number(initialUser.heightCm) : undefined,
@@ -23,11 +23,11 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
     }
     return {
       id: 'nam',
-      user_id: 'usr_default',
+      user_id: '22222222-2222-2222-2222-222222222222',
       full_name: 'Trần Hữu Nam',
       relationship: 'owner',
       gender: 'Nam',
-      birth_date: '1980-03-14',
+      birth_date: '1980-04-12',
       blood_type: 'O+',
       height_cm: undefined,
       weight_kg: undefined,
@@ -36,7 +36,6 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
     };
   });
 
-  // Local editable form fields
   const [fullName, setFullName] = useState(activeMember.full_name);
   const [gender, setGender] = useState<'Nam' | 'Nữ' | 'Khác'>(activeMember.gender);
   const [birthDate, setBirthDate] = useState(activeMember.birth_date);
@@ -44,8 +43,10 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
   const [heightCm, setHeightCm] = useState(activeMember.height_cm ? String(activeMember.height_cm) : '');
   const [weightKg, setWeightKg] = useState(activeMember.weight_kg ? String(activeMember.weight_kg) : '');
   const [avatarUrl, setAvatarUrl] = useState(activeMember.avatar_url || '');
-  const [citizenId, setCitizenId] = useState('[Số CCCD – 12 chữ số]');
-  const [address, setAddress] = useState('[Số nhà, đường, phường/xã, tỉnh/thành phố]');
+  const [citizenId, setCitizenId] = useState(
+    (initialUser as any)?.national_id || (initialUser as any)?.nationalId || '001085012345'
+  );
+  const [address, setAddress] = useState('Hà Nội, Việt Nam');
 
   const [loading, setLoading] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -55,27 +56,30 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
   const syncFormFromMember = (m: FamilyMember) => {
     setFullName(m.full_name);
     setGender(m.gender);
-    setBirthDate(m.birth_date || '1980-03-14');
+    setBirthDate(m.birth_date || '1980-04-12');
     setBloodType(m.blood_type || 'O+');
-    setHeightCm(m.height_cm ? String(m.height_cm) : '174');
-    setWeightKg(m.weight_kg ? String(m.weight_kg) : '72.5');
+    setHeightCm(m.height_cm ? String(m.height_cm) : '');
+    setWeightKg(m.weight_kg ? String(m.weight_kg) : '');
     setAvatarUrl(m.avatar_url || '');
   };
 
   const fetchProfile = async () => {
-    if (typeof window !== 'undefined' && (window as any).__VITEST__) return;
     setLoading(true);
     try {
-      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null') ? window.location.origin : '';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
-      const res = await fetch(`${baseUrl}/api/user/profile`, { headers });
+      const res = await fetch('/api/user/profile', { headers });
       if (res.ok) {
         const json = await res.json();
-        if (json.data?.user) setUser(json.data.user);
+        if (json.data?.user) {
+          setUser(json.data.user);
+          if (json.data.user.national_id) {
+            setCitizenId(json.data.user.national_id);
+          }
+        }
         if (json.data?.members && json.data.members.length > 0) {
           const owner = json.data.members.find((m: any) => m.relationship === 'owner') || json.data.members[0];
           setActiveMember(owner);
@@ -83,7 +87,7 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         }
       }
     } catch {
-      // ignore fetch error in test/offline
+      // offline/fallback
     } finally {
       setLoading(false);
     }
@@ -149,7 +153,6 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
     });
   };
 
-  // Real-time live BMI calculated directly from Height and Weight
   const hNum = parseFloat(heightCm);
   const wNum = parseFloat(weightKg);
   const bmi = hNum > 0 && wNum > 0

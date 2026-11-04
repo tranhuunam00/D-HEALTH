@@ -63,3 +63,4 @@ export const BiometricsHistorySection: React.FC<BiometricsHistorySectionProps> =
     </div>
   );
 };
+

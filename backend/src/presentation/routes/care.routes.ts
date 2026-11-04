@@ -23,22 +23,15 @@ export function createCareRouter(pool: Pool): Router {
       if (app) {
         const d = new Date(app.appointment_date);
         const m = d.getMonth() + 1;
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
         upcomingAppointment = {
           id: app.id,
           month: `TH ${m}`,
           date: String(d.getDate()).padStart(2, '0'),
-          title: app.purpose || 'Tái khám tim mạch',
-          timeDoctor: `09:00 · ${app.doctor_name || 'BS Trần Văn B'}`,
-          facility: app.facility_name || '[Bệnh viện đối tác]',
-        };
-      } else {
-        upcomingAppointment = {
-          id: 'app_default',
-          month: 'TH 11',
-          date: '12',
-          title: 'Tái khám tim mạch',
-          timeDoctor: '09:00 · BS Trần Văn B',
-          facility: '[Bệnh viện đối tác]',
+          title: app.purpose || 'Tái khám',
+          timeDoctor: `${hours}:${minutes} · ${app.doctor_name || 'Bác sĩ phụ trách'}`,
+          facility: app.facility_name || 'Cơ sở y tế',
         };
       }
 
@@ -50,9 +43,13 @@ export function createCareRouter(pool: Pool): Router {
         [memberId]
       );
 
-      const careTeam = grantsRes.rows.length > 0
-        ? grantsRes.rows.map(mapGrantToCareMember)
-        : getDefaultCareTeam();
+      const careTeam = grantsRes.rows.map(mapGrantToCareMember);
+
+      const expiringSoon = grantsRes.rows.filter((r: any) => {
+        if (!r.expires_at) return false;
+        const diff = new Date(r.expires_at).getTime() - Date.now();
+        return diff > 0 && diff <= 7 * 24 * 3600 * 1000;
+      }).length;
 
       return res.json({
         success: true,
@@ -60,8 +57,8 @@ export function createCareRouter(pool: Pool): Router {
           upcomingAppointment,
           careTeam,
           sharingStats: {
-            activeCount: grantsRes.rows.length || 3,
-            expiringSoonCount: 1,
+            activeCount: grantsRes.rows.length,
+            expiringSoonCount: expiringSoon,
             expiringDays: 7,
           },
         },
@@ -88,7 +85,7 @@ export function createCareRouter(pool: Pool): Router {
       await pool.query(
         `INSERT INTO share_grants (id, member_id, grantee_type, grantee_name, grantee_role, grantee_org, grantee_phone, grantee_email, expires_at, status)
          VALUES ($1, $2, 'doctor', $3, $4, $5, $6, $7, CURRENT_TIMESTAMP + INTERVAL '90 days', 'active')`,
-        [grantId, memberId, doctorName, specialty || 'Bác sĩ điều trị', hospital || '[Bệnh viện đối tác]', phone || '[Số điện thoại]', email || '[email bác sĩ]']
+        [grantId, memberId, doctorName, specialty || 'Bác sĩ điều trị', hospital || 'Cơ sở y tế', phone || '', email || '']
       );
 
       return res.status(201).json({
@@ -104,14 +101,17 @@ export function createCareRouter(pool: Pool): Router {
 }
 
 function mapGrantToCareMember(g: any) {
-  let code = 'TB';
+  let code = 'BS';
   let color = 'pink';
   if (g.grantee_role?.includes('Gia đình') || g.grantee_role?.includes('Chính')) {
-    code = 'HD';
+    code = 'GD';
     color = 'mint';
   } else if (g.grantee_role?.includes('CĐHA') || g.grantee_role?.includes('Hình ảnh')) {
-    code = 'LC';
+    code = 'HA';
     color = 'purple';
+  } else if (g.grantee_name) {
+    const words = g.grantee_name.trim().split(/\s+/);
+    code = words.length >= 2 ? `${words[words.length - 2][0]}${words[words.length - 1][0]}`.toUpperCase() : 'BS';
   }
 
   return {
@@ -119,44 +119,9 @@ function mapGrantToCareMember(g: any) {
     code,
     name: g.grantee_name,
     role: g.grantee_role || 'Bác sĩ',
-    org: g.grantee_org || '[Bệnh viện đối tác]',
-    phone: g.grantee_phone || '[Số điện thoại]',
-    email: g.grantee_email || '[email bác sĩ]',
+    org: g.grantee_org || 'Cơ sở y tế',
+    phone: g.grantee_phone || '',
+    email: g.grantee_email || '',
     color,
   };
-}
-
-function getDefaultCareTeam() {
-  return [
-    {
-      id: 'hd',
-      code: 'HD',
-      name: 'Trần Minh Hương',
-      role: 'Gia đình',
-      org: 'Gia đình',
-      phone: '0987 654 321',
-      email: 'huong@gmail.com',
-      color: 'mint',
-    },
-    {
-      id: 'tb',
-      code: 'TB',
-      name: 'BS Trần Văn B',
-      role: 'Tim mạch',
-      org: '[Bệnh viện đối tác]',
-      phone: '[Số điện thoại]',
-      email: '[email bác sĩ]',
-      color: 'pink',
-    },
-    {
-      id: 'lc',
-      code: 'LC',
-      name: 'BS Lê Văn C',
-      role: 'CĐHA',
-      org: 'Bệnh viện K',
-      phone: '0912 345 678',
-      email: 'levanc@dhealth.vn',
-      color: 'purple',
-    },
-  ];
 }

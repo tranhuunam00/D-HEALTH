@@ -60,3 +60,4 @@ export const BiometricsMetricTilesGrid: React.FC<BiometricsMetricTilesGridProps>
     </div>
   );
 };
+

@@ -30,3 +30,4 @@ export const ImagingFindingsCard: React.FC<ImagingFindingsCardProps> = ({
     </div>
   );
 };
+

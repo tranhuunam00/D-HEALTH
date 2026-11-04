@@ -30,3 +30,4 @@ export const ImagingConclusionCard: React.FC<ImagingConclusionCardProps> = ({
     </div>
   );
 };
+

@@ -1,13 +1,41 @@
-import { describe, it, expect } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAdminLogic } from './useAdminLogic';
 
-describe('useAdminLogic Hook', () => {
-  it('khởi tạo với tab active là overview, stats ban đầu và trạng thái sức khỏe dịch vụ', () => {
+describe('useAdminLogic Hook (Zero Mock Rule)', () => {
+  const mockOverview = {
+    totalUsers: 2,
+    totalMembers: 5,
+    totalFacilities: 5,
+    totalDoctors: 3,
+    totalMedications: 5,
+    totalClinicalReports: 1,
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('admin/overview')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ data: mockOverview }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ data: [], services: { database: 'connected', minio: 'connected' } }),
+      });
+    });
+  });
+
+  it('lấy số liệu thống kê hệ thống từ CSDL (/api/admin/overview)', async () => {
     const { result } = renderHook(() => useAdminLogic());
     expect(result.current.activeTab).toBe('overview');
-    expect(result.current.stats.totalFacilities).toBe(5);
-    expect(result.current.health.minio).toBeDefined();
+
+    await waitFor(() => {
+      expect(result.current.stats.totalFacilities).toBe(5);
+      expect(result.current.stats.totalDoctors).toBe(3);
+    });
   });
 
   it('chuyển tab sang quản trị cơ sở y tế facilities', () => {

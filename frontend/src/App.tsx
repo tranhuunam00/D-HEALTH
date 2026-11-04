@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Smartphone, Monitor, LogOut, HeartPulse } from 'lucide-react';
 import { SCR01_LoginScreen } from './screens/auth/SCR01_LoginScreen';
 import { SCR02_HomeScreen } from './screens/home/SCR02_HomeScreen';

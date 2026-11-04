@@ -1,15 +1,19 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { HealthScore } from '../../../types/member.types';
 
 export interface HomeHealthScoreCardProps {
   healthScore: HealthScore;
   onNavigateBiometrics?: () => void;
+  issuesCount?: number;
+  dataGroupsCount?: number;
 }
 
 export const HomeHealthScoreCard: React.FC<HomeHealthScoreCardProps> = ({
   healthScore,
   onNavigateBiometrics,
+  issuesCount = 0,
+  dataGroupsCount = 0,
 }) => {
   const displayScore = healthScore.total > 0 ? healthScore.total : '--';
   const scoreNum = typeof displayScore === 'number' ? displayScore : parseFloat(String(displayScore));
@@ -61,14 +65,21 @@ export const HomeHealthScoreCard: React.FC<HomeHealthScoreCardProps> = ({
         </div>
       </div>
 
-      {/* Two Pills below Arc (1:1 with Design) */}
+      {/* Two Dynamic Pills below Arc */}
       <div className="flex items-center gap-2 mt-3 w-full justify-center">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/70 text-amber-900 text-xs font-bold">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-          2 vấn đề cần theo dõi
-        </span>
+        {issuesCount > 0 ? (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/70 text-amber-900 text-xs font-bold">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            {issuesCount} vấn đề cần theo dõi
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/70 text-emerald-900 text-xs font-bold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            Chỉ số ổn định
+          </span>
+        )}
         <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/70 text-slate-700 text-xs font-bold">
-          9 nhóm dữ liệu
+          {dataGroupsCount > 0 ? `${dataGroupsCount} nhóm dữ liệu` : 'Chưa có nhóm dữ liệu'}
         </span>
       </div>
     </div>

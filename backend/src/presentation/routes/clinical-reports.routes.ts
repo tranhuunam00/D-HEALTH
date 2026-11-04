@@ -114,6 +114,25 @@ export function createClinicalReportsRouter(pool: Pool): Router {
     }
   });
 
+  // 4. GET /evaluations/:memberId - Lấy đánh giá đáp ứng khối u theo RECIST 1.1 từ CSDL
+  router.get('/evaluations/:memberId', async (req: AuthenticatedRequest, res: Response) => {
+    const { memberId } = req.params;
+    try {
+      const result = await pool.query(
+        `SELECT tte.*, r.title, r.performed_at, ist.modality, ist.body_part
+         FROM tumor_tracking_evaluations tte
+         JOIN imaging_studies ist ON tte.study_id = ist.id
+         JOIN clinical_reports r ON ist.report_id = r.id
+         WHERE r.member_id = $1
+         ORDER BY r.performed_at DESC LIMIT 1`,
+        [memberId]
+      );
+      return res.json({ success: true, data: result.rows[0] || null });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
   // 4. POST / - Nhập mới phiếu kết quả cận lâm sàng (SCR-12)
   router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     const {

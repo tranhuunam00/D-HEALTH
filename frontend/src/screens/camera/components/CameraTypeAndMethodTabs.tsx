@@ -81,3 +81,4 @@ export const CameraTypeAndMethodTabs: React.FC<CameraTypeAndMethodTabsProps> = (
     </>
   );
 };
+

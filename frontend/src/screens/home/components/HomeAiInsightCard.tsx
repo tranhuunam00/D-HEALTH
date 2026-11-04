@@ -1,10 +1,12 @@
 import React from 'react';
 
 export interface HomeAiInsightCardProps {
+  insightText?: string;
   onNavigateAi?: () => void;
 }
 
 export const HomeAiInsightCard: React.FC<HomeAiInsightCardProps> = ({
+  insightText,
   onNavigateAi,
 }) => {
   return (
@@ -24,7 +26,7 @@ export const HomeAiInsightCard: React.FC<HomeAiInsightCardProps> = ({
         <div className="flex flex-col min-w-0">
           <span className="text-[11px] font-black text-[#1F7A8C] uppercase tracking-wider block">AI INSIGHT</span>
           <span className="text-xs font-bold text-slate-900 leading-snug mt-0.5">
-            LDL–C tăng trong 3 lần xét nghiệm gần nhất.
+            {insightText || 'Chưa ghi nhận bất thường mới trong hồ sơ sinh trắc và xét nghiệm.'}
           </span>
         </div>
       </div>

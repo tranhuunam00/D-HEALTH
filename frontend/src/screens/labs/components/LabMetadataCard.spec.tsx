@@ -20,3 +20,4 @@ describe('LabMetadataCard Component', () => {
     expect(screen.getByText('Mã phiếu')).toBeDefined();
   });
 });
+

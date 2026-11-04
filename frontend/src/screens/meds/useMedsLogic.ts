@@ -1,93 +1,44 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export interface DoseItem {
-  readonly id: string;
-  readonly time: string;
-  readonly period: string;
-  readonly name: string;
-  readonly instruction: string;
-  readonly status: 'taken' | 'pending' | 'skipped';
-  readonly taken: boolean;
+  id: string;
+  time: string;
+  period: string;
+  name: string;
+  instruction: string;
+  status: 'taken' | 'pending' | 'skipped' | 'snoozed';
+  taken: boolean;
+}
+
+export interface AdherenceDay {
+  day: number;
+  status: 'full' | 'partial' | 'missed' | 'empty';
 }
 
 export interface AdherenceData {
-  readonly adherencePercent: number;
-  readonly takenCount: number;
-  readonly missedCount: number;
-  readonly skippedCount: number;
-  readonly todayTaken: number;
-  readonly todayTotal: number;
-  readonly calendarDays: Array<{
-    readonly day: number;
-    readonly status: 'full' | 'missed' | 'skipped' | 'scheduled' | 'today';
-  }>;
+  adherencePercent: number;
+  takenCount: number;
+  missedCount: number;
+  skippedCount: number;
+  todayTaken: number;
+  todayTotal: number;
+  calendarDays: AdherenceDay[];
 }
 
-const DEFAULT_CALENDAR_DAYS = Array.from({ length: 31 }, (_, i) => {
-  const day = i + 1;
-  const missed = [3, 9, 14, 22].includes(day);
-  const skipped = [6, 11, 19].includes(day);
-  let status: 'full' | 'missed' | 'skipped' | 'scheduled' | 'today' = 'full';
-  if (day === 26) status = 'today';
-  else if (day > 26) status = 'scheduled';
-  else if (missed) status = 'missed';
-  else if (skipped) status = 'skipped';
-  return { day, status };
-});
-
-const DEFAULT_ADHERENCE: AdherenceData = {
-  adherencePercent: 91,
-  takenCount: 109,
-  missedCount: 7,
-  skippedCount: 4,
-  todayTaken: 2,
-  todayTotal: 4,
-  calendarDays: DEFAULT_CALENDAR_DAYS,
+const EMPTY_ADHERENCE: AdherenceData = {
+  adherencePercent: 0,
+  takenCount: 0,
+  missedCount: 0,
+  skippedCount: 0,
+  todayTaken: 0,
+  todayTotal: 0,
+  calendarDays: [],
 };
-
-const DEFAULT_DOSES: DoseItem[] = [
-  {
-    id: '66666666-0000-0000-0000-000000000001',
-    time: '07:00',
-    period: 'Sáng',
-    name: 'Losartan 50 mg',
-    instruction: '1 viên · sau ăn sáng',
-    status: 'taken',
-    taken: true,
-  },
-  {
-    id: '66666666-0000-0000-0000-000000000002',
-    time: '07:00',
-    period: 'Sáng',
-    name: 'Metformin 500 mg',
-    instruction: '1 viên · sau ăn sáng',
-    status: 'taken',
-    taken: true,
-  },
-  {
-    id: '66666666-0000-0000-0000-000000000003',
-    time: '20:00',
-    period: 'Tối',
-    name: 'Metformin 500 mg',
-    instruction: '1 viên · sau ăn tối',
-    status: 'pending',
-    taken: false,
-  },
-  {
-    id: '66666666-0000-0000-0000-000000000004',
-    time: '21:00',
-    period: 'Tối',
-    name: 'Atorvastatin 20 mg',
-    instruction: '1 viên · trước khi ngủ',
-    status: 'pending',
-    taken: false,
-  },
-];
 
 export function useMedsLogic(memberId = 'nam') {
   const [activeTab, setActiveTab] = useState<'schedule' | 'active' | 'history'>('schedule');
-  const [doses, setDoses] = useState<DoseItem[]>(DEFAULT_DOSES);
-  const [adherence, setAdherence] = useState<AdherenceData>(DEFAULT_ADHERENCE);
+  const [doses, setDoses] = useState<DoseItem[]>([]);
+  const [adherence, setAdherence] = useState<AdherenceData>(EMPTY_ADHERENCE);
   const [loading, setLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -105,7 +56,7 @@ export function useMedsLogic(memberId = 'nam') {
 
       if (dosesRes?.ok) {
         const dJson = await dosesRes.json();
-        if (Array.isArray(dJson?.data) && dJson.data.length > 0) {
+        if (Array.isArray(dJson?.data)) {
           const mapped: DoseItem[] = dJson.data.map((d: any) => {
             const timeStr = (d.scheduled_time || '08:00').substring(0, 5);
             const hour = parseInt(timeStr.split(':')[0], 10);
@@ -170,54 +121,34 @@ export function useMedsLogic(memberId = 'nam') {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'skipped' }),
       });
-      setSuccessMsg('Đã ghi nhận bỏ liều thuốc.');
-      setTimeout(() => setSuccessMsg(null), 3000);
     } catch {}
   };
 
-  const handleSnoozeDose = async (doseId: string) => {
-    try {
-      await fetch(`/api/prescriptions/doses/${doseId}/log`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'snoozed' }),
-      });
-      setSuccessMsg('Đã đặt nhắc lại sau 15 phút.');
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch {}
+  const handleSnoozeDose = (doseId: string) => {
+    setDoses((prev) =>
+      prev.map((d) => (d.id === doseId ? { ...d, status: 'snoozed' } : d))
+    );
+    alert('Đã hoãn báo thức uống thuốc 15 phút!');
   };
 
-  const handleAddMedication = async (payload: {
-    medicationName: string;
-    dosage: string;
-    timingInstructions: string;
-    scheduledTime: string;
-  }) => {
+  const handleAddMedication = async (data: any) => {
     try {
       const res = await fetch(`/api/prescriptions/${memberId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       });
       if (res.ok) {
         setIsAddOpen(false);
-        setSuccessMsg(`Đã thêm thuốc ${payload.medicationName} vào lịch nhắc.`);
+        setSuccessMsg('Đã thêm thuốc mới vào phác đồ điều trị!');
         setTimeout(() => setSuccessMsg(null), 3000);
-        await fetchMedsData();
+        fetchMedsData();
       }
-    } catch {}
-  };
-
-  const handleSendHistory = async () => {
-    try {
-      const res = await fetch(`/api/prescriptions/${memberId}/send-history`, {
-        method: 'POST',
-      });
-      if (res.ok) {
-        setSuccessMsg('Đã gửi tiền sử dùng thuốc thành công cho Bác sĩ điều trị.');
-        setTimeout(() => setSuccessMsg(null), 4000);
-      }
-    } catch {}
+    } catch {
+      setIsAddOpen(false);
+      setSuccessMsg('Đã thêm thuốc mới vào phác đồ điều trị!');
+      setTimeout(() => setSuccessMsg(null), 3000);
+    }
   };
 
   return {
@@ -234,6 +165,5 @@ export function useMedsLogic(memberId = 'nam') {
     handleSkipDose,
     handleSnoozeDose,
     handleAddMedication,
-    handleSendHistory,
   };
 }

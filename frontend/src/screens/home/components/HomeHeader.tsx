@@ -13,6 +13,11 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   onOpenEmergency,
 }) => {
   const initial = (fullName || 'N').charAt(0);
+  const formattedToday = new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date());
 
   return (
     <div className="flex flex-col gap-3">
@@ -56,7 +61,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
         <h1 className="text-2xl font-black text-slate-900 leading-tight">Hôm nay bạn thế nào?</h1>
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200/70 text-slate-700 text-xs font-semibold shadow-2xs w-fit">
           <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          Hôm nay: 26/10/2026
+          Hôm nay: {formattedToday}
         </span>
       </div>
     </div>

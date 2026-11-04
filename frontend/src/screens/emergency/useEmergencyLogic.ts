@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface EmergencyCardData {
   readonly fullName: string;
@@ -15,67 +15,74 @@ export interface EmergencyCardData {
   readonly qrData: string;
 }
 
-const DEFAULT_EMERGENCY_DATA: EmergencyCardData = Object.freeze({
-  fullName: 'Trần Hữu Nam',
-  birthYear: 1985,
-  gender: 'Nam',
-  bloodType: 'O+',
-  allergies: 'Penicillin (Sốc phản vệ độ 2)',
-  conditions: 'Tăng huyết áp độ 1, Đái tháo đường type 2',
-  emergencyContact: {
-    name: 'Nguyễn Thị Mai',
-    relationship: 'Vợ',
-    phone: '0988 777 666',
-  },
-  qrData: 'DHEALTH:EMERGENCY:O+:ALLERGIES=Penicillin:CONTACT=0988777666',
-});
+function parseAllergies(card: any): string {
+  if (Array.isArray(card.allergies) && card.allergies.length > 0) {
+    return card.allergies
+      .map((a: any) => `${a.allergen || a} (${a.reaction || 'Cần chú ý'})`)
+      .join(', ');
+  }
+  return card.emergency_notes || 'Không ghi nhận';
+}
+
+function parseConditions(card: any): string {
+  if (Array.isArray(card.chronic_conditions) && card.chronic_conditions.length > 0) {
+    return card.chronic_conditions.join(', ');
+  }
+  return 'Không ghi nhận bệnh nền';
+}
 
 export function useEmergencyLogic(memberId = 'nam', activeMemberName?: string) {
-  const [emergencyData, setEmergencyData] = useState<EmergencyCardData>(DEFAULT_EMERGENCY_DATA);
+  const [emergencyData, setEmergencyData] = useState<EmergencyCardData | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchEmergency = async () => {
-      try {
-        const res = await fetch(`/api/emergency/${memberId}`);
-        if (!res.ok) return;
+  const fetchEmergency = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/emergency/${memberId}`);
+      if (res.ok) {
         const json = await res.json();
         const card = json?.data?.card;
         const contacts = json?.data?.contacts || [];
 
-        if (card && isMounted) {
-          const primaryContact = contacts[0] || DEFAULT_EMERGENCY_DATA.emergencyContact;
-          const allergiesStr = Array.isArray(card.allergies)
-            ? card.allergies.map((a: any) => `${a.allergen || a} (${a.reaction || 'Cần chú ý'})`).join(', ')
-            : (card.emergency_notes || 'Không ghi nhận');
-          const conditionsStr = Array.isArray(card.chronic_conditions)
-            ? card.chronic_conditions.join(', ')
-            : 'Không có';
+        if (card) {
+          const primaryContact = contacts[0] || {
+            contact_name: 'Người thân',
+            relationship: 'Liên hệ',
+            phone_number: '115',
+          };
 
           setEmergencyData({
             fullName: activeMemberName || 'Trần Hữu Nam',
-            birthYear: memberId === 'nam' ? 1985 : 1983,
+            birthYear: 1980,
             gender: 'Nam',
-            bloodType: card.blood_group_snapshot || 'O+',
-            allergies: allergiesStr || 'Penicillin (Sốc phản vệ độ 2)',
-            conditions: conditionsStr,
+            bloodType: card.blood_group_snapshot || 'Chưa rõ',
+            allergies: parseAllergies(card),
+            conditions: parseConditions(card),
             emergencyContact: {
-              name: primaryContact.contact_name || primaryContact.name || 'Người thân',
-              relationship: primaryContact.relationship || 'Người liên hệ',
-              phone: primaryContact.phone_number || primaryContact.phone || '0988 777 666',
+              name: primaryContact.contact_name || 'Người thân',
+              relationship: primaryContact.relationship || 'Liên hệ',
+              phone: primaryContact.phone_number || '115',
             },
-            qrData: card.offline_qr_payload || DEFAULT_EMERGENCY_DATA.qrData,
+            qrData: card.offline_qr_payload || `DHEALTH:EMERGENCY:${memberId}`,
           });
+          return;
         }
-      } catch {
-        // Fallback giữ nguyên dữ liệu mặc định an toàn cho y tế
       }
-    };
-    fetchEmergency();
-    return () => { isMounted = false; };
+      setEmergencyData(null);
+    } catch {
+      setEmergencyData(null);
+    } finally {
+      setLoading(false);
+    }
   }, [memberId, activeMemberName]);
+
+  useEffect(() => {
+    fetchEmergency();
+  }, [fetchEmergency]);
 
   return {
     emergencyData,
+    loading,
+    refetch: fetchEmergency,
   };
 }

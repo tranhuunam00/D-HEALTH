@@ -20,3 +20,4 @@ describe('LabAnalytesTable Component', () => {
     expect(screen.getByText('3,9 – 6,4')).toBeDefined();
   });
 });
+

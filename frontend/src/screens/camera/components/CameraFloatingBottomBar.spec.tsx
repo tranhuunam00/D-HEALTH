@@ -35,3 +35,4 @@ describe('CameraFloatingBottomBar Component', () => {
     expect(handleSave).toHaveBeenCalledTimes(1);
   });
 });
+

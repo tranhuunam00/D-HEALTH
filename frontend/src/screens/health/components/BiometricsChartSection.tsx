@@ -111,3 +111,4 @@ export const BiometricsChartSection: React.FC<BiometricsChartSectionProps> = ({
     </div>
   );
 };
+

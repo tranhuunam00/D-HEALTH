@@ -4,7 +4,7 @@ import { useLabsLogic, LabSpecialtyCode, TRACKED_METRICS_CONFIG } from './useLab
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 import { HealthCategoryTabs, HealthTabId } from '../../components/molecules/HealthCategoryTabs';
-import { LabTrendChart } from './components/LabTrendChart';
+import { LabTrackedMetricCard } from './components/LabTrackedMetricCard';
 
 export interface SCR05Props {
   readonly onNavigate: (screen: string, reportId?: string) => void;
@@ -33,6 +33,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
     toggleTrackedMetric,
     filteredReports,
     activeTrackedMetrics,
+    loading,
   } = useLabsLogic(activeMemberId);
 
   const getBadgeStyle = (code: 'SH' | 'HH' | 'VS' | 'PT' | 'DT') => {
@@ -49,18 +50,15 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-24">
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 flex flex-col gap-3.5">
-        {/* 1. Header Badges */}
         <ScreenHeaderPills
           activeMemberName={activeMemberName}
           onSelectMember={() => onNavigate('family')}
         />
 
-        {/* 2. Tiêu đề Sức khoẻ */}
         <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-tight pt-1">
           Sức khoẻ
         </h1>
 
-        {/* 3. Category Tabs 1 dòng */}
         <HealthCategoryTabs
           activeTab="labs"
           onSelectTab={(tab: HealthTabId) => {
@@ -70,11 +68,10 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
           }}
         />
 
-        {/* 4. Section: Kết quả xét nghiệm */}
+        {/* Section: Kết quả xét nghiệm */}
         <div className="flex flex-col gap-2">
           <h2 className="text-sm font-black text-slate-900 px-1">Kết quả xét nghiệm</h2>
 
-          {/* Horizontal Pills */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             {SPECIALTY_PILLS.map((p) => (
               <button
@@ -96,31 +93,36 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
             HH Huyết học · SH Sinh hoá · VS Vi sinh · PT Sinh học phân tử · DT Di truyền
           </span>
 
-          {/* List Card with internal scroll */}
           <div className="bg-white rounded-[24px] shadow-xs border border-slate-100 overflow-hidden flex flex-col">
             <div className="max-h-[290px] overflow-y-auto divide-y divide-slate-100">
-              {filteredReports.map((report) => (
-                <div
-                  key={report.id}
-                  onClick={() => onNavigate('lab-detail', report.id)}
-                  className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 ${getBadgeStyle(report.categoryBadge)}`}>
-                      {report.categoryBadge}
+              {loading ? (
+                <div className="py-8 text-center text-xs text-slate-400">Đang tải phiếu xét nghiệm...</div>
+              ) : filteredReports.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">Chưa có phiếu xét nghiệm nào trong hồ sơ</div>
+              ) : (
+                filteredReports.map((report) => (
+                  <div
+                    key={report.id}
+                    onClick={() => onNavigate('lab-detail', report.id)}
+                    className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 ${getBadgeStyle(report.categoryBadge)}`}>
+                        {report.categoryBadge}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-bold text-slate-900 truncate">{report.title}</span>
+                        <span className="text-xs text-slate-400 font-medium truncate">{report.summary}</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-bold text-slate-900 truncate">{report.title}</span>
-                      <span className="text-xs text-slate-400 font-medium truncate">{report.summary}</span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-xs text-slate-400 font-medium">{report.testDate}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-xs text-slate-400 font-medium">{report.testDate}</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             <div className="p-2.5 text-center text-[11px] text-slate-400 font-medium bg-slate-50/50 border-t border-slate-100">
@@ -129,7 +131,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
           </div>
         </div>
 
-        {/* 5. Section: Chỉ số cần theo dõi */}
+        {/* Section: Chỉ số cần theo dõi */}
         <div className="flex flex-col gap-2.5 pt-1">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-sm font-black text-slate-900">Chỉ số cần theo dõi</h2>
@@ -138,7 +140,6 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
             </span>
           </div>
 
-          {/* Tracked chips */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             {TRACKED_METRICS_CONFIG.map((metric) => {
               const isTracked = trackedMetricIds.includes(metric.id);
@@ -160,47 +161,12 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
             })}
           </div>
 
-          {/* Trend Line Cards for Active Tracked Metrics */}
-          {activeTrackedMetrics.map((m) => {
-            const isWarning = m.levelType === 'warning';
-            return (
-              <div
-                key={m.id}
-                className="bg-white rounded-[26px] p-5 shadow-xs border border-slate-100 flex flex-col gap-3 relative"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-black text-slate-900">{m.label}</span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      isWarning
-                        ? 'bg-[#FEF3C7] text-[#D97706]'
-                        : 'bg-[#EAF8F0] text-[#166534]'
-                    }`}
-                  >
-                    {m.level}
-                  </span>
-                </div>
-
-                <div className="flex items-baseline">
-                  <span className="text-4xl font-black text-slate-900 tracking-tight">{m.value}</span>
-                  <span className="text-xs font-medium text-slate-500 ml-1.5">{m.unit}</span>
-                </div>
-
-                {/* Trend Chart */}
-                <LabTrendChart points={m.points} isAmber={isWarning} />
-
-                {/* Callout Insight */}
-                <div className="bg-[#EAF8F0] border border-teal-100/70 rounded-2xl p-3 flex items-start gap-2">
-                  <span className="text-teal-700 text-xs font-black mt-0.5">✦</span>
-                  <span className="text-xs font-bold text-slate-800 leading-relaxed">{m.insight}</span>
-                </div>
-              </div>
-            );
-          })}
+          {activeTrackedMetrics.map((m) => (
+            <LabTrackedMetricCard key={m.id} metric={m} />
+          ))}
         </div>
       </div>
 
-      {/* Bottom Navigation */}
       <HomeBottomNav
         activeTab="health"
         onTabChange={(tab) => onNavigate(tab)}
