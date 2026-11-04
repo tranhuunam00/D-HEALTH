@@ -7,9 +7,6 @@ on:
   workflow_dispatch: # Cho phép bấm nút kích hoạt thủ công từ giao diện GitHub Actions
 
 jobs:
-  # -------------------------------------------------------------
-  # Tự động Deploy trực tiếp lên VPS Server qua SSH
-  # -------------------------------------------------------------
   deploy:
     name: Deploy to Production Server
     runs-on: ubuntu-latest
@@ -29,20 +26,21 @@ jobs:
             echo "🚀 [CI/CD] Bắt đầu cập nhật D-HEALTH trên máy chủ..."
             
             # Kiểm tra nếu thư mục D-HEALTH chưa tồn tại trên VPS thì clone về
-            if [ ! -d "~/D-HEALTH" ] && [ ! -d "/root/D-HEALTH" ]; then
+            if [ ! -d ~/D-HEALTH ] && [ ! -d /root/D-HEALTH ]; then
               echo "Cloning repository..."
               cd ~
               git clone https://github.com/tranhuunam00/D-HEALTH.git D-HEALTH
             fi
 
             # Di chuyển vào thư mục dự án
-            if [ -d "~/D-HEALTH" ]; then
+            if [ -d ~/D-HEALTH ]; then
               cd ~/D-HEALTH
             else
               cd /root/D-HEALTH
             fi
 
             # Kéo mã nguồn mới nhất từ nhánh main
+            git reset --hard
             git pull origin main
 
             # Đảm bảo có file .env
@@ -58,4 +56,6 @@ jobs:
             docker compose ps
 
             echo "🎉 [CI/CD] Triển khai thành công phiên bản mới D-HEALTH lên Server!"
-            echo "🌐 Truy cập tại: https://dhealth.home-care.vn"
+            echo "🌐 Frontend: http://103.90.227.173:7001 hoặc https://dhealth.home-care.vn"
+            echo "🌐 Backend:  http://103.90.227.173:7002/api/health"
+            echo "🌐 MinIO:    http://103.90.227.173:7005 (Console)"
