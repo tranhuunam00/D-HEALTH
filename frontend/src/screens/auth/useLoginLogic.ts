@@ -110,7 +110,7 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
     try {
       if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
         const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
-          client_id: (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '10390227173-google-client-id.apps.googleusercontent.com',
+          client_id: (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com',
           scope: 'email profile openid',
           callback: async (tokenResp: any) => {
             if (tokenResp.error) {
