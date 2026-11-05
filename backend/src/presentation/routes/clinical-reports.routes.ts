@@ -30,6 +30,8 @@ export async function ensureClinicalReportsSchema(pool: Pool): Promise<void> {
         ADD COLUMN IF NOT EXISTS attachment_s3_key TEXT,
         ADD COLUMN IF NOT EXISTS s3_bucket VARCHAR(50) DEFAULT 'dhealth-reports',
         ADD COLUMN IF NOT EXISTS file_sha256 VARCHAR(64);
+      ALTER TABLE clinical_reports ALTER COLUMN conclusion DROP NOT NULL;
+      ALTER TABLE clinical_reports ALTER COLUMN conclusion SET DEFAULT '';
     `);
   } catch {
     // Non-blocking in case table doesn't exist yet or connection is mocked
@@ -41,15 +43,28 @@ interface InsertReportParams {
   reportId: string;
 }
 
+function normalizeDate(val?: string): string {
+  if (!val) return new Date().toISOString().split('T')[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? new Date().toISOString().split('T')[0] : d.toISOString().split('T')[0];
+}
+
 function buildReportInsertPayload(params: InsertReportParams): Record<string, any> {
   const { body, reportId } = params;
+  const defaultConclusion = (body.conclusion && String(body.conclusion).trim())
+    || (body.summary && String(body.summary).trim())
+    || (body.kind === 'lab' ? 'Kết quả xét nghiệm hoàn tất' : 'Kết quả cận lâm sàng hoàn tất');
+
   const insertData: Record<string, any> = {
     id: reportId,
     member_id: body.memberId,
     kind: body.kind,
     category: body.category || 'SH',
     title: body.title,
-    performed_at: body.performedAt || new Date().toISOString().split('T')[0],
+    performed_at: normalizeDate(body.performedAt),
+    conclusion: defaultConclusion,
+    summary: defaultConclusion,
   };
 
   if (body.facilityName) insertData.facility_name = body.facilityName;
@@ -64,10 +79,6 @@ function buildReportInsertPayload(params: InsertReportParams): Record<string, an
   }
   if (body.techniqueDescription) insertData.technique_description = body.techniqueDescription;
   if (body.clinicalFindings) insertData.clinical_findings = body.clinicalFindings;
-  if (body.conclusion) {
-    insertData.conclusion = body.conclusion;
-    insertData.summary = body.conclusion;
-  }
   if (body.recommendations) insertData.recommendations = body.recommendations;
   if (body.specimenCode) insertData.accession_number = body.specimenCode;
   if (body.histologicGrade) insertData.histological_grade = body.histologicGrade;

@@ -155,7 +155,7 @@ export function useCameraInputLogic(initialMemberId = 'nam') {
         performedAt: testDate,
         facilityName,
         doctorName,
-        conclusion,
+        conclusion: conclusion || (kind === 'lab' ? `Đã ghi nhận ${validRows.length} chỉ số xét nghiệm` : 'Kết quả bình thường'),
         rows: validRows.length > 0 ? validRows : rows,
         lesions,
         markers,
