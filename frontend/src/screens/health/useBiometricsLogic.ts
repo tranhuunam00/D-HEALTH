@@ -9,6 +9,7 @@ export interface BiometricReading {
   readonly value: string;
   readonly unit: string;
   readonly recordedAt: string;
+  readonly measuredAt?: string;
   readonly source: 'device' | 'manual';
   readonly status: 'normal' | 'warning' | 'critical';
 }
@@ -60,6 +61,7 @@ export function useBiometricsLogic(memberId = 'nam') {
             month: '2-digit',
             year: 'numeric',
           }),
+          measuredAt: r.measured_at ? new Date(r.measured_at).toISOString() : '',
           source: r.source === 'device_ble' ? 'device' : 'manual',
           status: r.severity_level === 3 ? 'critical' : r.severity_level === 2 ? 'warning' : 'normal',
         }));

@@ -16,6 +16,8 @@ export interface BiometricsChartSectionProps {
     height: string;
     value: string;
     isLatest: boolean;
+    hasData?: boolean;
+    source?: 'device' | 'manual';
   }>;
   filteredHistory: Array<{ value: string; recordedAt: string }>;
   onOpenEntrySheet: () => void;
@@ -57,7 +59,7 @@ export const BiometricsChartSection: React.FC<BiometricsChartSectionProps> = ({
       {/* Legend */}
       <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-500 pt-0.5">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+          <span className="w-2 h-2 rounded-full bg-[#1F7A8C]" />
           Từ thiết bị
         </span>
         <span className="flex items-center gap-1.5">
@@ -67,24 +69,56 @@ export const BiometricsChartSection: React.FC<BiometricsChartSectionProps> = ({
       </div>
 
       {/* 7-Day Bar Chart */}
-      <div className="h-28 flex items-end justify-between px-3 pt-2 pb-1 border-b border-slate-100/60">
+      <div className="h-28 flex items-end justify-between px-3 pt-2 pb-1 border-b border-slate-100/60 relative">
         {chartBars.map((bar, idx) => (
-          <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end flex-1 max-w-[36px]">
-            <div
-              style={{ height: bar.height }}
-              className={`w-5 rounded-full transition-all ${
-                bar.isLatest ? 'bg-[#2563EB]' : 'bg-[#BFDBFE]'
-              }`}
-            />
+          <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end flex-1 max-w-[36px] z-10">
+            {bar.hasData ? (
+              <>
+                <span className="text-[10px] font-bold text-slate-700 leading-none mb-0.5 truncate max-w-full">
+                  {bar.value.split('/')[0]}
+                </span>
+                <div
+                  style={{ height: bar.height }}
+                  className={`w-5 rounded-full transition-all ${
+                    bar.isLatest
+                      ? bar.source === 'manual'
+                        ? 'bg-[#F59E0B] ring-2 ring-[#F59E0B]/40 shadow-xs'
+                        : 'bg-[#1F7A8C] ring-2 ring-[#1F7A8C]/40 shadow-xs'
+                      : bar.source === 'manual'
+                      ? 'bg-[#F59E0B]/70'
+                      : 'bg-[#1F7A8C]/60'
+                  }`}
+                  title={`${bar.day}: ${bar.value} ${activeMetricObj.unit}`}
+                />
+              </>
+            ) : (
+              <div
+                style={{ height: '6px' }}
+                className="w-5 rounded-full bg-slate-200/80 transition-all"
+                title={`Ngày ${bar.day}: Chưa có số đo`}
+              />
+            )}
             <span
-              className={`text-[10px] font-bold ${
-                bar.isLatest ? 'text-slate-900 font-extrabold' : 'text-slate-400'
+              className={`text-[10px] ${
+                bar.hasData
+                  ? bar.isLatest
+                    ? 'text-slate-900 font-black'
+                    : 'text-slate-700 font-bold'
+                  : 'text-slate-400 font-medium'
               }`}
             >
               {bar.day}
             </span>
           </div>
         ))}
+
+        {isNoData && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-6">
+            <span className="text-xs font-semibold text-slate-400 bg-white/95 px-3 py-1 rounded-full border border-slate-100 shadow-2xs">
+              Chưa có dữ liệu đo trong 7 ngày
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Callout box */}

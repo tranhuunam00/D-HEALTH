@@ -57,32 +57,82 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
     else if (tab === 'chronic') onNavigate('chronic');
   };
 
-  const days = ['20', '21', '22', '23', '24', '25', '26'];
-  const baseHeights = [58, 55, 65, 58, 62, 54, 70];
-  const chartBars = days.map((day, idx) => {
-    const isLatest = idx === days.length - 1;
-    const historyIndex = (days.length - 1) - idx;
-    const realReading = filteredHistory[historyIndex];
-    let heightPercent = baseHeights[idx];
-    let val = '';
+  // Tạo danh sách 7 ngày gần nhất kết thúc vào hôm nay
+  const now = new Date();
+  const daySlots = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${day}`;
+    return { day, dateKey };
+  });
 
-    if (realReading) {
-      val = realReading.value;
-      if (activeMetric === 'bp') {
-        const parts = realReading.value.split('/');
-        const sys = parseFloat(parts[0]) || 131;
-        heightPercent = Math.min(95, Math.max(35, Math.round(((sys - 90) / 70) * 60 + 35)));
-      } else {
-        const num = parseFloat(realReading.value) || 70;
-        heightPercent = Math.min(95, Math.max(35, Math.round((num % 50) + 40)));
+  const calculateHeightPercent = (valStr: string, metric: string): number => {
+    if (metric === 'bp') {
+      const parts = valStr.split('/');
+      const sys = parseFloat(parts[0]) || 120;
+      return Math.min(95, Math.max(25, Math.round(((Math.min(180, Math.max(90, sys)) - 80) / 100) * 70 + 25)));
+    }
+    if (metric === 'hr') {
+      const hr = parseFloat(valStr) || 75;
+      return Math.min(95, Math.max(25, Math.round(((Math.min(160, Math.max(40, hr)) - 40) / 120) * 70 + 25)));
+    }
+    if (metric === 'spo2') {
+      const sp = parseFloat(valStr) || 98;
+      return Math.min(95, Math.max(25, Math.round(((Math.min(100, Math.max(80, sp)) - 80) / 20) * 70 + 25)));
+    }
+    if (metric === 'temp') {
+      const t = parseFloat(valStr.replace(',', '.')) || 36.5;
+      return Math.min(95, Math.max(25, Math.round(((Math.min(41, Math.max(35, t)) - 35) / 6) * 70 + 25)));
+    }
+    if (metric === 'bmi') {
+      const b = parseFloat(valStr.replace(',', '.')) || 22;
+      return Math.min(95, Math.max(25, Math.round(((Math.min(35, Math.max(15, b)) - 15) / 20) * 70 + 25)));
+    }
+    const num = parseFloat(valStr) || 50;
+    return Math.min(95, Math.max(25, Math.round((num % 60) + 30)));
+  };
+
+  const hasAnyCalendarMatch = daySlots.some((slot) =>
+    filteredHistory.some((r) => r.measuredAt && r.measuredAt.slice(0, 10) === slot.dateKey)
+  );
+
+  const chartBars = daySlots.map((slot, idx) => {
+    let readingForSlot: typeof filteredHistory[0] | undefined;
+
+    if (hasAnyCalendarMatch) {
+      readingForSlot = filteredHistory.find(
+        (r) => r.measuredAt && r.measuredAt.slice(0, 10) === slot.dateKey
+      );
+    } else if (filteredHistory.length > 0) {
+      const offset = daySlots.length - filteredHistory.length;
+      if (idx >= offset) {
+        const histIdx = filteredHistory.length - 1 - (idx - offset);
+        readingForSlot = filteredHistory[histIdx];
       }
     }
 
+    if (!readingForSlot || isNoData) {
+      return {
+        day: slot.day,
+        height: '6px',
+        value: '',
+        isLatest: false,
+        hasData: false,
+        source: undefined,
+      };
+    }
+
+    const isLatest = readingForSlot.id === filteredHistory[0]?.id;
+    const heightPercent = calculateHeightPercent(readingForSlot.value, activeMetric);
+
     return {
-      day,
+      day: slot.day,
       height: `${heightPercent}%`,
-      value: val || `${baseHeights[idx]}`,
+      value: readingForSlot.value,
       isLatest,
+      hasData: true,
+      source: readingForSlot.source,
     };
   });
 

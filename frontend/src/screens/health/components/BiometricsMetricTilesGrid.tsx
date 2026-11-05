@@ -38,7 +38,7 @@ export const BiometricsMetricTilesGrid: React.FC<BiometricsMetricTilesGridProps>
               onClick={() => onSelectMetric(m.id)}
               className={`p-2.5 rounded-2xl flex flex-col items-center justify-between text-center transition-all cursor-pointer min-h-[96px] ${
                 isSelected
-                  ? 'bg-slate-900 text-white shadow-md ring-2 ring-slate-900 ring-offset-2'
+                  ? 'bg-[#1F7A8C] text-white shadow-md ring-2 ring-[#1F7A8C]/50 ring-offset-2'
                   : 'bg-white text-slate-900 shadow-2xs border border-slate-100 hover:border-slate-300'
               }`}
             >
@@ -54,7 +54,7 @@ export const BiometricsMetricTilesGrid: React.FC<BiometricsMetricTilesGridProps>
                 <span className="text-base font-black leading-none">{m.value}</span>
                 <span
                   className={`text-[10px] mt-0.5 font-medium truncate w-full ${
-                    isSelected ? 'text-slate-300' : 'text-slate-400'
+                    isSelected ? 'text-teal-100' : 'text-slate-400'
                   }`}
                 >
                   {m.unit}
@@ -63,7 +63,7 @@ export const BiometricsMetricTilesGrid: React.FC<BiometricsMetricTilesGridProps>
 
               <span
                 className={`text-[11px] font-bold truncate w-full ${
-                  isSelected ? 'text-white' : 'text-slate-600'
+                  isSelected ? 'text-white font-black' : 'text-slate-600'
                 }`}
               >
                 {m.name}
