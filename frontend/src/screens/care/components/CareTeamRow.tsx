@@ -21,6 +21,14 @@ export const CareTeamRow: React.FC<CareTeamRowProps> = ({
         return 'bg-[#CCFBF1] text-[#0F766E]';
       case 'purple':
         return 'bg-[#EDE9FE] text-[#6D28D9]';
+      case 'rose':
+        return 'bg-[#FEE2E2] text-[#B91C1C]';
+      case 'blue':
+        return 'bg-[#E0F2FE] text-[#0369A1]';
+      case 'amber':
+        return 'bg-[#FEF3C7] text-[#D97706]';
+      case 'slate':
+        return 'bg-[#F1F5F9] text-[#475569]';
       case 'pink':
       default:
         return 'bg-[#FCE7F3] text-[#BE185D]';
@@ -38,7 +46,7 @@ export const CareTeamRow: React.FC<CareTeamRowProps> = ({
         </span>
       </div>
 
-      <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none px-0.5">
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-0.5">
         {team.map((member) => {
           const isSelected = member.id === selectedId;
           const badgeClass = getBadgeStyle(member.color);

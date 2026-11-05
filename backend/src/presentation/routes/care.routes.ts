@@ -30,19 +30,25 @@ export function createCareRouter(pool: Pool): Router {
     try {
       const upcomingAppointment = await getUpcomingAppointment(pool, resolvedMemberId);
       let grantsRes = await pool.query(
-        `SELECT id, grantee_id, grantee_name, grantee_role, grantee_org, grantee_phone, grantee_email, expires_at
-         FROM share_grants
-         WHERE (member_id = $1 OR member_id = $2) AND status = 'active'
-         ORDER BY created_at ASC`,
+        `SELECT g.id, g.grantee_id, g.grantee_name, g.grantee_role, g.grantee_org, g.grantee_phone, g.grantee_email, g.expires_at,
+                dep.id AS department_id, dep.code AS department_code, dep.short_name AS department_short_name, dep.color AS department_color
+         FROM share_grants g
+         LEFT JOIN master_doctors d ON g.grantee_id = d.id
+         LEFT JOIN master_departments dep ON d.department_id = dep.id
+         WHERE (g.member_id = $1 OR g.member_id = $2) AND g.status = 'active'
+         ORDER BY g.created_at ASC`,
         [memberId, resolvedMemberId]
       );
 
       if (grantsRes.rows.length === 0 && memberId !== 'nam') {
         grantsRes = await pool.query(
-          `SELECT id, grantee_id, grantee_name, grantee_role, grantee_org, grantee_phone, grantee_email, expires_at
-           FROM share_grants
-           WHERE member_id = 'nam' AND status = 'active'
-           ORDER BY created_at ASC`
+          `SELECT g.id, g.grantee_id, g.grantee_name, g.grantee_role, g.grantee_org, g.grantee_phone, g.grantee_email, g.expires_at,
+                  dep.id AS department_id, dep.code AS department_code, dep.short_name AS department_short_name, dep.color AS department_color
+           FROM share_grants g
+           LEFT JOIN master_doctors d ON g.grantee_id = d.id
+           LEFT JOIN master_departments dep ON d.department_id = dep.id
+           WHERE g.member_id = 'nam' AND g.status = 'active'
+           ORDER BY g.created_at ASC`
         );
       }
 
@@ -231,36 +237,57 @@ async function upsertShareGrant(pool: Pool, memberId: string, doctorId: string |
 }
 
 function mapGrantToCareMember(g: any) {
-  let code = 'BS';
-  let color: 'mint' | 'pink' | 'purple' | 'slate' = 'pink';
+  let code = g.department_code || '';
+  let color = g.department_color || 'pink';
   const roleLower = (g.grantee_role || '').toLowerCase();
 
-  if (roleLower.includes('gia đình') || roleLower.includes('chính')) {
-    code = 'GD';
-    color = 'mint';
-  } else if (roleLower.includes('cđha') || roleLower.includes('hình ảnh')) {
-    code = 'LC';
-    color = 'purple';
-  } else if (roleLower.includes('tim mạch')) {
-    code = 'TB';
-    color = 'pink';
-  } else if (roleLower.includes('nội tiết')) {
-    code = 'NT';
-    color = 'mint';
-  } else if (roleLower.includes('ung bướu')) {
-    code = 'UB';
-    color = 'pink';
-  } else if (g.grantee_name) {
-    const words = g.grantee_name.trim().split(/\s+/);
-    code = words.length >= 2 ? `${words[words.length - 2][0]}${words[words.length - 1][0]}`.toUpperCase() : 'BS';
+  if (!code) {
+    if (roleLower.includes('gia đình') || roleLower.includes('chính')) {
+      code = 'GD';
+      color = 'blue';
+    } else if (roleLower.includes('cđha') || roleLower.includes('hình ảnh')) {
+      code = 'CD';
+      color = 'purple';
+    } else if (roleLower.includes('tim mạch')) {
+      code = 'TM';
+      color = 'pink';
+    } else if (roleLower.includes('nội tiết')) {
+      code = 'NT';
+      color = 'mint';
+    } else if (roleLower.includes('ung bướu')) {
+      code = 'UB';
+      color = 'rose';
+    } else if (roleLower.includes('giải phẫu')) {
+      code = 'GP';
+      color = 'amber';
+    } else if (roleLower.includes('hô hấp')) {
+      code = 'HH';
+      color = 'blue';
+    } else if (roleLower.includes('tiêu hóa')) {
+      code = 'TH';
+      color = 'amber';
+    } else if (roleLower.includes('thần kinh')) {
+      code = 'TK';
+      color = 'purple';
+    } else if (roleLower.includes('cơ xương')) {
+      code = 'CK';
+      color = 'slate';
+    } else if (g.grantee_name) {
+      const words = g.grantee_name.trim().split(/\s+/);
+      code = words.length >= 2 ? `${words[words.length - 2][0]}${words[words.length - 1][0]}`.toUpperCase() : 'BS';
+    } else {
+      code = 'BS';
+    }
   }
+
+  const role = g.department_short_name || g.grantee_role || 'Bác sĩ';
 
   return {
     id: g.id,
     granteeId: g.grantee_id || '',
     code,
     name: g.grantee_name,
-    role: g.grantee_role || 'Bác sĩ',
+    role,
     org: g.grantee_org || 'Cơ sở y tế',
     phone: g.grantee_phone || '',
     email: g.grantee_email || '',

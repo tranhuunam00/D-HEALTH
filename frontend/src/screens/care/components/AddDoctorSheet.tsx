@@ -41,6 +41,11 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   noi_tiet: { bg: 'bg-[#CCFBF1]', text: 'text-[#0F766E]' },
   ung_buou: { bg: 'bg-[#FEE2E2]', text: 'text-[#B91C1C]' },
   y_hoc_gia_dinh: { bg: 'bg-[#E0F2FE]', text: 'text-[#0369A1]' },
+  gpb: { bg: 'bg-[#FEF3C7]', text: 'text-[#D97706]' },
+  ho_hap: { bg: 'bg-[#E0F2FE]', text: 'text-[#0369A1]' },
+  tieu_hoa: { bg: 'bg-[#FEF3C7]', text: 'text-[#D97706]' },
+  than_kinh: { bg: 'bg-[#EDE9FE]', text: 'text-[#6D28D9]' },
+  co_xuong_khop: { bg: 'bg-[#F1F5F9]', text: 'text-[#475569]' },
 };
 
 export const AddDoctorSheet: React.FC<AddDoctorSheetProps> = ({

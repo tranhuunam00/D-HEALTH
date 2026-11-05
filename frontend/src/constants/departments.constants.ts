@@ -29,7 +29,7 @@ export const CLINICAL_DEPARTMENTS: readonly ClinicalDepartment[] = [
   },
   {
     id: 'cdha',
-    code: 'CĐ',
+    code: 'CD',
     name: 'Khoa Chẩn Đoán Hình Ảnh',
     shortName: 'CĐHA',
     iconName: 'camera',
@@ -100,4 +100,13 @@ export const CLINICAL_DEPARTMENTS: readonly ClinicalDepartment[] = [
     description: 'Thoái hóa khớp, loãng xương, viêm khớp dạng thấp, gout',
   },
 ];
+
+export const DEPARTMENT_MAP: Record<string, ClinicalDepartment> = Object.fromEntries(
+  CLINICAL_DEPARTMENTS.map((d) => [d.id, d])
+);
+
+export const getDepartmentById = (id?: string): ClinicalDepartment | undefined => {
+  return id ? DEPARTMENT_MAP[id] : undefined;
+};
+
 

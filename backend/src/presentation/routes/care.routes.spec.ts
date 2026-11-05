@@ -91,6 +91,9 @@ describe('CareRoutes TDD', () => {
       expect(output.data.upcomingAppointment.date).toBe('12');
       expect(output.data.upcomingAppointment.title).toBe('Tái khám tim mạch');
       expect(output.data.careTeam.length).toBe(3);
+      expect(output.data.careTeam[0].code).toBe('TM');
+      expect(output.data.careTeam[1].code).toBe('CD');
+      expect(output.data.careTeam[2].code).toBe('GD');
       expect(output.data.sharingStats.activeCount).toBe(3);
     });
   });
