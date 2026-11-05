@@ -23,6 +23,7 @@ import {
   Eye,
   AlertCircle,
   Sparkles,
+  Stethoscope,
 } from 'lucide-react';
 
 interface PatientDossierModalProps {
@@ -218,7 +219,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
             { id: 'biometrics', label: 'Sinh Trắc Học', icon: Heart, count: dossier?.biometrics?.length },
             { id: 'prescriptions', label: 'Đơn Thuốc & Tuân Thủ', icon: Pill, count: dossier?.prescriptions?.length },
             { id: 'reports', label: 'Xét Nghiệm & CĐHA', icon: FileText, count: dossier?.reports?.length },
-            { id: 'chronic', label: 'Bệnh Mạn Tính & Lịch Hẹn', icon: Activity, count: dossier?.conditions?.length },
+            { id: 'chronic', label: 'Bệnh Mạn Tính & Lịch Hẹn', icon: Activity, count: (dossier?.conditions?.length || 0) + (dossier?.appointments?.length || 0) },
             { id: 'family', label: 'Gia Đình Liên Kết', icon: Users, count: dossier?.members?.length },
           ].map((tab) => (
             <button
@@ -838,6 +839,46 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
               {/* TAB 5: BỆNH MẠN TÍNH & LỊCH HẸN */}
               {activeTab === 'chronic' && (
                 <div className="space-y-4">
+                  {/* Lịch Hẹn Tái Khám Đã Đặt */}
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <h4 className="font-bold text-slate-900 text-xs flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[#1F7A8C]" />
+                        <span>Lịch Hẹn Tái Khám Bệnh Nhân Đã Đặt ({dossier.appointments?.length || 0})</span>
+                      </h4>
+                      <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                        Đồng bộ từ App Mobile
+                      </span>
+                    </div>
+                    {!dossier.appointments || dossier.appointments.length === 0 ? (
+                      <p className="text-slate-400 text-xs py-2">Bệnh nhân chưa có lịch hẹn khám nào được đặt.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        {dossier.appointments.map((a: any) => (
+                          <div key={a.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                <Stethoscope className="w-3.5 h-3.5 text-[#1F7A8C]" />
+                                <span>{a.doctor_name || 'Bác sĩ phụ trách'}</span>
+                              </div>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-[#1F7A8C] font-bold border border-teal-200">
+                                {a.status === 'scheduled' ? 'Đã lên lịch' : a.status === 'completed' ? 'Hoàn thành' : 'Đã hủy'}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-600 space-y-1">
+                              <div><strong>Chuyên khoa:</strong> {a.department_name || '--'} · {a.facility_name || '--'}</div>
+                              <div className="text-teal-700 font-mono font-bold flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-teal-600" />
+                                <span>Thời gian khám: {new Date(a.appointment_date).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                              </div>
+                              <div><strong>Mục đích:</strong> {a.purpose || 'Tái khám định kỳ'}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Bệnh mạn tính */}
                     <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">

@@ -93,12 +93,12 @@ export const DoctorsGrid: React.FC<DoctorsGridProps> = ({
                   </td>
                   <td className="px-4 py-3">
                     {d.is_active ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                        Đang công tác
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 whitespace-nowrap">
+                        Hoạt động
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 font-bold border border-rose-200">
-                        Nghỉ phép
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 font-bold border border-rose-200 whitespace-nowrap">
+                        Tạm dừng
                       </span>
                     )}
                   </td>

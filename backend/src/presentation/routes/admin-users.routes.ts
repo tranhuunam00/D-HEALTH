@@ -383,7 +383,7 @@ export function createAdminUsersRouter(pool: Pool): Router {
         });
       }
 
-      const [bioRes, condRes, taskRes, repRes, rxRes, careRes] = await Promise.all([
+      const [bioRes, condRes, taskRes, repRes, rxRes, careRes, apptRes] = await Promise.all([
         pool.query(
           `SELECT * FROM biometric_records WHERE member_id = ANY($1) AND is_deleted = false ORDER BY measured_at DESC LIMIT 50`,
           [memberIds]
@@ -474,6 +474,16 @@ export function createAdminUsersRouter(pool: Pool): Router {
           `SELECT * FROM share_grants WHERE member_id = ANY($1) AND status = 'active'`,
           [memberIds]
         ),
+        pool.query(
+          `SELECT a.*, COALESCE(d.full_name, a.doctor_name) AS doctor_name, COALESCE(f.name, a.facility_name) AS facility_name, COALESCE(dep.name, a.department_name) AS department_name
+           FROM appointments a
+           LEFT JOIN master_doctors d ON a.doctor_id = d.id
+           LEFT JOIN master_facilities f ON a.facility_id = f.id
+           LEFT JOIN master_departments dep ON d.department_id = dep.id
+           WHERE a.member_id = ANY($1)
+           ORDER BY a.appointment_date DESC`,
+          [memberIds]
+        ),
       ]);
 
       return res.json({
@@ -487,6 +497,7 @@ export function createAdminUsersRouter(pool: Pool): Router {
           reports: repRes.rows || [],
           prescriptions: rxRes.rows || [],
           careTeam: careRes.rows || [],
+          appointments: apptRes.rows || [],
         },
       });
     } catch (err: any) {

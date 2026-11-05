@@ -250,6 +250,32 @@ app.get('/api/admin/overview', async (req: Request, res: Response) => {
   }
 });
 
+// 7. Danh sách Lịch hẹn khám toàn hệ thống cho Admin Tổng (GET /api/admin/appointments)
+app.get('/api/admin/appointments', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.id, a.member_id, a.appointment_date, a.purpose, a.status, a.notes, a.created_at,
+        COALESCE(a.doctor_name, d.full_name, 'Bác sĩ phụ trách') AS doctor_name,
+        COALESCE(a.facility_name, f.name, 'Bệnh viện đối tác') AS facility_name,
+        COALESCE(a.department_name, dep.name, 'Khám chuyên khoa') AS department_name,
+        COALESCE(fm.full_name, u.phone_number, a.member_id) AS patient_name,
+        COALESCE(u.phone_number, '--') AS patient_phone,
+        COALESCE(u.email, '--') AS patient_email
+      FROM appointments a
+      LEFT JOIN family_members fm ON a.member_id = fm.id
+      LEFT JOIN users u ON fm.user_id = u.id
+      LEFT JOIN master_doctors d ON a.doctor_id = d.id
+      LEFT JOIN master_departments dep ON d.department_id = dep.id
+      LEFT JOIN master_facilities f ON a.facility_id = f.id
+      ORDER BY a.appointment_date DESC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+  }
+});
+
 app.listen(port, () => {
   console.log(`D-Health Backend API running on port ${port}`);
 });

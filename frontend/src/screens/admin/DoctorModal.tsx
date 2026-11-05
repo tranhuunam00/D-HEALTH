@@ -211,7 +211,7 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
                     onChange={() => setFormData({ ...formData, is_active: true })}
                     className="accent-[#1F7A8C] w-4 h-4"
                   />
-                  <span>Đang công tác</span>
+                  <span>Hoạt động</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-slate-800 font-medium">
                   <input

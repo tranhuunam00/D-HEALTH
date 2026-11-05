@@ -12,12 +12,14 @@ import {
   UserCheck,
   HardDrive,
   LogOut,
+  Calendar,
 } from 'lucide-react';
 import { useAdminLogic } from './useAdminLogic';
 import { AdminUserManagement } from './AdminUserManagement';
 import { FacilitiesGrid, FacilityItem } from './FacilitiesGrid';
 import { DoctorsGrid, DoctorItem } from './DoctorsGrid';
 import { MedicationsGrid } from './MedicationsGrid';
+import { AppointmentsGrid } from './AppointmentsGrid';
 import { FacilityModal } from './FacilityModal';
 import { DoctorModal } from './DoctorModal';
 
@@ -33,6 +35,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     doctors,
     departments,
     medications,
+    appointments,
     activeTab,
     setActiveTab,
     loading,
@@ -122,21 +125,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             {[
               { id: 'overview', label: 'Toàn Cảnh Hệ Thống', icon: Activity },
               { id: 'users', label: 'Quản Trị Người Dùng', icon: UserCheck },
+              { id: 'appointments', label: 'Lịch Hẹn Khám', icon: Calendar, badge: appointments.length },
               { id: 'facilities', label: 'Cơ Sở Y Tế (CSYT)', icon: Building2 },
               { id: 'doctors', label: 'Danh Bạ Bác Sĩ', icon: Stethoscope },
-              { id: 'medications', label: 'Dược Thư Quốc Gia', icon: Pill },
+              { id: 'medications', label: 'Tủ Thuốc', icon: Pill },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`w-full px-3.5 py-2.5 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer ${
+                className={`w-full px-3.5 py-2.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-[#1F7A8C] text-white shadow-md shadow-teal-600/20 font-bold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <tab.icon className="w-4 h-4 shrink-0" />
-                <span>{tab.label}</span>
+                <div className="flex items-center gap-2.5">
+                  <tab.icon className="w-4 h-4 shrink-0" />
+                  <span>{tab.label}</span>
+                </div>
+                {tab.badge != null && tab.badge > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-teal-50 text-[#1F7A8C]'
+                  }`}>
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -222,10 +235,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 </div>
                 <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
                   <span className="text-xs text-slate-500 flex items-center gap-1.5 mb-1">
-                    <Pill className="w-4 h-4 text-amber-600" /> Dược Thư Quốc Gia
+                    <Pill className="w-4 h-4 text-amber-600" /> Tủ Thuốc
                   </span>
                   <div className="text-2xl font-black text-slate-900">
-                    {stats.totalMedications} <span className="text-xs font-normal text-slate-400">thuốc</span>
+                    {stats.totalMedications} <span className="text-xs font-normal text-slate-400">loại</span>
                   </div>
                 </div>
                 <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
@@ -247,7 +260,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       : activeTab === 'doctors'
                       ? 'Danh Bạ Bác Sĩ Chuyên Khoa'
                       : activeTab === 'medications'
-                      ? 'Từ Điển Thuốc Quốc Gia'
+                      ? 'Tủ Thuốc & Dược Thư'
+                      : activeTab === 'appointments'
+                      ? 'Danh Sách Lịch Hẹn Khám Đã Đặt'
                       : 'Bảng Điều Khiển Cấu Hình Master Data'}
                   </h2>
                   <span className="text-[11px] text-purple-700 font-bold px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200">
@@ -272,6 +287,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   />
                 )}
                 {activeTab === 'medications' && <MedicationsGrid medications={medications} />}
+                {activeTab === 'appointments' && <AppointmentsGrid appointments={appointments} loading={loading} />}
                 {activeTab === 'overview' && (
                   <FacilitiesGrid
                     facilities={facilities}

@@ -33,18 +33,20 @@ export function useAdminLogic() {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [medications, setMedications] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'facilities' | 'doctors' | 'medications'>('overview');
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'facilities' | 'doctors' | 'medications' | 'appointments'>('overview');
   const [loading, setLoading] = useState(false);
 
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [ovRes, facRes, docRes, depRes, medRes, healthRes] = await Promise.all([
+      const [ovRes, facRes, docRes, depRes, medRes, apptRes, healthRes] = await Promise.all([
         fetch('/api/admin/overview').catch(() => null),
         fetch('/api/facilities?all=true').catch(() => null),
         fetch('/api/doctors?all=true').catch(() => null),
         fetch('/api/departments').catch(() => null),
         fetch('/api/medications').catch(() => null),
+        fetch('/api/admin/appointments').catch(() => null),
         fetch('/api/health').catch(() => null),
       ]);
 
@@ -67,6 +69,10 @@ export function useAdminLogic() {
       if (medRes?.ok) {
         const d = await medRes.json();
         if (d.data) setMedications(d.data);
+      }
+      if (apptRes?.ok) {
+        const d = await apptRes.json();
+        if (d.data) setAppointments(d.data);
       }
       if (healthRes?.ok) {
         const h = await healthRes.json();
@@ -195,6 +201,7 @@ export function useAdminLogic() {
     doctors,
     departments,
     medications,
+    appointments,
     activeTab,
     setActiveTab,
     loading,

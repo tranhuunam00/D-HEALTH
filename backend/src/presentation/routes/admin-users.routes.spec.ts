@@ -243,7 +243,8 @@ describe('AdminUsersRoutes', () => {
             },
           ],
         }) // prescriptions
-        .mockResolvedValueOnce({ rows: [{ id: 'grant_1', grantee_name: 'BS B' }] }); // care team
+        .mockResolvedValueOnce({ rows: [{ id: 'grant_1', grantee_name: 'BS B' }] }) // care team
+        .mockResolvedValueOnce({ rows: [{ id: 'app_1', purpose: 'Tái khám định kỳ' }] }); // appointments
 
       const handler = getHandler('GET', '/:id/dossier');
       const { req, res } = createReqRes({ params: { id: 'u1' } });
@@ -260,6 +261,8 @@ describe('AdminUsersRoutes', () => {
       expect(output.data.prescriptions.length).toBe(1);
       expect(output.data.prescriptions[0].items[0].medication_name).toBe('Amlodipine');
       expect(output.data.prescriptions[0].adherence_stats.adherence_pct).toBe(100);
+      expect(output.data.appointments.length).toBe(1);
+      expect(output.data.appointments[0].purpose).toBe('Tái khám định kỳ');
     });
   });
 });
