@@ -11,6 +11,7 @@ export interface UpcomingAppointment {
 
 export interface CareTeamMember {
   readonly id: string;
+  readonly granteeId?: string;
   readonly code: string;
   readonly name: string;
   readonly role: string;
@@ -30,6 +31,7 @@ export function useCareLogic(memberId = 'nam') {
   const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointment | null>(null);
   const [careTeam, setCareTeam] = useState<CareTeamMember[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [sharingStats, setSharingStats] = useState<SharingStats>({
     activeCount: 0,
     expiringSoonCount: 0,
@@ -56,7 +58,10 @@ export function useCareLogic(memberId = 'nam') {
           const team = Array.isArray(json.data.careTeam) ? json.data.careTeam : [];
           setCareTeam(team);
           if (team.length > 0 && !selectedMemberId) {
-            const defaultDoc = team.find((m: CareTeamMember) => m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')) || team[0];
+            const defaultDoc =
+              team.find((m: CareTeamMember) =>
+                m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')
+              ) || team[0];
             setSelectedMemberId(defaultDoc.id);
           }
           if (json.data.sharingStats) {
@@ -76,7 +81,13 @@ export function useCareLogic(memberId = 'nam') {
   }, [fetchCareSummary]);
 
   const selectedMember = useMemo(
-    () => careTeam.find((m) => m.id === selectedMemberId) || careTeam.find((m) => m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')) || careTeam[0] || null,
+    () =>
+      careTeam.find((m) => m.id === selectedMemberId) ||
+      careTeam.find((m) =>
+        m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')
+      ) ||
+      careTeam[0] ||
+      null,
     [careTeam, selectedMemberId]
   );
 
@@ -105,6 +116,7 @@ export function useCareLogic(memberId = 'nam') {
   };
 
   const handleAddDoctor = async (data: {
+    doctorId?: string;
     doctorName: string;
     specialty: string;
     hospital: string;
@@ -127,15 +139,20 @@ export function useCareLogic(memberId = 'nam') {
 
       if (res.ok) {
         setIsAddDoctorOpen(false);
-        setSuccessMsg(`Đã thêm Bác sĩ ${data.doctorName} vào Đội ngũ chăm sóc!`);
+        setSuccessMsg(`Đã kết nối và thêm Bác sĩ ${data.doctorName} vào Đội ngũ chăm sóc!`);
         setTimeout(() => setSuccessMsg(null), 4000);
-        fetchCareSummary();
+        await fetchCareSummary();
       }
     } catch {
       setIsAddDoctorOpen(false);
-      setSuccessMsg(`Đã thêm Bác sĩ ${data.doctorName} vào Đội ngũ chăm sóc!`);
+      setSuccessMsg(`Đã kết nối và thêm Bác sĩ ${data.doctorName} vào Đội ngũ chăm sóc!`);
       setTimeout(() => setSuccessMsg(null), 4000);
     }
+  };
+
+  const openAddDoctorModal = (category?: string) => {
+    setSelectedCategory(category);
+    setIsAddDoctorOpen(true);
   };
 
   return {
@@ -144,10 +161,12 @@ export function useCareLogic(memberId = 'nam') {
     selectedMember,
     selectedMemberId,
     setSelectedMemberId,
+    selectedCategory,
     sharingStats,
     loading,
     isAddDoctorOpen,
     setIsAddDoctorOpen,
+    openAddDoctorModal,
     successMsg,
     fetchCareSummary,
     handleSendPreExamDossier,

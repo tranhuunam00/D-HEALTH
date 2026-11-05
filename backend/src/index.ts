@@ -173,17 +173,34 @@ app.get('/api/facilities', async (req: Request, res: Response) => {
   }
 });
 
+// 1b. Danh sách Chuyên khoa / Khoa phòng (Master Departments / Categories)
+app.get('/api/departments', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT * FROM master_departments WHERE is_active = true ORDER BY name ASC');
+    res.json({ data: result.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 2. Danh sách bác sĩ chuyên khoa (Master Doctors)
 app.get('/api/doctors', async (req: Request, res: Response) => {
   try {
-    const result = await pool.query(`
+    const { department_id } = req.query;
+    let query = `
       SELECT d.*, f.name AS facility_name, dep.name AS department_name
       FROM master_doctors d
       LEFT JOIN master_facilities f ON d.facility_id = f.id
       LEFT JOIN master_departments dep ON d.department_id = dep.id
       WHERE d.is_active = true
-      ORDER BY d.full_name ASC
-    `);
+    `;
+    const params: any[] = [];
+    if (department_id) {
+      params.push(department_id);
+      query += ` AND d.department_id = ${params.length}`;
+    }
+    query += ` ORDER BY d.full_name ASC`;
+    const result = await pool.query(query, params);
     res.json({ data: result.rows });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

@@ -35,8 +35,7 @@ describe('CareRoutes TDD', () => {
   });
 
   describe('GET /:memberId/care-summary', () => {
-    it('trả về thông tin lịch hẹn 12/11, đội ngũ chăm sóc 3 thành viên và thống kê chia sẻ quyền', async () => {
-      // Mock upcoming appointment
+    it('trả về thông tin lịch hẹn 12/11, Đội ngũ chăm sóc 3 thành viên và thống kê chia sẻ quyền', async () => {
       mockPool.query
         .mockResolvedValueOnce({
           rows: [
@@ -45,20 +44,19 @@ describe('CareRoutes TDD', () => {
               appointment_date: '2026-11-12T09:00:00Z',
               purpose: 'Tái khám tim mạch',
               doctor_name: 'BS Trần Văn B',
-              facility_name: '[Bệnh viện đối tác]',
+              facility_name: 'Bệnh viện Bạch Mai',
             },
           ],
         })
-        // Mock share grants
         .mockResolvedValueOnce({
           rows: [
             {
               id: 'sg_01',
               grantee_name: 'BS Trần Văn B',
               grantee_role: 'Tim mạch',
-              grantee_org: '[Bệnh viện đối tác]',
-              grantee_phone: '[Số điện thoại]',
-              grantee_email: '[email bác sĩ]',
+              grantee_org: 'Bệnh viện Bạch Mai',
+              grantee_phone: '0908 123 456',
+              grantee_email: 'tranvanb@bachmai.hospital.vn',
               expires_at: '2026-11-11T00:00:00Z',
             },
             {
@@ -110,6 +108,60 @@ describe('CareRoutes TDD', () => {
       const output = res.json.mock.calls[0][0];
       expect(output.success).toBe(true);
       expect(output.message).toContain('Đã gửi hồ sơ');
+    });
+  });
+
+  describe('POST /:memberId/add-doctor', () => {
+    it('chọn bác sĩ từ danh sách master_doctors (admin thêm) theo doctorId thành công', async () => {
+      // 1. Mock query master_doctors
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'pgs_tran_minh_h',
+              full_name: 'Trần Minh H',
+              academic_title: 'PGS.TS',
+              phone_number: '0913456789',
+              email: 'minhh.cardio@dhealth.vn',
+              department_name: 'Khoa Tim Mạch',
+              facility_name: 'Bệnh viện Bạch Mai',
+            },
+          ],
+        })
+        // 2. Mock query existing share_grants (not existing)
+        .mockResolvedValueOnce({ rows: [] })
+        // 3. Mock insert share_grants
+        .mockResolvedValueOnce({ rowCount: 1 });
+
+      const handler = getHandler('POST', '/:memberId/add-doctor');
+      const { req, res } = createReqRes({
+        params: { memberId: 'nam' },
+        body: { doctorId: 'pgs_tran_minh_h' },
+      });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.name).toBe('PGS.TS Trần Minh H');
+      expect(output.data.role).toBe('Khoa Tim Mạch');
+      expect(output.data.org).toBe('Bệnh viện Bạch Mai');
+      expect(output.data.phone).toBe('0913456789');
+    });
+
+    it('báo lỗi VALIDATION_ERROR khi không có tên hoặc doctorId', async () => {
+      const handler = getHandler('POST', '/:memberId/add-doctor');
+      const { req, res } = createReqRes({
+        params: { memberId: 'nam' },
+        body: {},
+      });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(false);
+      expect(output.error.code).toBe('VALIDATION_ERROR');
     });
   });
 });

@@ -26,9 +26,11 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
     selectedMember,
     selectedMemberId,
     setSelectedMemberId,
+    selectedCategory,
     sharingStats,
     isAddDoctorOpen,
     setIsAddDoctorOpen,
+    openAddDoctorModal,
     successMsg,
     handleSendPreExamDossier,
     handleAddDoctor,
@@ -76,13 +78,13 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             team={careTeam}
             selectedId={selectedMemberId}
             onSelectMember={setSelectedMemberId}
-            onAddDoctor={() => setIsAddDoctorOpen(true)}
+            onAddDoctor={() => openAddDoctorModal()}
           />
         ) : (
           <div className="bg-white rounded-3xl p-4 border border-slate-100 text-center text-xs text-slate-400 flex items-center justify-between">
             <span>Chưa có bác sĩ trong đội ngũ</span>
             <button
-              onClick={() => setIsAddDoctorOpen(true)}
+              onClick={() => openAddDoctorModal()}
               className="text-[#1F7A8C] font-bold text-xs hover:underline"
             >
               + Thêm bác sĩ
@@ -95,7 +97,7 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
           <DoctorProfileCard
             member={selectedMember}
             onSendPreExamDossier={handleSendPreExamDossier}
-            onEdit={() => setIsAddDoctorOpen(true)}
+            onEdit={() => openAddDoctorModal(selectedMember.role)}
           />
         )}
 
@@ -107,10 +109,11 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
         />
       </div>
 
-      {/* Add Doctor Bottom Sheet */}
+      {/* Add / Select Doctor Bottom Sheet */}
       <AddDoctorSheet
         isOpen={isAddDoctorOpen}
         onClose={() => setIsAddDoctorOpen(false)}
+        initialCategory={selectedCategory}
         onSubmit={handleAddDoctor}
       />
 
