@@ -38,7 +38,7 @@ export const CareTeamRow: React.FC<CareTeamRowProps> = ({
         </span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none px-0.5">
         {team.map((member) => {
           const isSelected = member.id === selectedId;
           const badgeClass = getBadgeStyle(member.color);
@@ -48,7 +48,7 @@ export const CareTeamRow: React.FC<CareTeamRowProps> = ({
               key={member.id}
               type="button"
               onClick={() => onSelectMember(member.id)}
-              className={`rounded-[22px] p-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 text-center min-h-[88px] ${
+              className={`min-w-[84px] w-[84px] shrink-0 rounded-[22px] p-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 text-center min-h-[88px] ${
                 isSelected
                   ? 'bg-white border-2 border-slate-900 shadow-sm ring-1 ring-slate-900/10'
                   : 'bg-white border border-slate-100 shadow-2xs hover:border-slate-300'
@@ -70,7 +70,7 @@ export const CareTeamRow: React.FC<CareTeamRowProps> = ({
         <button
           type="button"
           onClick={onAddDoctor}
-          className="rounded-[22px] p-2 border-2 border-dashed border-slate-300 bg-white/50 hover:bg-white text-center flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 min-h-[88px]"
+          className="min-w-[84px] w-[84px] shrink-0 rounded-[22px] p-2 border-2 border-dashed border-slate-300 bg-white/50 hover:bg-white text-center flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 min-h-[88px]"
         >
           <div className="w-11 h-11 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-bold text-lg flex items-center justify-center">
             <Plus className="w-5 h-5 text-slate-600" />

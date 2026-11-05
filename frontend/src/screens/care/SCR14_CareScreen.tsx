@@ -6,6 +6,7 @@ import { AppointmentCard } from './components/AppointmentCard';
 import { CareTeamRow } from './components/CareTeamRow';
 import { DoctorProfileCard } from './components/DoctorProfileCard';
 import { AddDoctorSheet } from './components/AddDoctorSheet';
+import { ScheduleAppointmentSheet } from './components/ScheduleAppointmentSheet';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
 interface SCR14Props {
@@ -28,10 +29,13 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
     selectedCategory,
     isAddDoctorOpen,
     setIsAddDoctorOpen,
+    isScheduleOpen,
+    setIsScheduleOpen,
     openAddDoctorModal,
     successMsg,
     handleSendPreExamDossier,
     handleAddDoctor,
+    handleScheduleAppointment,
   } = useCareLogic(activeMemberId);
 
   return (
@@ -63,10 +67,15 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             date={upcomingAppointment.date}
             title={upcomingAppointment.title}
             timeDoctor={upcomingAppointment.timeDoctor}
+            onClick={() => setIsScheduleOpen(true)}
           />
         ) : (
-          <div className="bg-white rounded-3xl p-4 border border-slate-100 text-center text-xs text-slate-400">
-            Không có lịch khám sắp tới
+          <div
+            onClick={() => setIsScheduleOpen(true)}
+            className="bg-white rounded-3xl p-4 border border-dashed border-slate-300 text-center text-xs text-slate-500 cursor-pointer hover:bg-slate-50 transition flex items-center justify-between"
+          >
+            <span>Chưa có lịch khám sắp tới</span>
+            <span className="text-[#1F7A8C] font-extrabold">+ Đặt lịch ngay</span>
           </div>
         )}
 
@@ -106,6 +115,14 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
         onClose={() => setIsAddDoctorOpen(false)}
         initialCategory={selectedCategory}
         onSubmit={handleAddDoctor}
+      />
+
+      {/* Schedule / Reschedule Appointment Bottom Sheet */}
+      <ScheduleAppointmentSheet
+        isOpen={isScheduleOpen}
+        onClose={() => setIsScheduleOpen(false)}
+        doctors={careTeam}
+        onSchedule={handleScheduleAppointment}
       />
 
       {/* Bottom Nav */}

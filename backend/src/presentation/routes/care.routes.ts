@@ -98,6 +98,27 @@ export function createCareRouter(pool: Pool): Router {
     }
   });
 
+  
+  // 4. POST /:memberId/appointments - Đặt lịch tái khám mới
+  router.post('/:memberId/appointments', async (req: AuthenticatedRequest, res: Response) => {
+    const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
+    const { doctorId, doctorName, facilityName, departmentName, appointmentDate, purpose } = req.body;
+    try {
+      const apptId = `app_${Date.now()}`;
+      const insertRes = await pool.query(
+        `INSERT INTO appointments 
+          (id, member_id, doctor_id, doctor_name, facility_name, department_name, appointment_date, purpose, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scheduled', NOW())
+         RETURNING *`,
+        [apptId, resolvedMemberId, doctorId || null, doctorName || 'Bác sĩ phụ trách', facilityName || 'Bệnh viện đối tác', departmentName || 'Khám chuyên khoa', appointmentDate || new Date(), purpose || 'Tái khám']
+      );
+      return res.status(201).json({ success: true, data: insertRes.rows[0] });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
   return router;
 }
 
@@ -123,14 +144,24 @@ async function getUpcomingAppointment(pool: Pool, memberId: string) {
   if (!app) return null;
 
   const d = new Date(app.appointment_date);
-  const m = d.getMonth() + 1;
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const formatter = new Intl.DateTimeFormat('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    month: 'numeric',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(d);
+  const m = parts.find((p) => p.type === 'month')?.value || String(d.getMonth() + 1);
+  const dateStr = parts.find((p) => p.type === 'day')?.value || String(d.getDate()).padStart(2, '0');
+  const hours = parts.find((p) => p.type === 'hour')?.value || '09';
+  const minutes = parts.find((p) => p.type === 'minute')?.value || '00';
 
   return {
     id: app.id,
     month: `TH ${m}`,
-    date: String(d.getDate()).padStart(2, '0'),
+    date: dateStr,
     title: app.purpose || 'Tái khám',
     timeDoctor: `${hours}:${minutes} · ${app.doctor_name || 'Bác sĩ phụ trách'}`,
     facility: app.facility_name || 'Cơ sở y tế',

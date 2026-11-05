@@ -39,6 +39,7 @@ export function useCareLogic(memberId = 'mem_145deb71') {
   });
   const [loading, setLoading] = useState(false);
   const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const fetchCareSummary = useCallback(async () => {
@@ -155,6 +156,41 @@ export function useCareLogic(memberId = 'mem_145deb71') {
     setIsAddDoctorOpen(true);
   };
 
+  const handleScheduleAppointment = async (data: {
+    doctorId: string;
+    doctorName: string;
+    facilityName: string;
+    departmentName: string;
+    appointmentDate: string;
+    purpose: string;
+  }): Promise<boolean> => {
+    try {
+      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+        ? window.location.origin
+        : 'http://localhost';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const res = await fetch(`${baseUrl}/api/care/${memberId}/appointments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        setIsScheduleOpen(false);
+        setSuccessMsg(`Đã đặt lịch hẹn khám thành công với ${data.doctorName}!`);
+        setTimeout(() => setSuccessMsg(null), 4000);
+        await fetchCareSummary();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
   return {
     upcomingAppointment,
     careTeam,
@@ -166,10 +202,13 @@ export function useCareLogic(memberId = 'mem_145deb71') {
     loading,
     isAddDoctorOpen,
     setIsAddDoctorOpen,
+    isScheduleOpen,
+    setIsScheduleOpen,
     openAddDoctorModal,
     successMsg,
     fetchCareSummary,
     handleSendPreExamDossier,
     handleAddDoctor,
+    handleScheduleAppointment,
   };
 }
