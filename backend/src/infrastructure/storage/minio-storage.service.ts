@@ -89,6 +89,26 @@ export class MinioStorageService {
     }
   }
 
+
+  async uploadDirect(
+    bucket: StorageBucket,
+    objectKey: string,
+    buffer: Buffer,
+    contentType?: string
+  ): Promise<string> {
+    const valid = validateStorageParams(bucket, objectKey);
+    try {
+      const meta = contentType ? { 'Content-Type': contentType } : undefined;
+      await this.client.putObject(valid.bucket, valid.objectKey, buffer, buffer.length, meta);
+      return `/s3/${valid.bucket}/${valid.objectKey}`;
+    } catch (err: any) {
+      throw new StorageOperationError(
+        'UPLOAD_FAILED',
+        `Tải tệp tin lên kho lưu trữ thất bại: ${err.message}`
+      );
+    }
+  }
+
   async getPresignedDownloadUrl(
     bucket: StorageBucket,
     objectKey: string,

@@ -19,7 +19,7 @@ export interface SCR03Props {
 export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
   onNavigate,
   onSelectMember,
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
   activeMemberId = 'nam',
 }) => {
   const {

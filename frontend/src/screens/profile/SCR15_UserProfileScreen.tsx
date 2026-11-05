@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle, LogOut } from 'lucide-react';
 import { useProfileLogic } from './useProfileLogic';
 import { EditProfileBottomSheet } from './EditProfileBottomSheet';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
@@ -11,6 +11,7 @@ import { ProfileMedicalInfoCard } from './components/ProfileMedicalInfoCard';
 export interface UserProfileScreenProps {
   onBack: () => void;
   onNavigateToAdmin?: () => void;
+  onLogout?: () => void;
   user?: UserType | null;
   activeMemberId?: string;
 }
@@ -18,6 +19,7 @@ export interface UserProfileScreenProps {
 export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   onBack,
   onNavigateToAdmin,
+  onLogout,
   user: propUser,
   activeMemberId,
 }) => {
@@ -65,15 +67,15 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
 
   const realPhone = user?.phoneNumber && !user.phoneNumber.startsWith('gg_')
     ? user.phoneNumber
-    : (user?.phone_number || '0988 777 666');
+    : (user?.phone_number || '');
 
-  const userEmail = user?.email || 'nam.tran@dhealth.vn';
+  const userEmail = user?.email || '';
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] flex flex-col font-sans select-none pb-12">
       {/* 1. Header with Pills (1:1 with Reference Design) */}
       <div className="px-4 pt-3 pb-2 flex flex-col gap-2">
-        <ScreenHeaderPills activeMemberName={fullName || 'Trần Hữu Nam'} />
+        <ScreenHeaderPills activeMemberName={fullName || user?.fullName || ''} />
 
         {/* Top Navbar: Back + Title + Save Button */}
         <div className="flex items-center justify-between pt-1">
@@ -148,14 +150,26 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
           onOpenEditModal={() => setIsEditOpen(true)}
         />
 
-        {/* PC Admin Switcher (If available) */}
-        {onNavigateToAdmin && (
+        {/* PC Admin Switcher (Chỉ hiển thị cho tài khoản Quản trị viên) */}
+        {onNavigateToAdmin && (user?.role === 'admin' || user?.role === 'super_admin' || (user as any)?.role_id === 'super_admin') && (
           <button
             type="button"
             onClick={onNavigateToAdmin}
             className="w-full py-3 min-h-[44px] rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs flex items-center justify-center cursor-pointer"
           >
             <span>Chuyển sang Quản Trị Hệ Thống (PC Admin)</span>
+          </button>
+        )}
+
+        {/* Nút Đăng Xuất (Dành cho Mobile) */}
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="w-full py-3 min-h-[44px] rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Đăng xuất tài khoản</span>
           </button>
         )}
 

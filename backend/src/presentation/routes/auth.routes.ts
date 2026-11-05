@@ -115,7 +115,19 @@ export function createAuthRouter(pool: Pool): Router {
       // Reset số lần thử sai
       await pool.query(`UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = $1`, [user.id]);
 
-      const token = generateToken({ userId: user.id, role: 'PATIENT', email: user.email });
+      // Kiểm tra vai trò từ admin_users nếu có
+      let userRole = 'patient';
+      try {
+        const adminCheck = await pool.query(
+          `SELECT role_id FROM admin_users WHERE (username = $1 OR email = $2) AND is_active = true LIMIT 1`,
+          [user.phone_number, user.email]
+        );
+        if (adminCheck.rows.length > 0) {
+          userRole = adminCheck.rows[0].role_id === 'super_admin' ? 'super_admin' : 'admin';
+        }
+      } catch {}
+
+      const token = generateToken({ userId: user.id, role: userRole === 'patient' ? 'PATIENT' : 'ADMIN', email: user.email });
       setAuthCookie(res, token);
 
       const realPhone = (user.phone_number && !user.phone_number.startsWith('gg_')) ? user.phone_number : null;
@@ -129,16 +141,16 @@ export function createAuthRouter(pool: Pool): Router {
             phone_number: realPhone,
             phoneNumber: realPhone,
             email: user.email,
-            fullName: user.full_name || 'Bệnh Nhân',
+            fullName: user.full_name || user.email?.split('@')[0] || '',
             avatarUrl: user.avatar_url || null,
-            activeMemberId: user.member_id || 'nam',
+            activeMemberId: user.member_id || user.id,
             bloodType: user.blood_type || null,
             heightCm: user.height_cm ? Number(user.height_cm) : null,
             weightKg: user.weight_kg ? Number(user.weight_kg) : null,
-            role: 'patient',
+            role: userRole,
           },
           token,
-          activeMemberId: user.member_id || 'nam',
+          activeMemberId: user.member_id || user.id,
         },
       });
     } catch (err: any) {
@@ -239,6 +251,17 @@ export function createAuthRouter(pool: Pool): Router {
       }
       const row = result.rows[0];
       const realPhone = (row.phone_number && !row.phone_number.startsWith('gg_')) ? row.phone_number : null;
+      let userRole = 'patient';
+      try {
+        const adminCheck = await pool.query(
+          `SELECT role_id FROM admin_users WHERE (username = $1 OR email = $2) AND is_active = true LIMIT 1`,
+          [row.phone_number, row.email]
+        );
+        if (adminCheck.rows.length > 0) {
+          userRole = adminCheck.rows[0].role_id === 'super_admin' ? 'super_admin' : 'admin';
+        }
+      } catch {}
+
       return res.json({
         success: true,
         data: {
@@ -247,14 +270,14 @@ export function createAuthRouter(pool: Pool): Router {
           phone_number: realPhone,
           phoneNumber: realPhone,
           email: row.email,
-          fullName: row.full_name || 'Bệnh Nhân',
+          fullName: row.full_name || row.email?.split('@')[0] || '',
           avatarUrl: row.avatar_url || null,
-          activeMemberId: row.member_id || 'nam',
+          activeMemberId: row.member_id || row.id,
           bloodType: row.blood_type || null,
           heightCm: row.height_cm ? Number(row.height_cm) : null,
           weightKg: row.weight_kg ? Number(row.weight_kg) : null,
           isEkycVerified: row.is_ekyc_verified,
-          role: 'patient',
+          role: userRole,
         },
       });
     } catch (err: any) {

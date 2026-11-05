@@ -17,7 +17,7 @@ interface SCR14Props {
 
 export const SCR14_CareScreen: React.FC<SCR14Props> = ({
   onNavigate,
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
   activeMemberId = 'nam',
 }) => {
   const {

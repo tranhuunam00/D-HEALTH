@@ -43,7 +43,7 @@ const INITIAL_MESSAGES: readonly ChatMessage[] = Object.freeze([
 
 export const SCR13_AIAssistantScreen: React.FC<SCR13Props> = ({
   onNavigate,
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
 }) => {
   const [messages, setMessages] = useState<readonly ChatMessage[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');

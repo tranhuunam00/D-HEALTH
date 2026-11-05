@@ -126,7 +126,7 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
               const googleFullName = (
                 gProfile.name ||
                 [gProfile.given_name, gProfile.family_name].filter(Boolean).join(' ') ||
-                (gProfile.email ? gProfile.email.split('@')[0].replace(/[._-]/g, ' ') : 'Trần Hữu Nam')
+                (gProfile.email ? gProfile.email.split('@')[0].replace(/[._-]/g, ' ') : '')
               ).trim();
               await sendGoogleProfileToBackend({
                 sub: gProfile.sub || `gg_${Date.now()}`,
@@ -144,12 +144,12 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         return;
       }
 
-      const promptEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', email || 'tranhuunam@gmail.com');
+      const promptEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', email || '');
       if (!promptEmail) {
         setLoading(false);
         return;
       }
-      const promptName = prompt('Nhập Họ và Tên trên tài khoản Google:', fullName || 'Trần Hữu Nam') || 'Trần Hữu Nam';
+      const promptName = prompt('Nhập Họ và Tên trên tài khoản Google:', fullName || '') || '';
       await sendGoogleProfileToBackend({
         sub: `gg_${Date.now()}`,
         email: promptEmail,

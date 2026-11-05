@@ -27,6 +27,37 @@ function handleStorageError(err: any, res: Response): Response {
 export function createStorageRouter(storageService: MinioStorageService): Router {
   const router = Router();
 
+
+  router.post('/upload', async (req: Request, res: Response) => {
+    try {
+      const { bucket = 'dhealth-avatars', objectKey, dataBase64, contentType } = req.body;
+      if (!dataBase64) {
+        return res.status(400).json({ success: false, code: 'VALIDATION_ERROR', message: 'Thiếu dữ liệu tệp tin dataBase64' });
+      }
+
+      // Tách header base64 nếu có data:image/...;base64,
+      let base64Clean = dataBase64;
+      let detectedType = contentType || 'image/jpeg';
+      if (dataBase64.includes(';base64,')) {
+        const parts = dataBase64.split(';base64,');
+        detectedType = parts[0].replace('data:', '') || detectedType;
+        base64Clean = parts[1];
+      }
+
+      const buffer = Buffer.from(base64Clean, 'base64');
+      const ext = detectedType.includes('png') ? 'png' : detectedType.includes('webp') ? 'webp' : 'jpg';
+      const key = objectKey || `avatars/avt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+
+      const url = await storageService.uploadDirect(bucket, key, buffer, detectedType);
+      return res.status(200).json({
+        success: true,
+        data: { url, bucket, objectKey: key, size: buffer.length },
+      });
+    } catch (err: any) {
+      return handleStorageError(err, res);
+    }
+  });
+
   router.post('/presigned-upload', async (req: Request, res: Response) => {
     try {
       const { bucket, objectKey, expirySeconds } = req.body;

@@ -43,7 +43,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
       </div>
 
       <h2 className="text-xl font-bold text-slate-900 mt-2.5">
-        {fullName || 'Trần Hữu Nam'}
+        {fullName || ''}
       </h2>
 
       <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-3 py-1 rounded-full mt-2">

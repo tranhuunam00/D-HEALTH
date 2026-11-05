@@ -28,7 +28,7 @@ const TILE_SCREEN_MAP: Record<keyof PassportCounts, string> = {
 export const SCR10_RecordsScreen: React.FC<SCR10Props> = ({
   onNavigate,
   onSelectMember,
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
   activeMemberId = 'nam',
 }) => {
   const { member, counts } = useRecordsLogic(activeMemberId);

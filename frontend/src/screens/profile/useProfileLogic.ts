@@ -7,14 +7,14 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
   const [activeMember, setActiveMember] = useState<FamilyMember>(() => {
     if (initialUser) {
       return {
-        id: initialUser.activeMemberId || initialMemberId || 'nam',
+        id: initialUser.activeMemberId || initialMemberId || '',
         user_id: initialUser.id,
-        full_name: initialUser.fullName || 'Trần Hữu Nam',
+        full_name: initialUser.fullName || '',
         relationship: 'owner',
-        gender: 'Nam',
-        birth_date: '1980-04-12',
+        gender: 'Khác',
+        birth_date: '',
         avatar_url: initialUser.avatarUrl,
-        blood_type: initialUser.bloodType || 'O+',
+        blood_type: initialUser.bloodType || '',
         height_cm: initialUser.heightCm ? Number(initialUser.heightCm) : undefined,
         weight_kg: initialUser.weightKg ? Number(initialUser.weightKg) : undefined,
         is_above_18: true,
@@ -22,13 +22,13 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
       };
     }
     return {
-      id: 'nam',
-      user_id: '22222222-2222-2222-2222-222222222222',
-      full_name: 'Trần Hữu Nam',
+      id: '',
+      user_id: '',
+      full_name: '',
       relationship: 'owner',
-      gender: 'Nam',
-      birth_date: '1980-04-12',
-      blood_type: 'O+',
+      gender: 'Khác',
+      birth_date: '',
+      blood_type: '',
       height_cm: undefined,
       weight_kg: undefined,
       is_above_18: true,
@@ -39,14 +39,12 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
   const [fullName, setFullName] = useState(activeMember.full_name);
   const [gender, setGender] = useState<'Nam' | 'Nữ' | 'Khác'>(activeMember.gender);
   const [birthDate, setBirthDate] = useState(activeMember.birth_date);
-  const [bloodType, setBloodType] = useState(activeMember.blood_type || 'O+');
+  const [bloodType, setBloodType] = useState(activeMember.blood_type || '');
   const [heightCm, setHeightCm] = useState(activeMember.height_cm ? String(activeMember.height_cm) : '');
   const [weightKg, setWeightKg] = useState(activeMember.weight_kg ? String(activeMember.weight_kg) : '');
   const [avatarUrl, setAvatarUrl] = useState(activeMember.avatar_url || '');
-  const [citizenId, setCitizenId] = useState(
-    (initialUser as any)?.national_id || (initialUser as any)?.nationalId || '001085012345'
-  );
-  const [address, setAddress] = useState('Hà Nội, Việt Nam');
+  const [citizenId, setCitizenId] = useState((initialUser as any)?.national_id || (initialUser as any)?.nationalId || '');
+  const [address, setAddress] = useState((initialUser as any)?.address || '');
 
   const [loading, setLoading] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -54,10 +52,10 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const syncFormFromMember = (m: FamilyMember) => {
-    setFullName(m.full_name);
-    setGender(m.gender);
-    setBirthDate(m.birth_date || '1980-04-12');
-    setBloodType(m.blood_type || 'O+');
+    setFullName(m.full_name || '');
+    setGender(m.gender || 'Khác');
+    setBirthDate(m.birth_date || '');
+    setBloodType(m.blood_type || '');
     setHeightCm(m.height_cm ? String(m.height_cm) : '');
     setWeightKg(m.weight_kg ? String(m.weight_kg) : '');
     setAvatarUrl(m.avatar_url || '');
@@ -76,9 +74,8 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         const json = await res.json();
         if (json.data?.user) {
           setUser(json.data.user);
-          if (json.data.user.national_id) {
-            setCitizenId(json.data.user.national_id);
-          }
+          setCitizenId(json.data.user.national_id || '');
+          setAddress(json.data.user.address || '');
         }
         if (json.data?.members && json.data.members.length > 0) {
           const owner = json.data.members.find((m: any) => m.relationship === 'owner') || json.data.members[0];
@@ -97,7 +94,7 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
     fetchProfile();
   }, [initialMemberId]);
 
-  const handleUpdateProfile = async (payload: Partial<FamilyMember>) => {
+  const handleUpdateProfile = async (payload: any) => {
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -106,6 +103,30 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
+
+      // Nếu avatar là ảnh mới dạng Base64, upload trực tiếp lên MinIO trước
+      let minioAvatarUrl = payload.avatar_url;
+      if (minioAvatarUrl && minioAvatarUrl.startsWith('data:image/')) {
+        try {
+          const upRes = await fetch('/api/storage/upload', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              bucket: 'dhealth-avatars',
+              dataBase64: minioAvatarUrl,
+            }),
+          });
+          const upJson = await upRes.json();
+          if (upJson.success && upJson.data?.url) {
+            minioAvatarUrl = upJson.data.url;
+            setAvatarUrl(minioAvatarUrl);
+            payload.avatar_url = minioAvatarUrl;
+          }
+        } catch {
+          // nếu minio upload lỗi sẽ gửi trực tiếp payload
+        }
+      }
+
       const res = await fetch(`/api/user/profile/members/${activeMember.id}`, {
         method: 'PUT',
         headers,
@@ -145,11 +166,14 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
     handleUpdateProfile({
       full_name: fullName,
       gender,
-      birth_date: birthDate,
-      blood_type: bloodType,
+      birth_date: birthDate || null,
+      blood_type: bloodType || null,
       height_cm: heightCm ? parseFloat(heightCm) : undefined,
       weight_kg: weightKg ? parseFloat(weightKg) : undefined,
       avatar_url: avatarUrl || undefined,
+      citizenId: citizenId || null,
+      address: address || null,
+      email: user?.email || null,
     });
   };
 

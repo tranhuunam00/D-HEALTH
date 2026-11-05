@@ -13,7 +13,7 @@ interface SCR06Props {
 
 export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
   onNavigate,
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
   activeMemberId = 'nam',
   reportId,
 }) => {

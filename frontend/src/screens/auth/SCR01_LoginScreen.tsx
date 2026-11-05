@@ -48,7 +48,7 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
                 <User className="w-4 h-4 text-slate-400 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Ví dụ: Trần Hữu Nam"
+                  placeholder="Nhập họ và tên bệnh nhân..."
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full text-xs font-semibold text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"

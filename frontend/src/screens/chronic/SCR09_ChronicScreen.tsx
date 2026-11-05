@@ -15,7 +15,7 @@ interface SCR09Props {
 
 export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
   onNavigate,
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
   activeMemberId = 'nam',
 }) => {
   const { conditions, tasks, loading, toggleTask } = useChronicLogic(activeMemberId);

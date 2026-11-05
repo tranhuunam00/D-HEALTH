@@ -10,7 +10,7 @@ interface SCR04Props {
 
 export const SCR04_DevicesScreen: React.FC<SCR04Props> = ({
   onNavigate,
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
 }) => {
   const {
     devices,

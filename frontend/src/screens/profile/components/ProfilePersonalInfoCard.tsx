@@ -37,6 +37,7 @@ export const ProfilePersonalInfoCard: React.FC<ProfilePersonalInfoCardProps> = (
         <input
           type="text"
           value={citizenId}
+          placeholder="Chưa cập nhật CCCD"
           onChange={(e) => setCitizenId(e.target.value)}
           className="w-full text-xs font-semibold text-slate-800 bg-slate-50/70 border border-slate-200/70 rounded-xl px-3 py-2 outline-none focus:border-[#1F7A8C]"
         />
@@ -74,6 +75,7 @@ export const ProfilePersonalInfoCard: React.FC<ProfilePersonalInfoCardProps> = (
         <input
           type="text"
           value={realPhone}
+          placeholder="Chưa cập nhật SĐT"
           readOnly
           className="w-full text-xs font-semibold text-slate-800 bg-slate-50/70 border border-slate-200/70 rounded-xl px-3 py-2 outline-none"
         />
@@ -84,6 +86,7 @@ export const ProfilePersonalInfoCard: React.FC<ProfilePersonalInfoCardProps> = (
         <input
           type="email"
           value={userEmail}
+          placeholder="Chưa cập nhật email"
           readOnly
           className="w-full text-xs font-semibold text-slate-800 bg-slate-50/70 border border-slate-200/70 rounded-xl px-3 py-2 outline-none"
         />
@@ -94,6 +97,7 @@ export const ProfilePersonalInfoCard: React.FC<ProfilePersonalInfoCardProps> = (
         <input
           type="text"
           value={address}
+          placeholder="Chưa cập nhật địa chỉ"
           onChange={(e) => setAddress(e.target.value)}
           className="w-full text-xs font-semibold text-slate-800 bg-slate-50/70 border border-slate-200/70 rounded-xl px-3 py-2 outline-none focus:border-[#1F7A8C]"
         />

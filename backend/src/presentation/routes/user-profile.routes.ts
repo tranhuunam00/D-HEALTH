@@ -12,7 +12,7 @@ export function createUserProfileRouter(pool: Pool): Router {
     const userId = req.user?.userId;
     try {
       const userRes = await pool.query(
-        `SELECT id, phone_number, national_id, email, is_ekyc_verified, created_at FROM users WHERE id = $1`,
+        `SELECT id, phone_number, national_id, email, address, is_ekyc_verified, created_at FROM users WHERE id = $1`,
         [userId]
       );
       const membersRes = await pool.query(
@@ -124,6 +124,9 @@ export function createUserProfileRouter(pool: Pool): Router {
     const heightCm = req.body.heightCm !== undefined ? req.body.heightCm : req.body.height_cm;
     const weightKg = req.body.weightKg !== undefined ? req.body.weightKg : req.body.weight_kg;
     const avatarUrl = req.body.avatarUrl || req.body.avatar_url;
+    const nationalId = req.body.citizenId || req.body.national_id || req.body.nationalId;
+    const address = req.body.address;
+    const email = req.body.email;
 
     if (bloodType && !isValidBloodType(bloodType)) {
       return res.status(400).json({

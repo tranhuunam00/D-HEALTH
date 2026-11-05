@@ -9,7 +9,7 @@ export interface ScreenHeaderPillsProps {
 }
 
 export const ScreenHeaderPills: React.FC<ScreenHeaderPillsProps> = ({
-  activeMemberName = 'Trần Hữu Nam',
+  activeMemberName = '',
   dateText = '26/10/2026',
   onSelectMember,
   className = '',
@@ -33,7 +33,7 @@ export const ScreenHeaderPills: React.FC<ScreenHeaderPillsProps> = ({
           👤
         </span>
         <span>Hồ sơ sức khoẻ:</span>
-        <span className="font-bold">{activeMemberName}</span>
+        <span className="font-bold">{activeMemberName || 'Hồ sơ cá nhân'}</span>
         <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
       </button>
     </div>

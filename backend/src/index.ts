@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
 import * as Minio from 'minio';
 import dotenv from 'dotenv';
+import path from 'path';
 import { apiLimiter } from './infrastructure/security/rate-limiters';
 import { createAuthRouter } from './presentation/routes/auth.routes';
 import { createAdminUsersRouter } from './presentation/routes/admin-users.routes';
@@ -17,6 +18,7 @@ import { createCareRouter } from './presentation/routes/care.routes';
 import { MinioStorageService } from './infrastructure/storage/minio-storage.service';
 import { createStorageRouter } from './presentation/routes/storage.routes';
 
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
 
 const app = express();
@@ -26,7 +28,8 @@ const port = process.env.PORT || 5000;
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(cookieParser());
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api/', apiLimiter);
 
 // 1. PostgreSQL Connection Pool
