@@ -33,6 +33,9 @@ export async function ensureClinicalReportsSchema(pool: Pool): Promise<void> {
         ADD COLUMN IF NOT EXISTS file_sha256 VARCHAR(64);
       ALTER TABLE clinical_reports ALTER COLUMN conclusion DROP NOT NULL;
       ALTER TABLE clinical_reports ALTER COLUMN conclusion SET DEFAULT '';
+      ALTER TABLE imaging_studies DROP CONSTRAINT IF EXISTS imaging_studies_modality_check;
+      ALTER TABLE imaging_studies ADD CONSTRAINT imaging_studies_modality_check 
+        CHECK (modality IN ('MRI', 'CT', 'US', 'XR', 'PET', 'XQ', 'MM', 'SA'));
     `);
   } catch {
     // Non-blocking in case table doesn't exist yet or connection is mocked
@@ -139,7 +142,7 @@ async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: 
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (id) DO NOTHING`,
     [studyId, reportId, modality, organ]
-  ).catch(() => null);
+  ).catch((err) => console.error('[Imaging] Lỗi insert imaging_studies:', err.message));
 
   if (Array.isArray(body.lesions) && body.lesions.length > 0) {
     const sumDiameters = body.lesions.reduce((sum: number, l: any) => {
@@ -166,7 +169,7 @@ async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: 
         'SD',
         `Theo dõi ${body.lesions.length} tổn thương (tổng ${sumDiameters} mm)`,
       ]
-    ).catch(() => null);
+    ).catch((err) => console.error('[Imaging] Lỗi insert tumor_tracking_evaluations:', err.message));
   }
 }
 
@@ -311,7 +314,7 @@ export function createClinicalReportsRouter(pool: Pool): Router {
          JOIN imaging_studies ist ON tte.study_id = ist.id
          JOIN clinical_reports r ON ist.report_id = r.id
          WHERE r.member_id = $1
-         ORDER BY r.performed_at ASC`,
+         ORDER BY r.performed_at ASC, tte.created_at ASC`,
         [memberId]
       );
       const rows = result.rows || [];

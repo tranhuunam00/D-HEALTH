@@ -22,11 +22,10 @@ export const CameraTypeAndMethodTabs: React.FC<CameraTypeAndMethodTabsProps> = (
         <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
           LOẠI KẾT QUẢ
         </span>
-        <div className="grid grid-cols-3 gap-1 bg-slate-200/80 p-1 rounded-2xl" role="tablist">
+        <div className="grid grid-cols-2 gap-1.5 bg-slate-200/80 p-1 rounded-2xl" role="tablist">
           {[
             { id: 'lab', label: 'Xét nghiệm' },
             { id: 'img', label: 'CĐHA' },
-            { id: 'gpb', label: 'GPB' },
           ].map((k) => (
             <button
               key={k.id}
@@ -42,7 +41,7 @@ export const CameraTypeAndMethodTabs: React.FC<CameraTypeAndMethodTabsProps> = (
           ))}
         </div>
         <span className="text-[11px] text-slate-500 px-1">
-          CĐHA: chẩn đoán hình ảnh · GPB: giải phẫu bệnh
+          CĐHA: chẩn đoán hình ảnh (X-quang, Siêu âm, CT, MRI, Nhũ ảnh)
         </span>
       </div>
 
