@@ -10,7 +10,7 @@ export interface DoseItem {
   period: string;
   name: string;
   instruction: string;
-  status: 'taken' | 'pending' | 'skipped' | 'snoozed' | 'scheduled';
+  status: 'taken' | 'pending' | 'skipped' | 'snoozed' | 'scheduled' | 'missed' | 'overdue';
   taken: boolean;
 }
 
