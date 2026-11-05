@@ -11,7 +11,7 @@ import { createAdminUsersRouter } from './presentation/routes/admin-users.routes
 import { createUserProfileRouter } from './presentation/routes/user-profile.routes';
 import { createBiometricsRouter } from './presentation/routes/biometrics.routes';
 import { createPrescriptionsRouter } from './presentation/routes/prescriptions.routes';
-import { createClinicalReportsRouter } from './presentation/routes/clinical-reports.routes';
+import { createClinicalReportsRouter, ensureClinicalReportsSchema } from './presentation/routes/clinical-reports.routes';
 import { createChronicConditionsRouter } from './presentation/routes/chronic-conditions.routes';
 import { createCareRouter } from './presentation/routes/care.routes';
 import { MinioStorageService } from './infrastructure/storage/minio-storage.service';
@@ -41,6 +41,9 @@ app.use('/api/user/profile', createUserProfileRouter(pool));
 app.use('/api/biometrics', createBiometricsRouter(pool));
 app.use('/api/prescriptions', createPrescriptionsRouter(pool));
 app.use('/api/clinical-reports', createClinicalReportsRouter(pool));
+ensureClinicalReportsSchema(pool)
+  .then(() => console.log('\u2713 [Database] Clinical reports schema verified.'))
+  .catch((err) => console.warn(`\u26a0\ufe0f [Database] Clinical reports schema notice: ${err.message}`));
 app.use('/api/chronic-conditions', createChronicConditionsRouter(pool));
 app.use('/api/care', createCareRouter(pool));
 

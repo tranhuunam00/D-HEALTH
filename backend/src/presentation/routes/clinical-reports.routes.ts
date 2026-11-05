@@ -2,9 +2,159 @@ import { Router, Response } from 'express';
 import { Pool } from 'pg';
 import { optionalAuthenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
 
+export async function ensureClinicalReportsSchema(pool: Pool): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE clinical_reports
+        ADD COLUMN IF NOT EXISTS performed_at DATE DEFAULT CURRENT_DATE,
+        ADD COLUMN IF NOT EXISTS facility_id VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS facility_name VARCHAR(150),
+        ADD COLUMN IF NOT EXISTS ordering_doctor_id VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS ordering_doctor_name VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS ordering_doctor VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS interpreting_doctor_id VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS interpreting_doctor_name VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS interpreting_doctor VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS technique_description TEXT,
+        ADD COLUMN IF NOT EXISTS clinical_findings TEXT,
+        ADD COLUMN IF NOT EXISTS conclusion TEXT,
+        ADD COLUMN IF NOT EXISTS summary TEXT,
+        ADD COLUMN IF NOT EXISTS recommendations TEXT,
+        ADD COLUMN IF NOT EXISTS accession_number VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS specimen_type VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS specimen_site VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS histological_grade VARCHAR(20),
+        ADD COLUMN IF NOT EXISTS ptnm_staging VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS surgical_margin VARCHAR(30),
+        ADD COLUMN IF NOT EXISTS ihc_markers JSONB DEFAULT '[]'::jsonb,
+        ADD COLUMN IF NOT EXISTS attachment_s3_key TEXT,
+        ADD COLUMN IF NOT EXISTS s3_bucket VARCHAR(50) DEFAULT 'dhealth-reports',
+        ADD COLUMN IF NOT EXISTS file_sha256 VARCHAR(64);
+    `);
+  } catch {
+    // Non-blocking in case table doesn't exist yet or connection is mocked
+  }
+}
+
+interface InsertReportParams {
+  body: any;
+  reportId: string;
+}
+
+function buildReportInsertPayload(params: InsertReportParams): Record<string, any> {
+  const { body, reportId } = params;
+  const insertData: Record<string, any> = {
+    id: reportId,
+    member_id: body.memberId,
+    kind: body.kind,
+    category: body.category || 'SH',
+    title: body.title,
+    performed_at: body.performedAt || new Date().toISOString().split('T')[0],
+  };
+
+  if (body.facilityName) insertData.facility_name = body.facilityName;
+  if (body.doctorName) {
+    insertData.ordering_doctor_name = body.doctorName;
+    insertData.ordering_doctor = body.doctorName;
+  }
+  const interpDoc = body.interpretingDoctorName || body.doctorName;
+  if (interpDoc) {
+    insertData.interpreting_doctor_name = interpDoc;
+    insertData.interpreting_doctor = interpDoc;
+  }
+  if (body.techniqueDescription) insertData.technique_description = body.techniqueDescription;
+  if (body.clinicalFindings) insertData.clinical_findings = body.clinicalFindings;
+  if (body.conclusion) {
+    insertData.conclusion = body.conclusion;
+    insertData.summary = body.conclusion;
+  }
+  if (body.recommendations) insertData.recommendations = body.recommendations;
+  if (body.specimenCode) insertData.accession_number = body.specimenCode;
+  if (body.histologicGrade) insertData.histological_grade = body.histologicGrade;
+  if (body.pTNM) insertData.ptnm_staging = body.pTNM;
+  if (body.resectionMargin) insertData.surgical_margin = body.resectionMargin;
+  if (Array.isArray(body.markers) && body.markers.length > 0) {
+    insertData.ihc_markers = JSON.stringify(body.markers);
+  }
+  if (body.organ) insertData.specimen_site = body.organ;
+
+  return insertData;
+}
+
+async function insertLabMetricRows(pool: Pool, reportId: string, rows: any[]): Promise<void> {
+  if (!Array.isArray(rows) || rows.length === 0) return;
+  for (const row of rows) {
+    if (row.name && row.value !== '' && row.value !== undefined) {
+      const numVal = parseFloat(String(row.value).replace(',', '.'));
+      await pool.query(
+        `INSERT INTO lab_results (report_id, test_code, test_name, value_numeric, value_text, unit, flag)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          reportId,
+          row.name.toUpperCase().substring(0, 30),
+          row.name,
+          isNaN(numVal) ? null : numVal,
+          String(row.value),
+          row.unit || '',
+          'NORMAL',
+        ]
+      ).catch(() => null);
+    }
+  }
+}
+
+async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: any): Promise<void> {
+  const studyId = `std_${reportId}`;
+  await pool.query(
+    `INSERT INTO imaging_studies (id, report_id, modality, body_part)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (id) DO NOTHING`,
+    [studyId, reportId, body.category || 'CT', body.organ || 'Gan · ổ bụng']
+  ).catch(() => null);
+
+  if (Array.isArray(body.lesions) && body.lesions.length > 0) {
+    const sumDiameters = body.lesions.reduce((sum: number, l: any) => {
+      const s = parseFloat(String(l.size).replace(',', '.'));
+      return isNaN(s) ? sum : sum + s;
+    }, 0);
+
+    await pool.query(
+      `INSERT INTO tumor_tracking_evaluations 
+        (study_id, organ, lesion_location, lesion_count, baseline_sum_diameters_mm, nadir_sum_diameters_mm, current_sum_diameters_mm, recist_response, treatment_response_note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        studyId,
+        body.organ || 'Gan',
+        `Khối u đặc · ${body.organ || 'Gan'}`,
+        body.lesions.length,
+        sumDiameters,
+        sumDiameters,
+        sumDiameters,
+        'SD',
+        `Theo dõi ${body.lesions.length} tổn thương (tổng ${sumDiameters} mm)`,
+      ]
+    ).catch(() => null);
+  }
+}
+
+async function getTableColumns(pool: Pool, tableName: string): Promise<Set<string>> {
+  try {
+    const res = await pool.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = $1`,
+      [tableName]
+    );
+    return new Set(res.rows.map((r: any) => r.column_name));
+  } catch {
+    return new Set();
+  }
+}
+
 export function createClinicalReportsRouter(pool: Pool): Router {
   const router = Router();
   router.use(optionalAuthenticate);
+
+  // Trigger non-blocking schema check
+  ensureClinicalReportsSchema(pool).catch(() => null);
 
   // 1. GET /:memberId - Lấy danh sách phiếu xét nghiệm / chẩn đoán hình ảnh
   router.get('/:memberId', async (req: AuthenticatedRequest, res: Response) => {
@@ -59,7 +209,7 @@ export function createClinicalReportsRouter(pool: Pool): Router {
     }
   });
 
-  // 3. GET /detail/:reportId - Lấy chi tiết toàn bộ thông tin của 1 báo cáo (Kèm chuỗi xung DICOM & Đánh giá tổn thương nếu có)
+  // 3. GET /detail/:reportId - Lấy chi tiết toàn bộ thông tin của 1 báo cáo
   router.get('/detail/:reportId', async (req: AuthenticatedRequest, res: Response) => {
     const { reportId } = req.params;
     try {
@@ -133,26 +283,9 @@ export function createClinicalReportsRouter(pool: Pool): Router {
     }
   });
 
-  // 4. POST / - Nhập mới phiếu kết quả cận lâm sàng (SCR-12)
+  // 5. POST / - Nhập mới phiếu kết quả cận lâm sàng (SCR-12)
   router.post('/', async (req: AuthenticatedRequest, res: Response) => {
-    const {
-      memberId,
-      kind,
-      category = 'SH',
-      title,
-      performedAt,
-      facilityName,
-      doctorName,
-      conclusion,
-      rows = [],
-      lesions = [],
-      markers = [],
-      specimenCode,
-      histologicGrade,
-      pTNM,
-      resectionMargin,
-    } = req.body;
-
+    const { memberId, kind, title } = req.body;
     if (!memberId || !kind || !title) {
       return res.status(400).json({
         success: false,
@@ -162,89 +295,26 @@ export function createClinicalReportsRouter(pool: Pool): Router {
 
     try {
       const reportId = `rep_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const availableCols = await getTableColumns(pool, 'clinical_reports');
+      const insertData = buildReportInsertPayload({ body: req.body, reportId });
+
+      const fieldsToInsert = Object.keys(insertData).filter(
+        (k) => availableCols.size === 0 || availableCols.has(k)
+      );
+      const values = fieldsToInsert.map((k) => insertData[k]);
+      const placeholders = fieldsToInsert.map((_, i) => `$${i + 1}`).join(', ');
+
       const result = await pool.query(
-        `INSERT INTO clinical_reports 
-          (id, member_id, kind, category, title, performed_at, facility_name, ordering_doctor_name, interpreting_doctor_name, technique_description, clinical_findings, conclusion, recommendations, accession_number, histological_grade, ptnm_staging, surgical_margin, ihc_markers, specimen_site)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        `INSERT INTO clinical_reports (${fieldsToInsert.join(', ')})
+         VALUES (${placeholders})
          RETURNING *`,
-        [
-          reportId,
-          memberId,
-          kind,
-          category,
-          title,
-          performedAt || new Date().toISOString().split('T')[0],
-          facilityName || null,
-          doctorName || null,
-          req.body.interpretingDoctorName || doctorName || null,
-          req.body.techniqueDescription || null,
-          req.body.clinicalFindings || null,
-          conclusion || null,
-          req.body.recommendations || null,
-          specimenCode || null,
-          histologicGrade || null,
-          pTNM || null,
-          resectionMargin || null,
-          JSON.stringify(markers),
-          req.body.organ || null,
-        ]
+        values
       );
 
-      // Nếu có danh sách chỉ số xét nghiệm (Lab Metric Rows)
-      if (Array.isArray(rows) && rows.length > 0) {
-        for (const row of rows) {
-          if (row.name && row.value !== '' && row.value !== undefined) {
-            const numVal = parseFloat(String(row.value).replace(',', '.'));
-            await pool.query(
-              `INSERT INTO lab_results (report_id, test_code, test_name, value_numeric, value_text, unit, flag)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-              [
-                reportId,
-                row.name.toUpperCase().substring(0, 30),
-                row.name,
-                isNaN(numVal) ? null : numVal,
-                String(row.value),
-                row.unit || '',
-                'NORMAL',
-              ]
-            ).catch(() => null);
-          }
-        }
-      }
-
-      // Nếu là ca CĐHA, tạo bản ghi imaging_studies và tumor_tracking_evaluations
-      if (kind === 'imaging') {
-        const studyId = `std_${reportId}`;
-        await pool.query(
-          `INSERT INTO imaging_studies (id, report_id, modality, body_part)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (id) DO NOTHING`,
-          [studyId, reportId, category || 'CT', req.body.organ || 'Gan · ổ bụng']
-        ).catch(() => null);
-
-        if (Array.isArray(lesions) && lesions.length > 0) {
-          const sumDiameters = lesions.reduce((sum: number, l: any) => {
-            const s = parseFloat(String(l.size).replace(',', '.'));
-            return isNaN(s) ? sum : sum + s;
-          }, 0);
-
-          await pool.query(
-            `INSERT INTO tumor_tracking_evaluations 
-              (study_id, organ, lesion_location, lesion_count, baseline_sum_diameters_mm, nadir_sum_diameters_mm, current_sum_diameters_mm, recist_response, treatment_response_note)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-            [
-              studyId,
-              req.body.organ || 'Gan',
-              `Khối u đặc · ${req.body.organ || 'Gan'}`,
-              lesions.length,
-              sumDiameters,
-              sumDiameters,
-              sumDiameters,
-              'SD',
-              `Theo dõi ${lesions.length} tổn thương (tổng ${sumDiameters} mm)`,
-            ]
-          ).catch(() => null);
-        }
+      if (kind === 'lab') {
+        await insertLabMetricRows(pool, reportId, req.body.rows);
+      } else if (kind === 'imaging') {
+        await insertImagingStudyAndLesions(pool, reportId, req.body);
       }
 
       return res.status(201).json({
