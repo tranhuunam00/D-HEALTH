@@ -104,3 +104,4 @@ export const CLINICAL_DEPARTMENTS: readonly ClinicalDepartment[] = [
 export const DEPARTMENT_MAP: Record<string, ClinicalDepartment> = Object.fromEntries(
   CLINICAL_DEPARTMENTS.map((d) => [d.id, d])
 );
+

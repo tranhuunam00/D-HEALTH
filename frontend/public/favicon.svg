@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="dhealthGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1F7A8C" />
+      <stop offset="100%" stop-color="#2F6FDB" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="13" fill="url(#dhealthGrad)" />
+  <path
+    d="M24 38.5 L10.8 25.8 A7.6 7.6 0 0 1 21.6 15 L24 17.4 L26.4 15 A7.6 7.6 0 0 1 37.2 25.8 Z"
+    fill="#FFFFFF"
+  />
+  <path
+    d="M13.5 25 H19.5 L22 20 L25.5 30 L28 25 H34.5"
+    fill="none"
+    stroke="#1F7A8C"
+    stroke-width="2.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

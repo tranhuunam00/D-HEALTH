@@ -2,3 +2,4 @@
 -- Up Migration
 
 DELETE FROM appointments WHERE id IN ('app_mem_cardio_01', 'app_cardio_01');
+
