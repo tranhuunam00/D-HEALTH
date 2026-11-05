@@ -26,22 +26,22 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         data-testid="bottom-sheet-backdrop"
       />
 
-      {/* Sheet Content: Rounded Top 28px, Max Height 85vh */}
-      <div className="relative w-full max-w-[440px] max-h-[85vh] bg-[#0F172A] border-t border-slate-700/80 rounded-t-[28px] p-5 shadow-2xl flex flex-col z-10 animate-in slide-in-from-bottom duration-200">
+      {/* Sheet Content: Rounded Top 28px, Max Height 88vh, Pure White Theme */}
+      <div className="relative w-full max-w-[460px] max-h-[88vh] bg-white border-t border-slate-200 rounded-t-[28px] p-5 shadow-2xl flex flex-col z-10 animate-in slide-in-from-bottom duration-200 text-slate-800">
         {/* Thanh kéo Thumb Handle 40x5px */}
-        <div className="w-10 h-1.5 bg-slate-600/80 rounded-full mx-auto mb-4" />
+        <div className="w-10 h-1.5 bg-slate-300 rounded-full mx-auto mb-3" />
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-          <h3 className="text-base font-bold text-white tracking-wide">{title}</h3>
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+          <h3 className="text-base font-bold text-slate-900 tracking-tight">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/60"
+            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition cursor-pointer"
             aria-label="Đóng"
           >
             <X className="w-5 h-5" />
@@ -49,7 +49,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
         </div>
 
         {/* Scrollable Body */}
-        <div className="overflow-y-auto flex-1 pr-1">{children}</div>
+        <div className="overflow-y-auto flex-1 pr-1 text-slate-800">{children}</div>
       </div>
     </div>
   );

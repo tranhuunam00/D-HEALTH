@@ -15,14 +15,14 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyle =
-    'min-h-[48px] px-5 py-3 rounded-2xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100';
+    'min-h-[44px] px-4 py-2.5 rounded-2xl font-bold text-xs transition-all duration-200 flex items-center justify-center gap-2 select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 cursor-pointer';
 
   const variants = {
     primary:
-      'bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white shadow-lg shadow-[#1F7A8C]/20 hover:shadow-[#1F7A8C]/30 hover:brightness-105',
-    secondary: 'bg-slate-800 text-slate-200 border border-slate-700/80 hover:bg-slate-700/80',
-    outline: 'bg-transparent text-slate-300 border border-slate-600/80 hover:bg-slate-800/40',
-    danger: 'bg-rose-600/90 text-white hover:bg-rose-600 shadow-lg shadow-rose-900/20',
+      'bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white shadow-md shadow-[#1F7A8C]/20 hover:shadow-[#1F7A8C]/30 hover:brightness-105',
+    secondary: 'bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200/80',
+    outline: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900',
+    danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-600/20',
   };
 
   return (
@@ -32,7 +32,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading ? (
-        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
       ) : null}
       {children}
     </button>
