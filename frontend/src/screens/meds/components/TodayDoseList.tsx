@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Check, X, RotateCcw } from 'lucide-react';
+import { Check, X, RotateCcw, Edit3 } from 'lucide-react';
 import type { DoseItem } from '../useMedsLogic';
 
 interface TodayDoseListProps {
@@ -10,6 +10,7 @@ interface TodayDoseListProps {
   onTakeDose: (doseId: string) => void;
   onSkipDose: (doseId: string) => void;
   onSnoozeDose: (doseId: string) => void;
+  onEditDose?: (dose: DoseItem) => void;
 }
 
 export const TodayDoseList: React.FC<TodayDoseListProps> = ({
@@ -20,6 +21,7 @@ export const TodayDoseList: React.FC<TodayDoseListProps> = ({
   onTakeDose,
   onSkipDose,
   onSnoozeDose,
+  onEditDose,
 }) => {
   const now = new Date();
   const currentMonth = month ?? (now.getMonth() + 1);
@@ -39,7 +41,7 @@ export const TodayDoseList: React.FC<TodayDoseListProps> = ({
   const headerTitle = isToday
     ? `Hôm nay · ${dayPadded}/${monthPadded}`
     : isTomorrow
-    ? `Ngày mai · ${dayPadded}/${monthPadded}`
+    ? `Ngàymay · ${dayPadded}/${monthPadded}`
     : isFuture
     ? `Ngày ${dayPadded}/${monthPadded} (Đã lên lịch)`
     : `Ngày ${dayPadded}/${monthPadded} (Lịch sử dùng thuốc)`;
@@ -82,7 +84,7 @@ export const TodayDoseList: React.FC<TodayDoseListProps> = ({
                     : 'border-slate-100'
                 }`}
               >
-                {/* Header row: Time, Name, Status Badge */}
+                {/* Header row: Time, Name, Status Badge & Edit Button */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="text-center shrink-0">
@@ -107,28 +109,58 @@ export const TodayDoseList: React.FC<TodayDoseListProps> = ({
                     </div>
                   </div>
 
-                  {/* Status Badge */}
-                  {isTaken && (
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200 shrink-0">
-                      Đã uống
-                    </span>
-                  )}
-                  {isSkipped && (
-                    <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 text-[11px] font-black border border-rose-200 shrink-0">
-                      Đã bỏ qua
-                    </span>
-                  )}
-                  {isSnoozed && (
-                    <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-black border border-amber-200 shrink-0">
-                      Nhắc lại sau 15p
-                    </span>
-                  )}
-                  {isPending && (
-                    <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-black shrink-0">
-                      {isFuture ? 'Sắp tới' : 'Chưa uống'}
-                    </span>
-                  )}
+                  {/* Status Badge & Edit Button */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isTaken && (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200 shrink-0">
+                        Đã uống
+                      </span>
+                    )}
+                    {isSkipped && (
+                      <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 text-[11px] font-black border border-rose-200 shrink-0">
+                        Đã bỏ qua
+                      </span>
+                    )}
+                    {isSnoozed && (
+                      <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-black border border-amber-200 shrink-0">
+                        Nhắc lại 15p
+                      </span>
+                    )}
+                    {isPending && (
+                      <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-black shrink-0">
+                        {isFuture ? 'Sắp tới' : 'Chưa uống'}
+                      </span>
+                    )}
+
+                    {/* Nút sửa nhanh */}
+                    <button
+                      type="button"
+                      onClick={() => onEditDose?.(dose)}
+                      className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 active:scale-95 transition"
+                      title="Sửa thuốc (tính từ lúc sửa)"
+                      aria-label="Sửa liều thuốc"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
+
+                {/* Footer action row for Future doses */}
+                {isFuture && (
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Liều đã lên lịch
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onEditDose?.(dose)}
+                      className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Sửa lịch thuốc</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Action Buttons for Today & Past */}
                 {!isFuture && (

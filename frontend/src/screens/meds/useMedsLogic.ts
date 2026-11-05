@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import type { EditMedicationInitialData } from './components/AddMedicationSheet';
 
 export interface DoseItem {
   id: string;
+  prescriptionItemId?: string;
+  rawName?: string;
+  dosage?: string;
   time: string;
   period: string;
   name: string;
@@ -62,6 +66,7 @@ export function useMedsLogic(memberId = 'nam') {
   const [adherence, setAdherence] = useState<AdherenceData>(EMPTY_ADHERENCE);
   const [loading, setLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<EditMedicationInitialData | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // 1. Tải danh sách cữ thuốc theo ngày được chọn
@@ -75,7 +80,10 @@ export function useMedsLogic(memberId = 'nam') {
         const dJson = await res.json();
         if (Array.isArray(dJson?.data)) {
           const nowDate = new Date();
-          const isFuture = year > nowDate.getFullYear() || month > (nowDate.getMonth() + 1) || (month === (nowDate.getMonth() + 1) && day > nowDate.getDate());
+          const isFuture =
+            year > nowDate.getFullYear() ||
+            month > (nowDate.getMonth() + 1) ||
+            (month === (nowDate.getMonth() + 1) && day > nowDate.getDate());
 
           const mapped: DoseItem[] = dJson.data.map((d: any) => {
             const timeStr = (d.scheduled_time || '08:00').substring(0, 5);
@@ -83,10 +91,15 @@ export function useMedsLogic(memberId = 'nam') {
             const period = hour >= 18 ? 'Tối' : hour >= 12 ? 'Trưa' : 'Sáng';
             return {
               id: d.id,
+              prescriptionItemId: d.prescription_item_id,
+              rawName: d.raw_medication_name || d.name,
+              dosage: d.dosage || '500 mg',
               time: timeStr,
               period,
               name: `${d.name} ${d.dosage || ''}`.trim(),
-              instruction: d.timing_instructions || `${d.dose_per_intake || '1 viên'} · ${d.meal_relation === 'after_meal' ? 'sau ăn' : 'trước ăn'}`,
+              instruction:
+                d.timing_instructions ||
+                `${d.dose_per_intake || '1 viên'} · ${d.meal_relation === 'after_meal' ? 'sau ăn' : 'trước ăn'}`,
               status: d.status || (isFuture ? 'scheduled' : 'pending'),
               taken: !!d.taken,
             };
@@ -242,21 +255,69 @@ export function useMedsLogic(memberId = 'nam') {
     alert('Đã hoãn báo thức uống thuốc 15 phút!');
   };
 
-  const handleAddMedication = async (data: any) => {
+  const handleOpenAdd = () => {
+    setEditingItem(null);
+    setIsAddOpen(true);
+  };
+
+  const handleOpenEditDose = (dose: DoseItem) => {
+    setEditingItem({
+      id: dose.prescriptionItemId,
+      scheduleId: dose.id,
+      medicationName: dose.rawName || dose.name.split(' ')[0],
+      dosage: dose.dosage || '500 mg',
+      scheduledTime: dose.time,
+      timingInstructions: dose.instruction,
+      durationMode: 'daily',
+    });
+    setIsAddOpen(true);
+  };
+
+  const handleOpenEditMed = (med: ActiveMedicationItem) => {
+    const firstSched = med.schedules?.[0]?.scheduledTime?.substring(0, 5) || '08:00';
+    setEditingItem({
+      id: med.id,
+      medicationName: med.name,
+      dosage: med.dosage || '500 mg',
+      scheduledTime: firstSched,
+      timingInstructions: med.timingInstructions || '1 viên · sau ăn',
+      durationMode: med.endDate ? 'custom' : 'daily',
+      endDate: med.endDate,
+    });
+    setIsAddOpen(true);
+  };
+
+  const handleAddMedication = async (data: any, editId?: string) => {
     try {
-      const res = await fetch(`/api/prescriptions/${memberId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      let res: Response;
+      if (editId) {
+        // Chỉnh sửa thuốc: tính từ lúc sửa
+        res = await fetch(`/api/prescriptions/doses/${editId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+      } else {
+        res = await fetch(`/api/prescriptions/${memberId}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+      }
+
       if (res.ok) {
         setIsAddOpen(false);
-        setSuccessMsg('Đã thêm thuốc vào lịch nhắc thành công!');
+        setEditingItem(null);
+        setSuccessMsg(
+          editId
+            ? `Đã cập nhật thuốc ${data.medicationName} thành công (tính từ hôm nay)!`
+            : `Đã thêm thuốc ${data.medicationName} vào lịch nhắc thành công!`
+        );
         setTimeout(() => setSuccessMsg(null), 3500);
         await fetchMedsData();
       }
     } catch (err) {
-      console.error('Lỗi thêm thuốc:', err);
+      console.error('Lỗi lưu thuốc:', err);
     }
   };
 
@@ -289,6 +350,10 @@ export function useMedsLogic(memberId = 'nam') {
     loading,
     isAddOpen,
     setIsAddOpen,
+    editingItem,
+    handleOpenAdd,
+    handleOpenEditDose,
+    handleOpenEditMed,
     successMsg,
     fetchMedsData,
     handleTakeDose,

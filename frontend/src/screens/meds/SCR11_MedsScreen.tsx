@@ -35,6 +35,10 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
     adherence,
     isAddOpen,
     setIsAddOpen,
+    editingItem,
+    handleOpenAdd,
+    handleOpenEditDose,
+    handleOpenEditMed,
     successMsg,
     handleTakeDose,
     handleSkipDose,
@@ -142,6 +146,7 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
               onTakeDose={handleTakeDose}
               onSkipDose={handleSkipDose}
               onSnoozeDose={handleSnoozeDose}
+              onEditDose={handleOpenEditDose}
             />
 
             <div className="bg-white rounded-[28px] p-4.5 shadow-xs border border-slate-100 flex flex-col gap-2">
@@ -152,7 +157,7 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
               <div className="grid grid-cols-2 gap-3 mt-1.5">
                 <button
                   type="button"
-                  onClick={() => setIsAddOpen(true)}
+                  onClick={handleOpenAdd}
                   className="py-3 px-3 rounded-2xl border border-slate-200/90 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-95 transition"
                 >
                   <Edit3 className="w-4 h-4 text-slate-600" />
@@ -183,7 +188,8 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
         {activeTab === 'active' && (
           <ActiveMedsTab
             medications={activeMedications}
-            onAddMedication={() => setIsAddOpen(true)}
+            onAddMedication={handleOpenAdd}
+            onEditMedication={handleOpenEditMed}
           />
         )}
 
@@ -200,9 +206,10 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
         )}
       </div>
 
-      {/* Add Medication Bottom Sheet */}
+      {/* Add / Edit Medication Bottom Sheet */}
       <AddMedicationSheet
         isOpen={isAddOpen}
+        initialData={editingItem}
         onClose={() => setIsAddOpen(false)}
         onSubmit={handleAddMedication}
       />

@@ -54,7 +54,9 @@ export function createPrescriptionsRouter(pool: Pool): Router {
         : new Date().toISOString().split('T')[0];
 
       const result = await pool.query(
-        `SELECT ds.id, pi.medication_name as name, pi.dosage, pi.dose_per_intake, 
+        `SELECT ds.id, pi.id as prescription_item_id, pi.medication_name as name, 
+                pi.medication_name as raw_medication_name,
+                pi.dosage, pi.dose_per_intake, 
                 ds.scheduled_time, ds.meal_relation, pi.timing_instructions,
                 pi.start_date, pi.end_date,
                 p.id as prescription_id,
@@ -79,7 +81,7 @@ export function createPrescriptionsRouter(pool: Pool): Router {
     }
   });
 
-  // 3. GET /:memberId/adherence-summary - Lấy tỷ lệ tuân thủ 30 ngày và ma trận Calendar Tháng 10
+  // 3. GET /:memberId/adherence-summary - Lấy tỷ lệ tuân thủ 30 ngày và ma trận Calendar
   router.get('/:memberId/adherence-summary', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
     try {
@@ -105,7 +107,6 @@ export function createPrescriptionsRouter(pool: Pool): Router {
         });
       }
 
-      // Lấy số cữ uống thuốc thực tế hôm nay
       const todayDosesRes = await pool.query(
         `SELECT ds.id, dl.status
          FROM dose_schedules ds
@@ -127,7 +128,6 @@ export function createPrescriptionsRouter(pool: Pool): Router {
       const isCurrentMonth = targetYear === now.getFullYear() && targetMonth === (now.getMonth() + 1);
       const todayDay = isCurrentMonth ? now.getDate() : -1;
 
-      // Ma trận ngày trong tháng chuẩn động theo thời gian thực tế
       const calendarDays = buildDynamicCalendarDays(targetYear, targetMonth, todayDay);
 
       return res.json({
@@ -193,51 +193,12 @@ export function createPrescriptionsRouter(pool: Pool): Router {
     }
 
     try {
-      let rxRes = await pool.query(
-        `SELECT id FROM prescriptions WHERE member_id = $1 AND status = 'active' LIMIT 1`,
-        [memberId]
+      const rxId = await getOrCreateActivePrescription(pool, memberId);
+      const { effectiveStartDate, effectiveEndDate, computedQuantity } = computeEffectiveDates(
+        durationMode,
+        endDate,
+        startDate
       );
-      let rxId = rxRes.rows[0]?.id;
-      if (!rxId) {
-        rxId = `rx_${memberId}_${Date.now()}`;
-        await pool.query(
-          `INSERT INTO prescriptions (id, member_id, diagnosis, prescribed_date, status)
-           VALUES ($1, $2, 'Đơn thuốc cá nhân', CURRENT_DATE, 'active')`,
-          [rxId, memberId]
-        );
-      }
-
-      const effectiveStartDate = startDate || new Date().toISOString().split('T')[0];
-      let effectiveEndDate = endDate;
-      let computedQuantity = 30;
-
-      if (durationMode === '3days') {
-        const d = new Date(effectiveStartDate);
-        d.setDate(d.getDate() + 2);
-        effectiveEndDate = d.toISOString().split('T')[0];
-        computedQuantity = 3;
-      } else if (durationMode === '5days') {
-        const d = new Date(effectiveStartDate);
-        d.setDate(d.getDate() + 4);
-        effectiveEndDate = d.toISOString().split('T')[0];
-        computedQuantity = 5;
-      } else if (durationMode === '1week') {
-        const d = new Date(effectiveStartDate);
-        d.setDate(d.getDate() + 6);
-        effectiveEndDate = d.toISOString().split('T')[0];
-        computedQuantity = 7;
-      } else if (durationMode === 'custom' && endDate) {
-        effectiveEndDate = endDate;
-        const s = new Date(effectiveStartDate).getTime();
-        const e = new Date(endDate).getTime();
-        const diff = Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1);
-        computedQuantity = diff;
-      } else {
-        const d = new Date(effectiveStartDate);
-        d.setDate(d.getDate() + 365);
-        effectiveEndDate = d.toISOString().split('T')[0];
-        computedQuantity = 30;
-      }
 
       const itemRes = await pool.query(
         `INSERT INTO prescription_items 
@@ -264,8 +225,125 @@ export function createPrescriptionsRouter(pool: Pool): Router {
     }
   });
 
+  // 5b. PUT /doses/:doseId - Chỉnh sửa thuốc (tính từ lúc sửa)
+  router.put('/doses/:doseId', async (req: AuthenticatedRequest, res: Response) => {
+    const { doseId } = req.params;
+    const {
+      medicationName,
+      dosage = '1 viên',
+      dosePerIntake = '1 viên',
+      timingInstructions = '1 viên sau ăn',
+      scheduledTime = '08:00:00',
+      durationMode = 'daily',
+      endDate,
+    } = req.body;
+
+    try {
+      const dsRes = await pool.query(
+        `SELECT id, prescription_item_id FROM dose_schedules WHERE id = $1`,
+        [doseId]
+      );
+      if (dsRes.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Không tìm thấy lịch uống thuốc.' },
+        });
+      }
+
+      const itemId = dsRes.rows[0].prescription_item_id;
+      // "Sửa thì tính từ lúc sửa": effectiveStartDate là CURRENT_DATE (hôm nay)
+      const { effectiveStartDate, effectiveEndDate, computedQuantity } = computeEffectiveDates(durationMode, endDate);
+
+      const updatedItemRes = await pool.query(
+        `UPDATE prescription_items
+         SET medication_name = COALESCE($1, medication_name),
+             dosage = COALESCE($2, dosage),
+             dose_per_intake = COALESCE($3, dose_per_intake),
+             timing_instructions = COALESCE($4, timing_instructions),
+             start_date = $5,
+             end_date = $6,
+             quantity_prescribed = $7
+         WHERE id = $8
+         RETURNING *`,
+        [medicationName, dosage, dosePerIntake, timingInstructions, effectiveStartDate, effectiveEndDate, computedQuantity, itemId]
+      );
+
+      await pool.query(
+        `UPDATE dose_schedules
+         SET scheduled_time = $1, is_active = true
+         WHERE id = $2`,
+        [scheduledTime, doseId]
+      );
+
+      return res.json({
+        success: true,
+        data: updatedItemRes.rows[0],
+        message: 'Đã cập nhật thuốc thành công (lịch nhắc mới tính từ lúc sửa).',
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
+  // 5c. PUT /:memberId/items/:itemId - Chỉnh sửa thuốc theo ItemId (tính từ lúc sửa)
+  router.put('/:memberId/items/:itemId', async (req: AuthenticatedRequest, res: Response) => {
+    const { itemId } = req.params;
+    const {
+      medicationName,
+      dosage = '1 viên',
+      dosePerIntake = '1 viên',
+      timingInstructions = '1 viên sau ăn',
+      scheduledTime = '08:00:00',
+      durationMode = 'daily',
+      endDate,
+    } = req.body;
+
+    try {
+      // "Sửa thì tính từ lúc sửa": effectiveStartDate là CURRENT_DATE (hôm nay)
+      const { effectiveStartDate, effectiveEndDate, computedQuantity } = computeEffectiveDates(durationMode, endDate);
+
+      const updatedItemRes = await pool.query(
+        `UPDATE prescription_items
+         SET medication_name = COALESCE($1, medication_name),
+             dosage = COALESCE($2, dosage),
+             dose_per_intake = COALESCE($3, dose_per_intake),
+             timing_instructions = COALESCE($4, timing_instructions),
+             start_date = $5,
+             end_date = $6,
+             quantity_prescribed = $7
+         WHERE id = $8
+         RETURNING *`,
+        [medicationName, dosage, dosePerIntake, timingInstructions, effectiveStartDate, effectiveEndDate, computedQuantity, itemId]
+      );
+
+      if (updatedItemRes.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Không tìm thấy thuốc cần chỉnh sửa.' },
+        });
+      }
+
+      if (scheduledTime) {
+        await pool.query(
+          `UPDATE dose_schedules
+           SET scheduled_time = $1, is_active = true
+           WHERE prescription_item_id = $2`,
+          [scheduledTime, itemId]
+        );
+      }
+
+      return res.json({
+        success: true,
+        data: updatedItemRes.rows[0],
+        message: 'Đã cập nhật thuốc thành công (lịch nhắc mới tính từ lúc sửa).',
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
   // 6. POST /:memberId/send-history - Gửi tiền sử dùng thuốc cho bác sĩ
-  router.post('/:memberId/send-history', async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/:memberId/send-history', async (_req: AuthenticatedRequest, res: Response) => {
     return res.json({
       success: true,
       message: 'Đã gửi tiền sử dùng thuốc thành công cho Bác sĩ điều trị qua Cổng Y Tế D-Health.',
@@ -275,9 +353,59 @@ export function createPrescriptionsRouter(pool: Pool): Router {
   return router;
 }
 
-/**
- * Xây dựng danh sách 31 ngày trong Tháng 10/2026 khớp 100% thiết kế SCR-11
- */
+async function getOrCreateActivePrescription(pool: Pool, memberId: string): Promise<string> {
+  const rxRes = await pool.query(
+    `SELECT id FROM prescriptions WHERE member_id = $1 AND status = 'active' LIMIT 1`,
+    [memberId]
+  );
+  if (rxRes.rows[0]?.id) {
+    return rxRes.rows[0].id;
+  }
+  const rxId = `rx_${memberId}_${Date.now()}`;
+  await pool.query(
+    `INSERT INTO prescriptions (id, member_id, diagnosis, prescribed_date, status)
+     VALUES ($1, $2, 'Đơn thuốc cá nhân', CURRENT_DATE, 'active')`,
+    [rxId, memberId]
+  );
+  return rxId;
+}
+
+function computeEffectiveDates(durationMode: string, endDate?: string, startDate?: string) {
+  const effectiveStartDate = startDate || new Date().toISOString().split('T')[0];
+  let effectiveEndDate = endDate;
+  let computedQuantity = 30;
+
+  if (durationMode === '3days') {
+    const d = new Date(effectiveStartDate);
+    d.setDate(d.getDate() + 2);
+    effectiveEndDate = d.toISOString().split('T')[0];
+    computedQuantity = 3;
+  } else if (durationMode === '5days') {
+    const d = new Date(effectiveStartDate);
+    d.setDate(d.getDate() + 4);
+    effectiveEndDate = d.toISOString().split('T')[0];
+    computedQuantity = 5;
+  } else if (durationMode === '1week') {
+    const d = new Date(effectiveStartDate);
+    d.setDate(d.getDate() + 6);
+    effectiveEndDate = d.toISOString().split('T')[0];
+    computedQuantity = 7;
+  } else if (durationMode === 'custom' && endDate) {
+    effectiveEndDate = endDate;
+    const s = new Date(effectiveStartDate).getTime();
+    const e = new Date(endDate).getTime();
+    const diff = Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1);
+    computedQuantity = diff;
+  } else {
+    const d = new Date(effectiveStartDate);
+    d.setDate(d.getDate() + 365);
+    effectiveEndDate = d.toISOString().split('T')[0];
+    computedQuantity = 30;
+  }
+
+  return { effectiveStartDate, effectiveEndDate, computedQuantity };
+}
+
 function buildDynamicCalendarDays(year: number, month: number, todayDay: number) {
   const daysInMonth = new Date(year, month, 0).getDate();
   const missedDays = new Set([3, 9, 14, 22]);

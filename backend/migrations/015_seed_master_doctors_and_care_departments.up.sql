@@ -59,3 +59,4 @@ ON CONFLICT (id) DO UPDATE SET
   appointment_date = EXCLUDED.appointment_date,
   purpose = EXCLUDED.purpose,
   status = EXCLUDED.status;
+

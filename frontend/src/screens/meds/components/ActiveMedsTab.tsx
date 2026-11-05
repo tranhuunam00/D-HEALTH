@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pill, Clock, Plus, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Pill, Clock, Plus, ShieldCheck, Edit3 } from 'lucide-react';
 
 export interface ActiveMedicationItem {
   id: string;
@@ -20,6 +20,7 @@ export interface ActiveMedicationItem {
 interface ActiveMedsTabProps {
   medications: ActiveMedicationItem[];
   onAddMedication: () => void;
+  onEditMedication?: (med: ActiveMedicationItem) => void;
 }
 
 function formatDateDisplay(dateStr?: string): string {
@@ -36,6 +37,7 @@ function formatDateDisplay(dateStr?: string): string {
 export const ActiveMedsTab: React.FC<ActiveMedsTabProps> = ({
   medications,
   onAddMedication,
+  onEditMedication,
 }) => {
   return (
     <div className="flex flex-col gap-3.5">
@@ -43,7 +45,7 @@ export const ActiveMedsTab: React.FC<ActiveMedsTabProps> = ({
       <div className="flex items-center justify-between px-1">
         <div>
           <h3 className="text-sm font-extrabold text-slate-900 leading-tight">
-            Thuốc đang sử dụng
+            Thuốc đang dùng
           </h3>
           <span className="text-xs text-slate-500 font-medium">
             Tất cả các thuốc có lịch nhắc đang hoạt động
@@ -90,7 +92,7 @@ export const ActiveMedsTab: React.FC<ActiveMedsTabProps> = ({
                 key={med.id}
                 className="bg-white rounded-[24px] p-4 shadow-xs border border-slate-100 flex flex-col gap-3 transition"
               >
-                {/* Title & Status */}
+                {/* Title & Status & Edit */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-teal-50 text-[#1F7A8C] flex items-center justify-center shrink-0 mt-0.5">
@@ -106,10 +108,21 @@ export const ActiveMedsTab: React.FC<ActiveMedsTabProps> = ({
                     </div>
                   </div>
 
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-black shrink-0 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span>Đang dùng</span>
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-black shrink-0 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span>Đang dùng</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onEditMedication?.(med)}
+                      className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 active:scale-95 transition"
+                      title="Sửa thuốc (tính từ lúc sửa)"
+                      aria-label="Sửa thuốc"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Schedules & Duration */}
@@ -148,4 +161,3 @@ export const ActiveMedsTab: React.FC<ActiveMedsTabProps> = ({
     </div>
   );
 };
-

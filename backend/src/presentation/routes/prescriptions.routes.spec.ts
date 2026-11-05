@@ -125,7 +125,7 @@ describe('PrescriptionsRoutes TDD', () => {
   describe('POST /doses/:doseId/log', () => {
     it('ghi nhận nhật ký đã uống hoặc bỏ liều thuốc thành công', async () => {
       mockPool.query
-        .mockResolvedValueOnce({ rowCount: 1 }) // delete old log for today
+        .mockResolvedValueOnce({ rowCount: 1 })
         .mockResolvedValueOnce({
           rows: [
             {
@@ -151,9 +151,9 @@ describe('PrescriptionsRoutes TDD', () => {
   describe('POST /:memberId/items (Nhập thuốc thủ công)', () => {
     it('thêm đơn thuốc mới và tạo cữ uống thuốc thành công', async () => {
       mockPool.query
-        .mockResolvedValueOnce({ rows: [{ id: 'rx_nam_01' }] }) // check or get prescription
-        .mockResolvedValueOnce({ rows: [{ id: 'pi_new_1', medication_name: 'Aspirin' }] }) // insert item
-        .mockResolvedValueOnce({ rows: [{ id: 'ds_new_1' }] }); // insert dose schedule
+        .mockResolvedValueOnce({ rows: [{ id: 'rx_nam_01' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'pi_new_1', medication_name: 'Aspirin' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'ds_new_1' }] });
 
       const handler = getHandler('POST', '/:memberId/items');
       const { req, res } = createReqRes({
@@ -198,10 +198,40 @@ describe('PrescriptionsRoutes TDD', () => {
 
       const insertItemCall = mockPool.query.mock.calls[1];
       expect(insertItemCall[0]).toContain('quantity_prescribed');
-      expect(insertItemCall[1][3]).toBe(5); // computedQuantity = 5
-      expect(insertItemCall[1][6]).toBe('2026-10-30'); // 26 + 4 days = 30
+      expect(insertItemCall[1][3]).toBe(5);
+      expect(insertItemCall[1][6]).toBe('2026-10-30');
     });
+  });
 
+  describe('PUT /doses/:doseId (Chỉnh sửa thuốc - tính từ lúc sửa)', () => {
+    it('cập nhật thuốc theo doseId với start_date tính từ hôm nay và tính lại end_date', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'ds_123', prescription_item_id: 'pi_123' }] }) // find schedule
+        .mockResolvedValueOnce({ rows: [{ id: 'pi_123', medication_name: 'NAMTH 1 Updated', dosage: '500 mg' }] }) // update item
+        .mockResolvedValueOnce({ rowCount: 1 }); // update schedule
+
+      const handler = getHandler('PUT', '/doses/:doseId');
+      const { req, res } = createReqRes({
+        params: { doseId: 'ds_123' },
+        body: {
+          medicationName: 'NAMTH 1 Updated',
+          dosage: '500 mg',
+          scheduledTime: '08:30:00',
+          durationMode: '3days',
+        },
+      });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.medication_name).toBe('NAMTH 1 Updated');
+
+      const updateCall = mockPool.query.mock.calls[1];
+      expect(updateCall[0]).toContain('UPDATE prescription_items');
+      const todayStr = new Date().toISOString().split('T')[0];
+      expect(updateCall[1][4]).toBe(todayStr); // effectiveStartDate is today
+    });
   });
 
   describe('POST /:memberId/send-history', () => {
