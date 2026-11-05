@@ -38,20 +38,21 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
           THÔNG TIN Y TẾ
         </span>
         <span className="text-[10px] text-[#1F7A8C] font-semibold bg-[#E0F2FE]/60 px-2 py-0.5 rounded-full">
-          Nhập trực tiếp • Tự tính BMI
+          Chọn nhóm máu & nhập số đo
         </span>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5 pt-1">
-        {/* Nhóm máu */}
+        {/* Nhóm máu (Select Dropdown) */}
         <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100 flex flex-col items-center">
           <label className="text-[11px] font-medium text-slate-500 block mb-1">Nhóm máu</label>
           <div className="relative w-full">
             <select
-              value={bloodType || 'O+'}
+              value={bloodType || ''}
               onChange={(e) => setBloodType(e.target.value)}
-              className="w-full text-sm font-black text-rose-600 bg-white border border-slate-200 rounded-xl px-2 py-1.5 outline-none focus:border-[#1F7A8C] text-center appearance-none cursor-pointer"
+              className="w-full h-9 text-sm font-bold text-rose-600 bg-white border border-slate-200 rounded-xl pl-3 pr-6 py-1 outline-none focus:border-[#1F7A8C] appearance-none cursor-pointer text-center"
             >
+              <option value="">Chọn</option>
               <option value="A+">A+</option>
               <option value="A-">A-</option>
               <option value="B+">B+</option>
@@ -61,7 +62,7 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
               <option value="O+">O+</option>
               <option value="O-">O-</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-1.5 top-2.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-3 pointer-events-none" />
           </div>
         </div>
 
@@ -77,7 +78,7 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
               value={heightCm}
               placeholder="cm"
               onChange={(e) => setHeightCm(e.target.value)}
-              className="w-full text-sm font-black text-slate-900 bg-white border border-slate-200 rounded-xl px-2 py-1.5 outline-none focus:border-[#1F7A8C] text-center"
+              className="w-full h-9 text-sm font-bold text-slate-900 bg-white border border-slate-200 rounded-xl px-2 py-1 outline-none focus:border-[#1F7A8C] text-center"
             />
           </div>
         </div>
@@ -94,7 +95,7 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
               value={weightKg}
               placeholder="kg"
               onChange={(e) => setWeightKg(e.target.value)}
-              className="w-full text-sm font-black text-slate-900 bg-white border border-slate-200 rounded-xl px-2 py-1.5 outline-none focus:border-[#1F7A8C] text-center"
+              className="w-full h-9 text-sm font-bold text-slate-900 bg-white border border-slate-200 rounded-xl px-2 py-1 outline-none focus:border-[#1F7A8C] text-center"
             />
           </div>
         </div>
