@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Calendar } from 'lucide-react';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { useCareLogic } from './useCareLogic';
 import { AppointmentCard } from './components/AppointmentCard';
@@ -72,10 +72,17 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
         ) : (
           <div
             onClick={() => setIsScheduleOpen(true)}
-            className="bg-white rounded-3xl p-4 border border-dashed border-slate-300 text-center text-xs text-slate-500 cursor-pointer hover:bg-slate-50 transition flex items-center justify-between"
+            className="bg-white rounded-3xl p-4.5 border border-dashed border-slate-300 text-xs text-slate-500 cursor-pointer hover:bg-slate-50/80 transition flex items-center justify-between shadow-2xs group"
           >
-            <span>Chưa có lịch khám sắp tới</span>
-            <span className="text-[#1F7A8C] font-extrabold">+ Đặt lịch ngay</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[#1F7A8C]/10 group-hover:text-[#1F7A8C] transition">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-700">Chưa có lịch khám sắp tới</span>
+            </div>
+            <span className="text-[#1F7A8C] font-black hover:underline cursor-pointer">
+              + Đặt lịch ngay
+            </span>
           </div>
         )}
 

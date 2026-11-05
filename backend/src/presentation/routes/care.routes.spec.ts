@@ -96,6 +96,23 @@ describe('CareRoutes TDD', () => {
       expect(output.data.careTeam[2].code).toBe('GD');
       expect(output.data.sharingStats.activeCount).toBe(3);
     });
+
+    it('trả về upcomingAppointment: null khi người dùng chưa đặt lịch khám nào', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const handler = getHandler('GET', '/:memberId/care-summary');
+      const { req, res } = createReqRes({ params: { memberId: 'mem_new_user' } });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.upcomingAppointment).toBeNull();
+      expect(output.data.careTeam).toEqual([]);
+    });
   });
 
   describe('POST /:memberId/send-pre-exam-dossier', () => {

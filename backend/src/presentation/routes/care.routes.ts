@@ -129,22 +129,13 @@ export function createCareRouter(pool: Pool): Router {
 }
 
 async function getUpcomingAppointment(pool: Pool, memberId: string) {
-  let appRes = await pool.query(
+  const appRes = await pool.query(
     `SELECT id, appointment_date, purpose, doctor_name, facility_name
      FROM appointments
      WHERE member_id = $1 AND status = 'scheduled'
      ORDER BY appointment_date ASC LIMIT 1`,
     [memberId]
   );
-
-  if (appRes.rows.length === 0 && memberId !== 'nam') {
-    appRes = await pool.query(
-      `SELECT id, appointment_date, purpose, doctor_name, facility_name
-       FROM appointments
-       WHERE member_id = 'nam' AND status = 'scheduled'
-       ORDER BY appointment_date ASC LIMIT 1`
-    );
-  }
 
   const app = appRes.rows[0];
   if (!app) return null;
