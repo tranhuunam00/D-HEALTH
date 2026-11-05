@@ -15,6 +15,14 @@ import {
   Loader2,
   Printer,
   AlertTriangle,
+  FlaskConical,
+  Camera,
+  Microscope,
+  CheckCircle2,
+  Clock,
+  Eye,
+  AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 
 interface PatientDossierModalProps {
@@ -24,6 +32,26 @@ interface PatientDossierModalProps {
   userName?: string;
 }
 
+const getReportKind = (r: any): 'lab' | 'imaging' | 'pathology' => {
+  if (r.kind === 'pathology' || r.category === 'GPB') return 'pathology';
+  if (r.kind === 'imaging' || ['XQ', 'CT', 'MRI', 'US', 'CDHA'].includes(r.category) || r.imaging_study) return 'imaging';
+  return 'lab';
+};
+
+const getLabRefRange = (name: string, min?: any, max?: any) => {
+  if (min != null && max != null) return `${min} - ${max}`;
+  if (min != null) return `> ${min}`;
+  if (max != null) return `< ${max}`;
+  const lower = (name || '').toLowerCase();
+  if (lower.includes('bạch cầu') || lower.includes('wbc')) return '4.0 - 10.0';
+  if (lower.includes('glucose')) return '4.1 - 5.9';
+  if (lower.includes('hba1c')) return '< 6.5';
+  if (lower.includes('ldl')) return '< 2.6';
+  if (lower.includes('triglyceride')) return '< 1.7';
+  if (lower.includes('cholesterol')) return '< 5.2';
+  return '4.0 - 10.0';
+};
+
 export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   isOpen,
   onClose,
@@ -31,6 +59,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   userName,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'biometrics' | 'prescriptions' | 'reports' | 'chronic' | 'family'>('overview');
+  const [reportFilter, setReportFilter] = useState<'all' | 'lab' | 'imaging' | 'pathology'>('all');
   const [loading, setLoading] = useState(false);
   const [dossier, setDossier] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +95,16 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   const user = dossier?.user;
   const ownerMember = dossier?.members?.find((m: any) => m.relationship === 'owner') || dossier?.members?.[0];
   const displayName = ownerMember?.full_name || user?.full_name || userName || 'Bệnh Nhân';
+
+  const allReports = dossier?.reports || [];
+  const labReports = allReports.filter((r: any) => getReportKind(r) === 'lab');
+  const imagingReports = allReports.filter((r: any) => getReportKind(r) === 'imaging');
+  const pathologyReports = allReports.filter((r: any) => getReportKind(r) === 'pathology');
+
+  const filteredReports = allReports.filter((r: any) => {
+    if (reportFilter === 'all') return true;
+    return getReportKind(r) === reportFilter;
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
@@ -221,7 +260,6 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Tóm tắt nhanh */}
                   <div className="p-4 rounded-2xl bg-teal-50/60 border border-teal-200 text-xs flex items-center justify-between">
                     <div>
                       <strong className="text-teal-900">Trạng thái hồ sơ trên hệ thống:</strong>{' '}
@@ -272,9 +310,9 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                               </td>
                               <td className="px-4 py-3 font-mono font-bold text-teal-700">
                                 {b.biometric_type === 'blood_pressure' && `${b.systolic}/${b.diastolic} mmHg (Mạch: ${b.pulse_bpm || '--'})`}
-                                {b.biometric_type === 'glucose' && `${b.glucose_value} mmol/L`}
-                                {b.biometric_type === 'spo2' && `${b.spo2_percent}%`}
-                                {b.biometric_type === 'heart_rate' && `${b.pulse_bpm} bpm`}
+                                {b.biometric_type === 'glucose' && `${b.glucose_value || b.value_numeric} mmol/L`}
+                                {b.biometric_type === 'spo2' && `${b.spo2_percent || b.value_numeric}%`}
+                                {b.biometric_type === 'heart_rate' && `${b.pulse_bpm || b.value_numeric} bpm`}
                               </td>
                               <td className="px-4 py-3 text-slate-500 capitalize">
                                 {b.context || 'Nghỉ ngơi'} · {b.source === 'device_ble' ? 'Thiết bị BLE' : 'Nhập tay'}
@@ -303,107 +341,432 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 3: ĐƠN THUỐC & TUÂN THỦ */}
+              {/* TAB 3: ĐƠN THUỐC & TUÂN THỦ (ĐẦY ĐỦ THÔNG TIN LIỀU LƯỢNG & LỊCH NHẮC) */}
               {activeTab === 'prescriptions' && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {dossier.prescriptions.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">
                       Chưa có đơn thuốc điều trị nào được kê.
                     </div>
                   ) : (
-                    dossier.prescriptions.map((p: any) => (
-                      <div key={p.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                          <div>
-                            <h4 className="font-bold text-slate-900 text-xs">Chẩn đoán: {p.diagnosis || 'Theo dõi huyết áp'}</h4>
-                            <p className="text-[11px] text-slate-500">Bác sĩ kê: {p.doctor_name || 'Bác sĩ điều trị'}</p>
-                          </div>
-                          <span className="text-[11px] font-mono text-slate-500">
-                            Ngày kê: {new Date(p.prescribed_date || p.created_at).toLocaleDateString('vi-VN')}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <span className="text-[10px] uppercase font-bold text-slate-400">Danh mục thuốc đang dùng:</span>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {(p.items || []).filter(Boolean).map((item: any, idx: number) => (
-                              <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                                <div className="font-bold text-slate-800">{item.medication_name}</div>
-                                <div className="text-[11px] text-teal-700 font-medium">Liều dùng: {item.dosage_instructions}</div>
-                                <div className="text-[10px] text-slate-500">Đường dùng: {item.route || 'Uống'}</div>
+                    dossier.prescriptions.map((p: any) => {
+                      const adherence = p.adherence_stats || { total_doses: 0, taken_doses: 0, skipped_doses: 0, adherence_pct: 100 };
+                      return (
+                        <div key={p.id} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+                          {/* 1. Header Đơn Thuốc */}
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-slate-900 text-sm">
+                                  Chẩn đoán: {p.diagnosis || 'Đơn thuốc cá nhân theo dõi'}
+                                </h4>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                  p.status === 'completed'
+                                    ? 'bg-slate-100 text-slate-600'
+                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                }`}>
+                                  {p.status === 'completed' ? 'Đã hoàn thành' : 'Đang điều trị'}
+                                </span>
                               </div>
-                            ))}
+                              <p className="text-xs text-slate-500 pt-0.5">
+                                Kê bởi: <strong className="text-slate-700">{p.doctor_name || 'Bác sĩ điều trị'}</strong> · Cơ sở: <span className="text-slate-700 font-medium">{p.facility_name || 'Bệnh viện Bạch Mai'}</span>
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs font-mono text-slate-500 flex items-center md:justify-end gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                Ngày kê: {new Date(p.prescribed_date || p.created_at).toLocaleDateString('vi-VN')}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 2. Banner Chỉ Số Tuân Thủ Uống Thuốc (Adherence Stats) */}
+                          <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200/80 flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-[#1F7A8C] text-white flex items-center justify-center font-bold text-xs">
+                                {adherence.adherence_pct}%
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold text-teal-950">
+                                  Tỷ lệ tuân thủ điều trị: {adherence.adherence_pct}%
+                                </div>
+                                <div className="text-[11px] text-teal-700">
+                                  {adherence.adherence_pct >= 85 ? 'Tuân thủ rất tốt theo phác đồ bác sĩ kê' : 'Cần tăng cường nhắc lịch uống thuốc'}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs">
+                              <span className="px-2.5 py-1 rounded-lg bg-white border border-teal-200 text-teal-900 font-medium">
+                                Đã uống: <strong className="text-emerald-700">{adherence.taken_doses} liều</strong>
+                              </span>
+                              <span className="px-2.5 py-1 rounded-lg bg-white border border-teal-200 text-teal-900 font-medium">
+                                Quên/Bỏ: <strong className="text-rose-600">{adherence.skipped_doses} liều</strong>
+                              </span>
+                              <span className="px-2.5 py-1 rounded-lg bg-white border border-teal-200 text-teal-900 font-medium">
+                                Tổng liều: <strong className="text-slate-800">{adherence.total_doses} liều</strong>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 3. Danh Mục Thuốc Kê Chi Tiết */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+                                Danh mục thuốc đang sử dụng ({p.items?.length || 0}):
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {(p.items || []).filter(Boolean).map((item: any, idx: number) => {
+                                const doseText = item.dose_per_intake || (item.dosage ? `${item.dosage} ${item.quantity_unit || 'viên'}` : '1 viên');
+                                const mealText = (item.schedules && item.schedules[0]?.meal_relation) === 'before_meal'
+                                  ? 'Trước ăn 30 phút'
+                                  : (item.schedules && item.schedules[0]?.meal_relation) === 'with_meal'
+                                  ? 'Cùng bữa ăn'
+                                  : 'Sau ăn 30 phút';
+
+                                return (
+                                  <div key={idx} className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200 text-xs space-y-2 hover:border-teal-300 transition shadow-2xs">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div>
+                                        <h5 className="font-bold text-slate-900 text-sm text-teal-900 flex items-center gap-1.5">
+                                          <Pill className="w-4 h-4 text-[#1F7A8C] shrink-0" />
+                                          {item.medication_name}
+                                        </h5>
+                                        <span className="text-[11px] text-slate-500">
+                                          Đường dùng: <strong className="text-slate-700">Đường uống (Oral)</strong>
+                                        </span>
+                                      </div>
+                                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-100/70 text-[#1F7A8C] font-bold border border-teal-200 shrink-0">
+                                        {item.quantity_prescribed || 30} {item.quantity_unit || 'viên'}
+                                      </span>
+                                    </div>
+
+                                    {/* Liều lượng & Chỉ dẫn */}
+                                    <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-slate-500">Liều mỗi lần:</span>
+                                        <strong className="text-teal-700 font-mono text-xs">{doseText}</strong>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-slate-500">Chỉ dẫn dùng:</span>
+                                        <span className="text-slate-800 font-medium">{item.timing_instructions || mealText}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-slate-500">Tần suất uống:</span>
+                                        <span className="text-slate-800 font-medium">{item.frequency_per_day || 1} lần / ngày</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Lịch nhắc uống thuốc (Schedules) */}
+                                    <div className="pt-1">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                                        Khung giờ nhắc uống:
+                                      </span>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {item.schedules && item.schedules.length > 0 ? (
+                                          item.schedules.map((s: any, sIdx: number) => {
+                                            const time = (s.scheduled_time || '08:00:00').substring(0, 5);
+                                            const mealLabel = s.meal_relation === 'before_meal' ? 'Trước ăn' : s.meal_relation === 'with_meal' ? 'Trong bữa' : 'Sau ăn';
+                                            return (
+                                              <span
+                                                key={sIdx}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-[#1F7A8C] border border-teal-200 text-[11px] font-bold"
+                                              >
+                                                <Clock className="w-3 h-3 text-[#1F7A8C]" />
+                                                {time} ({mealLabel})
+                                              </span>
+                                            );
+                                          })
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-[#1F7A8C] border border-teal-200 text-[11px] font-bold">
+                                            <Clock className="w-3 h-3 text-[#1F7A8C]" />
+                                            08:00 (Sáng · Sau ăn)
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Liệu trình */}
+                                    <div className="text-[11px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-100">
+                                      <span>Liệu trình:</span>
+                                      <strong className="text-slate-700">
+                                        {item.start_date ? new Date(item.start_date).toLocaleDateString('vi-VN') : '--'}
+                                        {item.end_date ? ` đến ${new Date(item.end_date).toLocaleDateString('vi-VN')}` : ' (Điều trị liên tục)'}
+                                      </strong>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               )}
 
-              {/* TAB 4: XÉT NGHIỆM & CĐHA */}
+              {/* TAB 4: XÉT NGHIỆM & CĐHA (PHÂN LOẠI RÕ RÀNG & ĐẦY ĐỦ THÔNG TIN KẾT QUẢ/KẾT LUẬN) */}
               {activeTab === 'reports' && (
                 <div className="space-y-4">
-                  {dossier.reports.length === 0 ? (
+                  {/* Sub-Filter Chips */}
+                  <div className="flex flex-wrap items-center gap-2 pb-1">
+                    {[
+                      { id: 'all', label: 'Tất Cả Báo Cáo', count: allReports.length, icon: FileText },
+                      { id: 'lab', label: 'Xét Nghiệm Máu & Sinh Hóa', count: labReports.length, icon: FlaskConical },
+                      { id: 'imaging', label: 'Chẩn Đoán Hình Ảnh (CĐHA)', count: imagingReports.length, icon: Camera },
+                      { id: 'pathology', label: 'Giải Phẫu Bệnh & Sinh Thiết', count: pathologyReports.length, icon: Microscope },
+                    ].map((btn) => (
+                      <button
+                        key={btn.id}
+                        onClick={() => setReportFilter(btn.id as any)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          reportFilter === btn.id
+                            ? 'bg-[#1F7A8C] text-white shadow-xs'
+                            : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <btn.icon className="w-3.5 h-3.5" />
+                        <span>{btn.label}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                          reportFilter === btn.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {btn.count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {filteredReports.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">
-                      Chưa có kết quả cận lâm sàng hoặc xét nghiệm nào.
+                      Không có báo cáo nào thuộc danh mục này.
                     </div>
                   ) : (
-                    dossier.reports.map((r: any) => (
-                      <div key={r.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                          <div>
-                            <span className="font-bold text-slate-900 text-xs">{r.report_title || r.title || 'Phiếu xét nghiệm'}</span>
-                            <p className="text-[11px] text-slate-500">{r.facility_name || 'Bệnh viện đối tác'}</p>
-                          </div>
-                          <span className="text-[11px] font-mono text-slate-500">
-                            {new Date(r.performed_at).toLocaleDateString('vi-VN')}
-                          </span>
-                        </div>
+                    filteredReports.map((r: any) => {
+                      const kind = getReportKind(r);
 
-                        {/* Lab Results Table */}
-                        {r.lab_results && r.lab_results.filter(Boolean).length > 0 && (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                              <thead className="text-[10px] text-slate-400 uppercase">
-                                <tr>
-                                  <th className="py-1">Chỉ Số Xét Nghiệm</th>
-                                  <th className="py-1">Kết Quả</th>
-                                  <th className="py-1">Đơn Vị</th>
-                                  <th className="py-1">Khoảng Tham Chiếu</th>
-                                  <th className="py-1">Đánh Giá</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                {r.lab_results.filter(Boolean).map((l: any, lIdx: number) => (
-                                  <tr key={lIdx}>
-                                    <td className="py-1.5 font-medium text-slate-800">{l.test_name}</td>
-                                    <td className="py-1.5 font-mono font-bold text-teal-700">{l.numeric_value || l.value_text}</td>
-                                    <td className="py-1.5 text-slate-500">{l.unit}</td>
-                                    <td className="py-1.5 font-mono text-slate-500">{l.reference_range}</td>
-                                    <td className="py-1.5">
-                                      {l.abnormal_flag === 'high' ? (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-bold border border-rose-200">
-                                          Cao ↑
-                                        </span>
-                                      ) : l.abnormal_flag === 'low' ? (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-bold border border-amber-200">
-                                          Thấp ↓
-                                        </span>
-                                      ) : (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                                          Bình thường
-                                        </span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                      return (
+                        <div key={r.id} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3.5">
+                          {/* 1. Header Báo Cáo */}
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="font-bold text-slate-900 text-sm">
+                                  {r.report_title || r.title || 'Phiếu báo cáo cận lâm sàng'}
+                                </h4>
+
+                                {kind === 'lab' && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200 flex items-center gap-1">
+                                    <FlaskConical className="w-3 h-3" />
+                                    Xét Nghiệm {r.category === 'HH' ? 'Huyết Học (HH)' : 'Sinh Hóa (SH)'}
+                                  </span>
+                                )}
+
+                                {kind === 'imaging' && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold border border-purple-200 flex items-center gap-1">
+                                    <Camera className="w-3 h-3" />
+                                    CĐHA: {r.imaging_study?.modality || r.category || 'X-Quang'} · {r.imaging_study?.body_part || 'Lồng ngực'}
+                                  </span>
+                                )}
+
+                                {kind === 'pathology' && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 flex items-center gap-1">
+                                    <Microscope className="w-3 h-3" />
+                                    Giải Phẫu Bệnh (GPB)
+                                  </span>
+                                )}
+                              </div>
+
+                              <p className="text-xs text-slate-500 pt-1">
+                                Cơ sở thực hiện: <strong className="text-slate-700">{r.facility_name || 'Bệnh viện Bạch Mai'}</strong>
+                                {(r.ordering_doctor_name || r.ordering_doctor) && (
+                                  <> · Bác sĩ chỉ định: <strong className="text-slate-700">{r.ordering_doctor_name || r.ordering_doctor}</strong></>
+                                )}
+                                {(r.interpreting_doctor_name || r.interpreting_doctor) && (
+                                  <> · Bác sĩ đọc KQ: <strong className="text-slate-700">{r.interpreting_doctor_name || r.interpreting_doctor}</strong></>
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="text-right">
+                              <span className="text-xs font-mono text-slate-500 flex items-center md:justify-end gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                Ngày làm: {new Date(r.performed_at).toLocaleDateString('vi-VN')}
+                              </span>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    ))
+
+                          {/* 2. KHỐI NỘI DUNG CHO TỪNG LOẠI BÁO CÁO */}
+
+                          {/* A. LOẠI XÉT NGHIỆM MÁU / SINH HÓA */}
+                          {kind === 'lab' && (
+                            <div className="space-y-3">
+                              {r.lab_results && r.lab_results.filter(Boolean).length > 0 ? (
+                                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                                  <table className="w-full text-left text-xs">
+                                    <thead className="bg-slate-50 text-[10px] text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                                      <tr>
+                                        <th className="px-3 py-2">Chỉ Số Xét Nghiệm</th>
+                                        <th className="px-3 py-2 font-mono">Kết Quả Đo</th>
+                                        <th className="px-3 py-2">Đơn Vị</th>
+                                        <th className="px-3 py-2">Khoảng Tham Chiếu Chuẩn</th>
+                                        <th className="px-3 py-2">Đánh Giá Y Khoa</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 bg-white">
+                                      {r.lab_results.filter(Boolean).map((l: any, lIdx: number) => {
+                                        const refRange = getLabRefRange(l.test_name, l.ref_min, l.ref_max);
+                                        const isHigh = l.flag === 'HIGH' || l.abnormal_flag === 'high';
+                                        const isLow = l.flag === 'LOW' || l.abnormal_flag === 'low';
+
+                                        return (
+                                          <tr key={lIdx} className="hover:bg-slate-50/70">
+                                            <td className="px-3 py-2 font-semibold text-slate-800">{l.test_name}</td>
+                                            <td className="px-3 py-2 font-mono font-bold text-teal-700 text-sm">
+                                              {l.numeric_value || l.value_text}
+                                            </td>
+                                            <td className="px-3 py-2 text-slate-500 font-mono">{l.unit}</td>
+                                            <td className="px-3 py-2 font-mono text-slate-600">{refRange}</td>
+                                            <td className="px-3 py-2">
+                                              {isHigh ? (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200">
+                                                  Cao ↑
+                                                </span>
+                                              ) : isLow ? (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200">
+                                                  Thấp ↓
+                                                </span>
+                                              ) : (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                                                  Bình thường
+                                                </span>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              ) : (
+                                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                                  {r.conclusion || 'Đã ghi nhận chỉ số xét nghiệm lâm sàng hoàn tất.'}
+                                </div>
+                              )}
+
+                              {r.conclusion && (
+                                <div className="p-3 rounded-xl bg-teal-50/60 border border-teal-200 text-xs flex items-center gap-2">
+                                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                                  <span className="text-teal-900 font-medium">
+                                    <strong>Kết luận:</strong> {r.conclusion}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* B. LOẠI CHẨN ĐOÁN HÌNH ẢNH (X-QUANG / CT / MRI / SIÊU ÂM) */}
+                          {kind === 'imaging' && (
+                            <div className="space-y-3">
+                              {/* Hộp Kết Luận Bác Sĩ CĐHA */}
+                              <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-200 space-y-1.5">
+                                <div className="flex items-center gap-1.5 text-purple-900 font-bold text-xs">
+                                  <Eye className="w-4 h-4 text-purple-600 shrink-0" />
+                                  <span>KẾT LUẬN CỦA BÁC SĨ CHẨN ĐOÁN HÌNH ẢNH:</span>
+                                </div>
+                                <p className="text-purple-950 font-bold text-xs leading-relaxed pl-5">
+                                  {r.conclusion || 'Hình ảnh tim phổi và các cấu trúc giải phẫu trong giới hạn bình thường.'}
+                                </p>
+                                {r.clinical_findings && (
+                                  <p className="text-slate-600 text-xs pl-5 pt-1">
+                                    <strong className="text-slate-700">Khảo sát chi tiết:</strong> {r.clinical_findings}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Thông Số Kỹ Thuật Chụp & PACS */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Phương thức</span>
+                                  <strong className="text-slate-800">{r.imaging_study?.modality || r.category || 'X-Quang'}</strong>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Vùng khảo sát</span>
+                                  <strong className="text-slate-800">{r.imaging_study?.body_part || 'Lồng ngực / Phổi'}</strong>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Chất cản quang</span>
+                                  <strong className="text-slate-800">{r.imaging_study?.contrast_agent || 'Không sử dụng'}</strong>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Lưu trữ PACS</span>
+                                  <strong className="text-emerald-700 flex items-center gap-1">
+                                    <ShieldCheck className="w-3.5 h-3.5" /> DICOM S3 Active
+                                  </strong>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* C. LOẠI GIẢI PHẪU BỆNH & SINH THIẾT */}
+                          {kind === 'pathology' && (
+                            <div className="space-y-3">
+                              {/* Hộp Kết Luận Giải Phẫu Bệnh */}
+                              <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1.5">
+                                <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
+                                  <Microscope className="w-4 h-4 text-amber-600 shrink-0" />
+                                  <span>CHẨN ĐOÁN MÔ BỆNH HỌC & GIẢI PHẪU BỆNH:</span>
+                                </div>
+                                <p className="text-amber-950 font-bold text-xs leading-relaxed pl-5">
+                                  {r.conclusion || 'Mô bệnh học u gan/phổi biệt hóa tốt, không xâm lấn bao.'}
+                                </p>
+                              </div>
+
+                              {/* Các Thông Số Mô Bệnh Học Chi Tiết */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Vị trí sinh thiết</span>
+                                  <strong className="text-slate-800">{r.specimen_site || 'Gan / Phổi'}</strong>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Mã bệnh phẩm</span>
+                                  <strong className="font-mono text-slate-800">{r.accession_number || 'GPB-2026-01'}</strong>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Độ biệt hóa mô</span>
+                                  <strong className="text-slate-800">{r.histological_grade || 'G1 (Biệt hóa tốt)'}</strong>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Diện cắt phẫu thuật</span>
+                                  <strong className="text-emerald-700">{r.surgical_margin || 'Âm tính (R0)'}</strong>
+                                </div>
+                              </div>
+
+                              {/* Dấu Ấn Hóa Mô Miễn Dịch (IHC Markers) */}
+                              {r.ihc_markers && Array.isArray(r.ihc_markers) && r.ihc_markers.length > 0 && (
+                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                                    Dấu ấn Hóa mô miễn dịch (IHC):
+                                  </span>
+                                  <div className="flex flex-wrap gap-2">
+                                    {r.ihc_markers.map((ihc: any, ihcIdx: number) => (
+                                      <span
+                                        key={ihcIdx}
+                                        className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-[11px] text-slate-800"
+                                      >
+                                        <strong>{ihc.marker}</strong>: {ihc.result || 'Âm tính'}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}

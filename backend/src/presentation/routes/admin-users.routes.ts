@@ -397,20 +397,77 @@ export function createAdminUsersRouter(pool: Pool): Router {
           [memberIds]
         ),
         pool.query(
-          `SELECT r.*, json_agg(l.*) AS lab_results 
+          `SELECT 
+            r.*,
+            COALESCE(
+              (SELECT json_agg(l.*) FROM lab_results l WHERE l.report_id = r.id),
+              '[]'::json
+            ) AS lab_results,
+            (SELECT row_to_json(s.*) FROM imaging_studies s WHERE s.report_id = r.id LIMIT 1) AS imaging_study
            FROM clinical_reports r 
-           LEFT JOIN lab_results l ON r.id = l.report_id 
            WHERE r.member_id = ANY($1) 
-           GROUP BY r.id 
            ORDER BY r.performed_at DESC`,
           [memberIds]
         ),
         pool.query(
-          `SELECT p.*, json_agg(i.*) AS items 
+          `SELECT 
+            p.*,
+            COALESCE(f.name, p.facility_id, 'Phòng khám Ngoại trú') AS facility_name,
+            COALESCE(d.full_name, p.doctor_id, 'BS. Điều trị') AS doctor_name,
+            COALESCE(
+              (
+                SELECT json_agg(
+                  json_build_object(
+                    'id', i.id,
+                    'medication_id', i.medication_id,
+                    'medication_name', i.medication_name,
+                    'dosage', i.dosage,
+                    'dose_per_intake', i.dose_per_intake,
+                    'quantity_prescribed', i.quantity_prescribed,
+                    'quantity_unit', i.quantity_unit,
+                    'frequency_per_day', i.frequency_per_day,
+                    'timing_instructions', i.timing_instructions,
+                    'start_date', i.start_date,
+                    'end_date', i.end_date,
+                    'schedules', COALESCE(
+                      (
+                        SELECT json_agg(
+                          json_build_object(
+                            'id', s.id,
+                            'scheduled_time', s.scheduled_time,
+                            'meal_relation', s.meal_relation,
+                            'is_active', s.is_active
+                          )
+                        )
+                        FROM dose_schedules s
+                        WHERE s.prescription_item_id = i.id
+                      ),
+                      '[]'::json
+                    )
+                  )
+                )
+                FROM prescription_items i
+                WHERE i.prescription_id = p.id
+              ),
+              '[]'::json
+            ) AS items,
+            (
+              SELECT json_build_object(
+                'total_doses', COUNT(l.id),
+                'taken_doses', COUNT(CASE WHEN l.status = 'taken' THEN 1 END),
+                'skipped_doses', COUNT(CASE WHEN l.status = 'skipped' THEN 1 END),
+                'adherence_pct', CASE WHEN COUNT(l.id) > 0 THEN ROUND((COUNT(CASE WHEN l.status = 'taken' THEN 1 END)::numeric / COUNT(l.id)::numeric) * 100) ELSE 100 END
+              )
+              FROM dose_schedules s
+              JOIN prescription_items i ON s.prescription_item_id = i.id
+              LEFT JOIN dose_logs l ON l.schedule_id = s.id
+              WHERE i.prescription_id = p.id
+            ) AS adherence_stats
            FROM prescriptions p 
-           LEFT JOIN prescription_items i ON p.id = i.prescription_id 
+           LEFT JOIN master_facilities f ON p.facility_id = f.id
+           LEFT JOIN master_doctors d ON p.doctor_id = d.id
            WHERE p.member_id = ANY($1) 
-           GROUP BY p.id`,
+           ORDER BY p.prescribed_date DESC`,
           [memberIds]
         ),
         pool.query(

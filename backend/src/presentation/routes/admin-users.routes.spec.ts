@@ -221,8 +221,28 @@ describe('AdminUsersRoutes', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'bio_1', systolic: 120, diastolic: 80 }] }) // biometrics
         .mockResolvedValueOnce({ rows: [{ id: 'cond_1', condition_name: 'Tim mạch' }] }) // conditions
         .mockResolvedValueOnce({ rows: [{ id: 'task_1', title: 'Đo huyết áp' }] }) // tasks
-        .mockResolvedValueOnce({ rows: [{ id: 'rep_1', report_type: 'blood_test' }] }) // reports
-        .mockResolvedValueOnce({ rows: [{ id: 'rx_1', diagnosis: 'Tăng huyết áp' }] }) // prescriptions
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'rep_1',
+              kind: 'imaging',
+              title: 'Báo cáo XQ Phổi',
+              conclusion: 'Bình thường',
+              lab_results: [],
+              imaging_study: { modality: 'XR', body_part: 'Phổi' },
+            },
+          ],
+        }) // reports
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'rx_1',
+              diagnosis: 'Tăng huyết áp',
+              items: [{ medication_name: 'Amlodipine', dosage: '5 mg', timing_instructions: '1 viên · sáng' }],
+              adherence_stats: { adherence_pct: 100 },
+            },
+          ],
+        }) // prescriptions
         .mockResolvedValueOnce({ rows: [{ id: 'grant_1', grantee_name: 'BS B' }] }); // care team
 
       const handler = getHandler('GET', '/:id/dossier');
@@ -236,6 +256,10 @@ describe('AdminUsersRoutes', () => {
       expect(output.data.biometrics.length).toBe(1);
       expect(output.data.conditions.length).toBe(1);
       expect(output.data.reports.length).toBe(1);
+      expect(output.data.reports[0].conclusion).toBe('Bình thường');
+      expect(output.data.prescriptions.length).toBe(1);
+      expect(output.data.prescriptions[0].items[0].medication_name).toBe('Amlodipine');
+      expect(output.data.prescriptions[0].adherence_stats.adherence_pct).toBe(100);
     });
   });
 });
