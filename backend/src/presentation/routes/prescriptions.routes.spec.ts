@@ -86,7 +86,9 @@ describe('PrescriptionsRoutes TDD', () => {
     it('trả về tỷ lệ tuân thủ 91%, tổng số liều và số ngày động theo tháng trong lịch', async () => {
       mockPool.query
         .mockResolvedValueOnce({ rows: [{ count: '4' }] })
-        .mockResolvedValueOnce({ rows: [{ id: 'ds_1', status: 'taken' }, { id: 'ds_2', status: 'pending' }] });
+        .mockResolvedValueOnce({ rows: [{ id: 'ds_1', status: 'taken' }, { id: 'ds_2', status: 'pending' }] })
+        .mockResolvedValueOnce({ rows: [{ taken_count: '109', missed_count: '7', skipped_count: '4' }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       const handler = getHandler('GET', '/:memberId/adherence-summary');
       const { req, res } = createReqRes({ params: { memberId: 'nam' } });
@@ -107,7 +109,9 @@ describe('PrescriptionsRoutes TDD', () => {
     it('hỗ trợ query year và month để trả về đúng số ngày của tháng được chọn (ví dụ Tháng 10/2026 có 31 ngày)', async () => {
       mockPool.query
         .mockResolvedValueOnce({ rows: [{ count: '4' }] })
-        .mockResolvedValueOnce({ rows: [{ id: 'ds_1', status: 'taken' }] });
+        .mockResolvedValueOnce({ rows: [{ id: 'ds_1', status: 'taken' }] })
+        .mockResolvedValueOnce({ rows: [{ taken_count: '10', missed_count: '0', skipped_count: '0' }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       const handler = getHandler('GET', '/:memberId/adherence-summary');
       const { req, res } = createReqRes({ params: { memberId: 'nam' }, query: { year: '2026', month: '10' } });

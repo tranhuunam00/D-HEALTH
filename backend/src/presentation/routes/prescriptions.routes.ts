@@ -124,6 +124,29 @@ export function createPrescriptionsRouter(pool: Pool): Router {
       const actualTodayTotal = todayDosesRes.rows.length;
       const actualTodayTaken = todayDosesRes.rows.filter((r) => r.status === 'taken').length;
 
+      // Query 30-day adherence statistics dynamically from dose_logs
+      const logs30dRes = await pool.query(
+        `SELECT 
+           COUNT(CASE WHEN dl.status = 'taken' THEN 1 END) AS taken_count,
+           COUNT(CASE WHEN dl.status = 'missed' THEN 1 END) AS missed_count,
+           COUNT(CASE WHEN dl.status = 'skipped' THEN 1 END) AS skipped_count
+         FROM dose_logs dl
+         JOIN dose_schedules ds ON dl.schedule_id = ds.id
+         JOIN prescription_items pi ON ds.prescription_item_id = pi.id
+         JOIN prescriptions p ON pi.prescription_id = p.id
+         WHERE (p.member_id = $1 OR p.member_id = $2)
+           AND dl.scheduled_at >= CURRENT_DATE - INTERVAL '30 days'`,
+        [memberId, resolvedMemberId]
+      );
+
+      const takenCount = parseInt(logs30dRes.rows[0]?.taken_count || '0', 10);
+      const missedCount = parseInt(logs30dRes.rows[0]?.missed_count || '0', 10);
+      const skippedCount = parseInt(logs30dRes.rows[0]?.skipped_count || '0', 10);
+      const totalRecordedDoses = takenCount + missedCount + skippedCount;
+      const adherencePercent = totalRecordedDoses > 0
+        ? Math.round((takenCount / totalRecordedDoses) * 100)
+        : 100;
+
       const { year, month } = req.query;
       const now = new Date();
       const targetYear = typeof year === 'string' && /^[0-9]{4}$/.test(year) ? parseInt(year, 10) : now.getFullYear();
@@ -131,15 +154,28 @@ export function createPrescriptionsRouter(pool: Pool): Router {
       const isCurrentMonth = targetYear === now.getFullYear() && targetMonth === (now.getMonth() + 1);
       const todayDay = isCurrentMonth ? now.getDate() : -1;
 
-      const calendarDays = buildDynamicCalendarDays(targetYear, targetMonth, todayDay);
+      // Query month logs for dynamic calendar
+      const monthLogsRes = await pool.query(
+        `SELECT EXTRACT(DAY FROM dl.scheduled_at)::int AS day_num, dl.status
+         FROM dose_logs dl
+         JOIN dose_schedules ds ON dl.schedule_id = ds.id
+         JOIN prescription_items pi ON ds.prescription_item_id = pi.id
+         JOIN prescriptions p ON pi.prescription_id = p.id
+         WHERE (p.member_id = $1 OR p.member_id = $2)
+           AND EXTRACT(YEAR FROM dl.scheduled_at) = $3
+           AND EXTRACT(MONTH FROM dl.scheduled_at) = $4`,
+        [memberId, resolvedMemberId, targetYear, targetMonth]
+      );
+
+      const calendarDays = buildDynamicCalendarDays(targetYear, targetMonth, todayDay, monthLogsRes.rows);
 
       return res.json({
         success: true,
         data: {
-          adherencePercent: 91,
-          takenCount: 109,
-          missedCount: 7,
-          skippedCount: 4,
+          adherencePercent,
+          takenCount,
+          missedCount,
+          skippedCount,
           todayTaken: actualTodayTaken,
           todayTotal: actualTodayTotal,
           month: targetMonth,
@@ -409,10 +445,15 @@ function computeEffectiveDates(durationMode: string, endDate?: string, startDate
   return { effectiveStartDate, effectiveEndDate, computedQuantity };
 }
 
-function buildDynamicCalendarDays(year: number, month: number, todayDay: number) {
+function buildDynamicCalendarDays(year: number, month: number, todayDay: number, monthLogs: any[] = []) {
   const daysInMonth = new Date(year, month, 0).getDate();
-  const missedDays = new Set([3, 9, 14, 22]);
-  const skippedDays = new Set([6, 11, 19]);
+  const logsByDay = new Map<number, string[]>();
+  for (const log of monthLogs) {
+    const day = log.day_num;
+    if (!logsByDay.has(day)) logsByDay.set(day, []);
+    logsByDay.get(day)!.push(log.status);
+  }
+
   const days = [];
 
   for (let d = 1; d <= daysInMonth; d++) {
@@ -421,10 +462,15 @@ function buildDynamicCalendarDays(year: number, month: number, todayDay: number)
       status = 'today';
     } else if (todayDay !== -1 && d > todayDay) {
       status = 'scheduled';
-    } else if (missedDays.has(d)) {
-      status = 'missed';
-    } else if (skippedDays.has(d)) {
-      status = 'skipped';
+    } else if (logsByDay.has(d)) {
+      const dayStatuses = logsByDay.get(d)!;
+      if (dayStatuses.includes('skipped')) {
+        status = 'skipped';
+      } else if (dayStatuses.includes('missed')) {
+        status = 'missed';
+      } else {
+        status = 'full';
+      }
     } else {
       status = 'full';
     }
