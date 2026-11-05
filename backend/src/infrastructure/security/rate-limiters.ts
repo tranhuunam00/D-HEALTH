@@ -6,15 +6,16 @@ import rateLimit from 'express-rate-limit';
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 5, // Tối đa 5 lần thử
+  max: 100000, // Tạm thời bỏ limit cho dev/testing
+  skip: () => true, // Tạm thời bypass rate limit theo yêu cầu
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // Chỉ tính các lần đăng nhập thất bại
+  skipSuccessfulRequests: true,
   message: {
     success: false,
     error: {
       code: 'AUTH_RATE_LIMIT_EXCEEDED',
-      message: 'Bạn đã thử đăng nhập quá nhiều lần (tối đa 5 lần). Vui lòng đợi 15 phút để thử lại.',
+      message: 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng đợi 15 phút để thử lại.',
     },
   },
 });
