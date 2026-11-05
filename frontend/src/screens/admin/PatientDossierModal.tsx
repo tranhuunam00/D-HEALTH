@@ -686,24 +686,30 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                                 )}
                               </div>
 
-                              {/* Thông Số Kỹ Thuật Chụp & PACS */}
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                              {/* Thông tin phương tiện & vị trí thực tế */}
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
                                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Phương thức</span>
-                                  <strong className="text-slate-800">{r.imaging_study?.modality || r.category || 'X-Quang'}</strong>
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Phương tiện chẩn đoán</span>
+                                  <strong className="text-slate-800">
+                                    {r.imaging_study?.modality === 'CT'
+                                      ? 'Cắt lớp vi tính (CT)'
+                                      : r.imaging_study?.modality === 'MRI'
+                                      ? 'Cộng hưởng từ (MRI)'
+                                      : r.imaging_study?.modality === 'SA'
+                                      ? 'Siêu âm (SA)'
+                                      : r.imaging_study?.modality === 'MM'
+                                      ? 'Nhũ ảnh (MM)'
+                                      : r.imaging_study?.modality || r.category || 'X-quang (XQ)'}
+                                  </strong>
                                 </div>
                                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Vùng khảo sát</span>
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Vị trí / Bộ phận</span>
                                   <strong className="text-slate-800">{r.imaging_study?.body_part || 'Lồng ngực / Phổi'}</strong>
                                 </div>
                                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Chất cản quang</span>
-                                  <strong className="text-slate-800">{r.imaging_study?.contrast_agent || 'Không sử dụng'}</strong>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Lưu trữ PACS</span>
-                                  <strong className="text-emerald-700 flex items-center gap-1">
-                                    <ShieldCheck className="w-3.5 h-3.5" /> DICOM S3 Active
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Đánh giá hình thái</span>
+                                  <strong className={r.conclusion?.toLowerCase().includes('tổn thương') ? 'text-rose-700 font-bold' : 'text-emerald-700 font-bold'}>
+                                    {r.conclusion?.toLowerCase().includes('tổn thương') ? 'Có nốt / tổn thương' : 'Bình thường'}
                                   </strong>
                                 </div>
                               </div>
@@ -717,46 +723,54 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                               <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1.5">
                                 <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
                                   <Microscope className="w-4 h-4 text-amber-600 shrink-0" />
-                                  <span>CHẨN ĐOÁN MÔ BỆNH HỌC & GIẢI PHẪU BỆNH:</span>
+                                  <span>CHẨN ĐOÁN MÔ BỆNH HỌC:</span>
                                 </div>
                                 <p className="text-amber-950 font-bold text-xs leading-relaxed pl-5">
-                                  {r.conclusion || 'Mô bệnh học u gan/phổi biệt hóa tốt, không xâm lấn bao.'}
+                                  {r.conclusion || 'Đã ghi nhận kết quả mô bệnh học.'}
                                 </p>
                               </div>
 
-                              {/* Các Thông Số Mô Bệnh Học Chi Tiết */}
+                              {/* Các Thông Số Thực Tế Đã Nhập */}
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Vị trí sinh thiết</span>
-                                  <strong className="text-slate-800">{r.specimen_site || 'Gan / Phổi'}</strong>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Mã bệnh phẩm</span>
-                                  <strong className="font-mono text-slate-800">{r.accession_number || 'GPB-2026-01'}</strong>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Độ biệt hóa mô</span>
-                                  <strong className="text-slate-800">{r.histological_grade || 'G1 (Biệt hóa tốt)'}</strong>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Diện cắt phẫu thuật</span>
-                                  <strong className="text-emerald-700">{r.surgical_margin || 'Âm tính (R0)'}</strong>
-                                </div>
+                                {r.specimen_site && (
+                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Vị trí sinh thiết</span>
+                                    <strong className="text-slate-800">{r.specimen_site}</strong>
+                                  </div>
+                                )}
+                                {r.accession_number && (
+                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Mã số GPB / tiêu bản</span>
+                                    <strong className="font-mono text-slate-800">{r.accession_number}</strong>
+                                  </div>
+                                )}
+                                {r.histological_grade && (
+                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Độ mô học</span>
+                                    <strong className="text-slate-800">{r.histological_grade}</strong>
+                                  </div>
+                                )}
+                                {r.surgical_margin && (
+                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Diện cắt phẫu thuật</span>
+                                    <strong className="text-emerald-700">{r.surgical_margin}</strong>
+                                  </div>
+                                )}
                               </div>
 
-                              {/* Dấu Ấn Hóa Mô Miễn Dịch (IHC Markers) */}
-                              {r.ihc_markers && Array.isArray(r.ihc_markers) && r.ihc_markers.length > 0 && (
+                              {/* Dấu Ấn Hóa Mô Miễn Dịch (IHC Markers) nếu có */}
+                              {r.ihc_markers && Array.isArray(r.ihc_markers) && r.ihc_markers.filter((m: any) => m.marker && m.result).length > 0 && (
                                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                                   <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
                                     Dấu ấn Hóa mô miễn dịch (IHC):
                                   </span>
                                   <div className="flex flex-wrap gap-2">
-                                    {r.ihc_markers.map((ihc: any, ihcIdx: number) => (
+                                    {r.ihc_markers.filter((m: any) => m.marker && m.result).map((ihc: any, ihcIdx: number) => (
                                       <span
                                         key={ihcIdx}
                                         className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-[11px] text-slate-800"
                                       >
-                                        <strong>{ihc.marker}</strong>: {ihc.result || 'Âm tính'}
+                                        <strong>{ihc.marker}</strong>: {ihc.result}
                                       </span>
                                     ))}
                                   </div>
