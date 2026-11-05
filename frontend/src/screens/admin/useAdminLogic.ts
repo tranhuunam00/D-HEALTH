@@ -31,6 +31,7 @@ export function useAdminLogic() {
   });
   const [facilities, setFacilities] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [medications, setMedications] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'facilities' | 'doctors' | 'medications'>('overview');
   const [loading, setLoading] = useState(false);
@@ -38,10 +39,11 @@ export function useAdminLogic() {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [ovRes, facRes, docRes, medRes, healthRes] = await Promise.all([
+      const [ovRes, facRes, docRes, depRes, medRes, healthRes] = await Promise.all([
         fetch('/api/admin/overview').catch(() => null),
-        fetch('/api/facilities').catch(() => null),
-        fetch('/api/doctors').catch(() => null),
+        fetch('/api/facilities?all=true').catch(() => null),
+        fetch('/api/doctors?all=true').catch(() => null),
+        fetch('/api/departments').catch(() => null),
         fetch('/api/medications').catch(() => null),
         fetch('/api/health').catch(() => null),
       ]);
@@ -57,6 +59,10 @@ export function useAdminLogic() {
       if (docRes?.ok) {
         const d = await docRes.json();
         if (d.data) setDoctors(d.data);
+      }
+      if (depRes?.ok) {
+        const d = await depRes.json();
+        if (d.data) setDepartments(d.data);
       }
       if (medRes?.ok) {
         const d = await medRes.json();
@@ -82,15 +88,122 @@ export function useAdminLogic() {
     fetchAdminData();
   }, []);
 
+  const createFacility = async (data: Record<string, any>) => {
+    try {
+      const res = await fetch('/api/facilities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        await fetchAdminData();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Lỗi thêm CSYT:', err);
+      return false;
+    }
+  };
+
+  const updateFacility = async (id: string, data: Record<string, any>) => {
+    try {
+      const res = await fetch(`/api/facilities/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        await fetchAdminData();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Lỗi cập nhật CSYT:', err);
+      return false;
+    }
+  };
+
+  const deleteFacility = async (id: string) => {
+    try {
+      const res = await fetch(`/api/facilities/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await fetchAdminData();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Lỗi ngừng kích hoạt CSYT:', err);
+      return false;
+    }
+  };
+
+  const createDoctor = async (data: Record<string, any>) => {
+    try {
+      const res = await fetch('/api/doctors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        await fetchAdminData();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Lỗi thêm Bác sĩ:', err);
+      return false;
+    }
+  };
+
+  const updateDoctor = async (id: string, data: Record<string, any>) => {
+    try {
+      const res = await fetch(`/api/doctors/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        await fetchAdminData();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Lỗi cập nhật Bác sĩ:', err);
+      return false;
+    }
+  };
+
+  const deleteDoctor = async (id: string) => {
+    try {
+      const res = await fetch(`/api/doctors/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await fetchAdminData();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Lỗi ngừng kích hoạt Bác sĩ:', err);
+      return false;
+    }
+  };
+
   return {
     stats,
     health,
     facilities,
     doctors,
+    departments,
     medications,
     activeTab,
     setActiveTab,
     loading,
     refresh: fetchAdminData,
+    createFacility,
+    updateFacility,
+    deleteFacility,
+    createDoctor,
+    updateDoctor,
+    deleteDoctor,
   };
 }

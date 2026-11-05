@@ -15,6 +15,7 @@ import { createPrescriptionsRouter } from './presentation/routes/prescriptions.r
 import { createClinicalReportsRouter, ensureClinicalReportsSchema } from './presentation/routes/clinical-reports.routes';
 import { createChronicConditionsRouter } from './presentation/routes/chronic-conditions.routes';
 import { createCareRouter } from './presentation/routes/care.routes';
+import { createMasterCatalogsRouter } from './presentation/routes/master-catalogs.routes';
 import { MinioStorageService } from './infrastructure/storage/minio-storage.service';
 import { createStorageRouter } from './presentation/routes/storage.routes';
 
@@ -49,6 +50,7 @@ ensureClinicalReportsSchema(pool)
   .catch((err) => console.warn(`\u26a0\ufe0f [Database] Clinical reports schema notice: ${err.message}`));
 app.use('/api/chronic-conditions', createChronicConditionsRouter(pool));
 app.use('/api/care', createCareRouter(pool));
+app.use('/api', createMasterCatalogsRouter(pool));
 
 // 2. MinIO S3 Client & Storage Service
 const isDockerEnv = process.env.IS_DOCKER === 'true' || process.env.NODE_ENV === 'production';
@@ -163,49 +165,7 @@ app.get('/api/reports/:memberId', async (req: Request, res: Response) => {
 // ADMIN TỔNG MASTER DATA ENDPOINTS (DYNAMIC CATALOGS)
 // ====================================================================
 
-// 1. Danh sách cơ sở y tế đối tác (Master Facilities)
-app.get('/api/facilities', async (req: Request, res: Response) => {
-  try {
-    const result = await pool.query('SELECT * FROM master_facilities WHERE is_active = true ORDER BY name ASC');
-    res.json({ data: result.rows });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 1b. Danh sách Chuyên khoa / Khoa phòng (Master Departments / Categories)
-app.get('/api/departments', async (req: Request, res: Response) => {
-  try {
-    const result = await pool.query('SELECT * FROM master_departments WHERE is_active = true ORDER BY name ASC');
-    res.json({ data: result.rows });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 2. Danh sách bác sĩ chuyên khoa (Master Doctors)
-app.get('/api/doctors', async (req: Request, res: Response) => {
-  try {
-    const { department_id } = req.query;
-    let query = `
-      SELECT d.*, f.name AS facility_name, dep.name AS department_name
-      FROM master_doctors d
-      LEFT JOIN master_facilities f ON d.facility_id = f.id
-      LEFT JOIN master_departments dep ON d.department_id = dep.id
-      WHERE d.is_active = true
-    `;
-    const params: any[] = [];
-    if (department_id) {
-      params.push(department_id);
-      query += ` AND d.department_id = ${params.length}`;
-    }
-    query += ` ORDER BY d.full_name ASC`;
-    const result = await pool.query(query, params);
-    res.json({ data: result.rows });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// Master catalogs (facilities, doctors, departments) handled by createMasterCatalogsRouter
 
 // 3. Từ điển thuốc quốc gia (Master Medications)
 app.get('/api/medications', async (req: Request, res: Response) => {

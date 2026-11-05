@@ -1,17 +1,107 @@
-import React from 'react';
-import { Building2, Stethoscope, Pill, ShieldCheck, Database, RefreshCw, Activity, Search, Users, UserCheck, HardDrive, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Building2,
+  Stethoscope,
+  Pill,
+  ShieldCheck,
+  Database,
+  RefreshCw,
+  Activity,
+  Search,
+  Users,
+  UserCheck,
+  HardDrive,
+  LogOut,
+} from 'lucide-react';
 import { useAdminLogic } from './useAdminLogic';
 import { AdminUserManagement } from './AdminUserManagement';
-import { FacilitiesGrid } from './FacilitiesGrid';
-import { DoctorsGrid } from './DoctorsGrid';
+import { FacilitiesGrid, FacilityItem } from './FacilitiesGrid';
+import { DoctorsGrid, DoctorItem } from './DoctorsGrid';
 import { MedicationsGrid } from './MedicationsGrid';
+import { FacilityModal } from './FacilityModal';
+import { DoctorModal } from './DoctorModal';
 
 interface AdminDashboardProps {
   readonly onLogout?: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
-  const { stats, health, facilities, doctors, medications, activeTab, setActiveTab, loading, refresh } = useAdminLogic();
+  const {
+    stats,
+    health,
+    facilities,
+    doctors,
+    departments,
+    medications,
+    activeTab,
+    setActiveTab,
+    loading,
+    refresh,
+    createFacility,
+    updateFacility,
+    deleteFacility,
+    createDoctor,
+    updateDoctor,
+    deleteDoctor,
+  } = useAdminLogic();
+
+  // Modal states for Facility
+  const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
+  const [selectedFacility, setSelectedFacility] = useState<FacilityItem | null>(null);
+
+  // Modal states for Doctor
+  const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<DoctorItem | null>(null);
+
+  // Handlers for Facility
+  const handleOpenAddFacility = () => {
+    setSelectedFacility(null);
+    setIsFacilityModalOpen(true);
+  };
+
+  const handleOpenEditFacility = (facility: FacilityItem) => {
+    setSelectedFacility(facility);
+    setIsFacilityModalOpen(true);
+  };
+
+  const handleDeleteFacility = async (facility: FacilityItem) => {
+    const actionName = facility.is_active ? 'ngừng kích hoạt' : 'xóa';
+    if (window.confirm(`Bạn có chắc muốn ${actionName} cơ sở "${facility.name}"?`)) {
+      await deleteFacility(facility.id);
+    }
+  };
+
+  const handleSaveFacility = async (data: Record<string, any>) => {
+    if (selectedFacility) {
+      return await updateFacility(selectedFacility.id, data);
+    }
+    return await createFacility(data);
+  };
+
+  // Handlers for Doctor
+  const handleOpenAddDoctor = () => {
+    setSelectedDoctor(null);
+    setIsDoctorModalOpen(true);
+  };
+
+  const handleOpenEditDoctor = (doctor: DoctorItem) => {
+    setSelectedDoctor(doctor);
+    setIsDoctorModalOpen(true);
+  };
+
+  const handleDeleteDoctor = async (doctor: DoctorItem) => {
+    const actionName = doctor.is_active ? 'ngừng kích hoạt' : 'xóa';
+    if (window.confirm(`Bạn có chắc muốn ${actionName} bác sĩ "${doctor.full_name}"?`)) {
+      await deleteDoctor(doctor.id);
+    }
+  };
+
+  const handleSaveDoctor = async (data: Record<string, any>) => {
+    if (selectedDoctor) {
+      return await updateDoctor(selectedDoctor.id, data);
+    }
+    return await createDoctor(data);
+  };
 
   return (
     <div className="w-full min-h-screen bg-[#070D1E] text-slate-100 flex">
@@ -39,7 +129,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all ${
+                className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-[#1F7A8C] text-white shadow-md shadow-[#1F7A8C]/20'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -83,7 +173,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={refresh}
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
+              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 cursor-pointer"
               title="Làm mới dữ liệu"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -146,15 +236,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   </span>
                 </div>
 
-                {activeTab === 'facilities' && <FacilitiesGrid facilities={facilities} />}
-                {activeTab === 'doctors' && <DoctorsGrid doctors={doctors} />}
+                {activeTab === 'facilities' && (
+                  <FacilitiesGrid
+                    facilities={facilities}
+                    onAdd={handleOpenAddFacility}
+                    onEdit={handleOpenEditFacility}
+                    onDelete={handleDeleteFacility}
+                  />
+                )}
+                {activeTab === 'doctors' && (
+                  <DoctorsGrid
+                    doctors={doctors}
+                    onAdd={handleOpenAddDoctor}
+                    onEdit={handleOpenEditDoctor}
+                    onDelete={handleDeleteDoctor}
+                  />
+                )}
                 {activeTab === 'medications' && <MedicationsGrid medications={medications} />}
-                {activeTab === 'overview' && <FacilitiesGrid facilities={facilities} />}
+                {activeTab === 'overview' && (
+                  <FacilitiesGrid
+                    facilities={facilities}
+                    onAdd={handleOpenAddFacility}
+                    onEdit={handleOpenEditFacility}
+                    onDelete={handleDeleteFacility}
+                  />
+                )}
               </div>
             </>
           )}
         </div>
       </main>
+
+      {/* Facility Modal (Add & Edit) */}
+      <FacilityModal
+        isOpen={isFacilityModalOpen}
+        onClose={() => setIsFacilityModalOpen(false)}
+        onSave={handleSaveFacility}
+        facility={selectedFacility}
+      />
+
+      {/* Doctor Modal (Add & Edit) */}
+      <DoctorModal
+        isOpen={isDoctorModalOpen}
+        onClose={() => setIsDoctorModalOpen(false)}
+        onSave={handleSaveDoctor}
+        doctor={selectedDoctor}
+        departments={departments}
+        facilities={facilities}
+      />
     </div>
   );
 };
