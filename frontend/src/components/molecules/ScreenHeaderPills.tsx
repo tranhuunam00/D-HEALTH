@@ -8,18 +8,28 @@ export interface ScreenHeaderPillsProps {
   readonly className?: string;
 }
 
+function getTodayFormatted(): string {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export const ScreenHeaderPills: React.FC<ScreenHeaderPillsProps> = ({
   activeMemberName = '',
-  dateText = '26/10/2026',
+  dateText,
   onSelectMember,
   className = '',
 }) => {
+  const displayDate = dateText || getTodayFormatted();
+
   return (
     <div className={`flex items-center gap-2 flex-wrap shrink-0 ${className}`}>
       {/* 1. Date Pill */}
       <div className="inline-flex items-center gap-1.5 h-6.5 px-3 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-2xs border border-slate-100">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-        <span>Hôm nay: {dateText}</span>
+        <span>Hôm nay: {displayDate}</span>
       </div>
 
       {/* 2. Global Synchronized Health Profile Pill */}

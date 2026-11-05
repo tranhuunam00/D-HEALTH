@@ -221,3 +221,4 @@ export const HistoryMedsTab: React.FC<HistoryMedsTabProps> = ({
     </div>
   );
 };
+

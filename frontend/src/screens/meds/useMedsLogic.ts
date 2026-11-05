@@ -52,8 +52,11 @@ const EMPTY_ADHERENCE: AdherenceData = {
 };
 
 export function useMedsLogic(memberId = 'nam') {
+  const now = new Date();
   const [activeTab, setActiveTab] = useState<'schedule' | 'active' | 'history'>('schedule');
-  const [selectedDay, setSelectedDay] = useState<number>(26);
+  const [currentYear, setCurrentYear] = useState<number>(() => now.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState<number>(() => now.getMonth() + 1);
+  const [selectedDay, setSelectedDay] = useState<number>(() => now.getDate());
   const [doses, setDoses] = useState<DoseItem[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [adherence, setAdherence] = useState<AdherenceData>(EMPTY_ADHERENCE);
@@ -61,16 +64,19 @@ export function useMedsLogic(memberId = 'nam') {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // 1. Tải danh sách cữ thuốc theo ngày được chọn trong tháng 10/2026
-  const fetchDosesForDay = useCallback(async (day: number) => {
+  // 1. Tải danh sách cữ thuốc theo ngày được chọn
+  const fetchDosesForDay = useCallback(async (day: number, month = currentMonth, year = currentYear) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const dateStr = `2026-10-${String(day).padStart(2, '0')}`;
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const res = await fetch(`/api/prescriptions/${memberId}/today-doses?date=${dateStr}`, { headers });
       if (res.ok) {
         const dJson = await res.json();
         if (Array.isArray(dJson?.data)) {
+          const nowDate = new Date();
+          const isFuture = year > nowDate.getFullYear() || month > (nowDate.getMonth() + 1) || (month === (nowDate.getMonth() + 1) && day > nowDate.getDate());
+
           const mapped: DoseItem[] = dJson.data.map((d: any) => {
             const timeStr = (d.scheduled_time || '08:00').substring(0, 5);
             const hour = parseInt(timeStr.split(':')[0], 10);
@@ -81,7 +87,7 @@ export function useMedsLogic(memberId = 'nam') {
               period,
               name: `${d.name} ${d.dosage || ''}`.trim(),
               instruction: d.timing_instructions || `${d.dose_per_intake || '1 viên'} · ${d.meal_relation === 'after_meal' ? 'sau ăn' : 'trước ăn'}`,
-              status: d.status || (day > 26 ? 'scheduled' : 'pending'),
+              status: d.status || (isFuture ? 'scheduled' : 'pending'),
               taken: !!d.taken,
             };
           });
@@ -91,14 +97,14 @@ export function useMedsLogic(memberId = 'nam') {
     } catch (err) {
       console.error('Lỗi tải cữ thuốc theo ngày:', err);
     }
-  }, [memberId]);
+  }, [memberId, currentMonth, currentYear]);
 
   // 2. Tải tổng quan tuân thủ thuốc
-  const fetchAdherenceSummary = useCallback(async () => {
+  const fetchAdherenceSummary = useCallback(async (month = currentMonth, year = currentYear) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const adhRes = await fetch(`/api/prescriptions/${memberId}/adherence-summary`, { headers }).catch(() => null);
+      const adhRes = await fetch(`/api/prescriptions/${memberId}/adherence-summary?year=${year}&month=${month}`, { headers }).catch(() => null);
       if (adhRes?.ok) {
         const aJson = await adhRes.json();
         if (aJson?.data) {
@@ -108,7 +114,7 @@ export function useMedsLogic(memberId = 'nam') {
     } catch (err) {
       console.error('Lỗi tải tổng quan tuân thủ:', err);
     }
-  }, [memberId]);
+  }, [memberId, currentMonth, currentYear]);
 
   // 3. Tải danh sách toàn bộ đơn thuốc của thành viên
   const fetchPrescriptions = useCallback(async () => {
@@ -130,12 +136,12 @@ export function useMedsLogic(memberId = 'nam') {
   const fetchMedsData = useCallback(async () => {
     setLoading(true);
     await Promise.all([
-      fetchDosesForDay(selectedDay),
-      fetchAdherenceSummary(),
+      fetchDosesForDay(selectedDay, currentMonth, currentYear),
+      fetchAdherenceSummary(currentMonth, currentYear),
       fetchPrescriptions(),
     ]);
     setLoading(false);
-  }, [fetchDosesForDay, fetchAdherenceSummary, fetchPrescriptions, selectedDay]);
+  }, [fetchDosesForDay, fetchAdherenceSummary, fetchPrescriptions, selectedDay, currentMonth, currentYear]);
 
   useEffect(() => {
     fetchMedsData();
@@ -143,8 +149,32 @@ export function useMedsLogic(memberId = 'nam') {
 
   // Khi người dùng bấm chuyển ngày trên lịch tháng
   useEffect(() => {
-    fetchDosesForDay(selectedDay);
-  }, [selectedDay, fetchDosesForDay]);
+    fetchDosesForDay(selectedDay, currentMonth, currentYear);
+  }, [selectedDay, currentMonth, currentYear, fetchDosesForDay]);
+
+  const handlePrevMonth = () => {
+    let newM = currentMonth - 1;
+    let newY = currentYear;
+    if (newM < 1) {
+      newM = 12;
+      newY -= 1;
+    }
+    setCurrentMonth(newM);
+    setCurrentYear(newY);
+    setSelectedDay(1);
+  };
+
+  const handleNextMonth = () => {
+    let newM = currentMonth + 1;
+    let newY = currentYear;
+    if (newM > 12) {
+      newM = 1;
+      newY += 1;
+    }
+    setCurrentMonth(newM);
+    setCurrentYear(newY);
+    setSelectedDay(1);
+  };
 
   // Trích xuất danh sách thuốc đang hoạt động từ các đơn đang dùng
   const activeMedications = useMemo<ActiveMedicationItem[]>(() => {
@@ -246,8 +276,12 @@ export function useMedsLogic(memberId = 'nam') {
   return {
     activeTab,
     setActiveTab,
+    currentMonth,
+    currentYear,
     selectedDay,
     setSelectedDay,
+    handlePrevMonth,
+    handleNextMonth,
     doses,
     prescriptions,
     activeMedications,

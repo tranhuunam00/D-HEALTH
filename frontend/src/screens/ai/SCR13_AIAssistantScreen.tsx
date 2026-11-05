@@ -48,6 +48,12 @@ export const SCR13_AIAssistantScreen: React.FC<SCR13Props> = ({
   const [messages, setMessages] = useState<readonly ChatMessage[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');
 
+  const todayFormatted = new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date());
+
   const handleSend = () => {
     if (!inputText.trim()) return;
     const newMsg: ChatMessage = {
@@ -77,7 +83,7 @@ export const SCR13_AIAssistantScreen: React.FC<SCR13Props> = ({
         <div className="flex gap-1.5 items-center flex-wrap shrink-0">
           <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Hôm nay: 26/10/2026
+            Hôm nay: {todayFormatted}
           </span>
           <span className="inline-flex items-center gap-1.5 h-6.5 px-2.5 rounded-full bg-[#111827] text-white text-xs font-semibold shadow-xs">
             Hồ sơ: <b>{activeMemberName}</b>

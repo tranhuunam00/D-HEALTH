@@ -83,7 +83,7 @@ describe('PrescriptionsRoutes TDD', () => {
   });
 
   describe('GET /:memberId/adherence-summary', () => {
-    it('trả về tỷ lệ tuân thủ 91%, tổng số liều và 31 ngày trong lịch', async () => {
+    it('trả về tỷ lệ tuân thủ 91%, tổng số liều và số ngày động theo tháng trong lịch', async () => {
       mockPool.query
         .mockResolvedValueOnce({ rows: [{ count: '4' }] })
         .mockResolvedValueOnce({ rows: [{ id: 'ds_1', status: 'taken' }, { id: 'ds_2', status: 'pending' }] });
@@ -99,7 +99,26 @@ describe('PrescriptionsRoutes TDD', () => {
       expect(output.data.takenCount).toBe(109);
       expect(output.data.missedCount).toBe(7);
       expect(output.data.skippedCount).toBe(4);
+      const now = new Date();
+      const expectedDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      expect(output.data.calendarDays.length).toBe(expectedDays);
+    });
+
+    it('hỗ trợ query year và month để trả về đúng số ngày của tháng được chọn (ví dụ Tháng 10/2026 có 31 ngày)', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ count: '4' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'ds_1', status: 'taken' }] });
+
+      const handler = getHandler('GET', '/:memberId/adherence-summary');
+      const { req, res } = createReqRes({ params: { memberId: 'nam' }, query: { year: '2026', month: '10' } });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
       expect(output.data.calendarDays.length).toBe(31);
+      expect(output.data.month).toBe(10);
+      expect(output.data.year).toBe(2026);
     });
   });
 

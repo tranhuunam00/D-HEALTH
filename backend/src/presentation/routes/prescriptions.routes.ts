@@ -120,8 +120,15 @@ export function createPrescriptionsRouter(pool: Pool): Router {
       const actualTodayTotal = todayDosesRes.rows.length;
       const actualTodayTaken = todayDosesRes.rows.filter((r) => r.status === 'taken').length;
 
-      // Ma trận ngày trong tháng 10/2026 (1..31) chuẩn thiết kế SCR-11
-      const calendarDays = buildOctoberCalendarDays();
+      const { year, month } = req.query;
+      const now = new Date();
+      const targetYear = typeof year === 'string' && /^[0-9]{4}$/.test(year) ? parseInt(year, 10) : now.getFullYear();
+      const targetMonth = typeof month === 'string' && /^[0-9]{1,2}$/.test(month) ? parseInt(month, 10) : (now.getMonth() + 1);
+      const isCurrentMonth = targetYear === now.getFullYear() && targetMonth === (now.getMonth() + 1);
+      const todayDay = isCurrentMonth ? now.getDate() : -1;
+
+      // Ma trận ngày trong tháng chuẩn động theo thời gian thực tế
+      const calendarDays = buildDynamicCalendarDays(targetYear, targetMonth, todayDay);
 
       return res.json({
         success: true,
@@ -132,6 +139,9 @@ export function createPrescriptionsRouter(pool: Pool): Router {
           skippedCount: 4,
           todayTaken: actualTodayTaken,
           todayTotal: actualTodayTotal,
+          month: targetMonth,
+          year: targetYear,
+          todayDay: isCurrentMonth ? todayDay : undefined,
           calendarDays,
         },
       });
@@ -268,16 +278,17 @@ export function createPrescriptionsRouter(pool: Pool): Router {
 /**
  * Xây dựng danh sách 31 ngày trong Tháng 10/2026 khớp 100% thiết kế SCR-11
  */
-function buildOctoberCalendarDays() {
+function buildDynamicCalendarDays(year: number, month: number, todayDay: number) {
+  const daysInMonth = new Date(year, month, 0).getDate();
   const missedDays = new Set([3, 9, 14, 22]);
   const skippedDays = new Set([6, 11, 19]);
   const days = [];
 
-  for (let d = 1; d <= 31; d++) {
+  for (let d = 1; d <= daysInMonth; d++) {
     let status: 'full' | 'missed' | 'skipped' | 'scheduled' | 'today';
-    if (d === 26) {
+    if (d === todayDay) {
       status = 'today';
-    } else if (d > 26) {
+    } else if (todayDay !== -1 && d > todayDay) {
       status = 'scheduled';
     } else if (missedDays.has(d)) {
       status = 'missed';

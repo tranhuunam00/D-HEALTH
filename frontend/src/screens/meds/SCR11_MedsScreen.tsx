@@ -23,8 +23,12 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
   const {
     activeTab,
     setActiveTab,
+    currentMonth,
+    currentYear,
     selectedDay,
     setSelectedDay,
+    handlePrevMonth,
+    handleNextMonth,
     doses,
     prescriptions,
     activeMedications,
@@ -122,12 +126,18 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
 
             <MedMonthCalendar
               days={adherence.calendarDays}
+              month={currentMonth}
+              year={currentYear}
               selectedDay={selectedDay}
               onSelectDay={setSelectedDay}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
             />
 
             <TodayDoseList
               selectedDay={selectedDay}
+              month={currentMonth}
+              year={currentYear}
               doses={doses}
               onTakeDose={handleTakeDose}
               onSkipDose={handleSkipDose}

@@ -19,7 +19,7 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
   }, [initialKind]);
 
   const [method, setMethod] = useState<InputMethod>('manual');
-  const [testDate, setTestDate] = useState('2026-10-26');
+  const [testDate, setTestDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [doctorName, setDoctorName] = useState('');
   const [facilityName, setFacilityName] = useState('Bệnh viện Bạch Mai');
 
