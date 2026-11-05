@@ -64,13 +64,13 @@ export function createPrescriptionsRouter(pool: Pool): Router {
                 p.id as prescription_id,
                 COALESCE(
                   dl.status, 
-                  CASE WHEN $2::date > CURRENT_DATE THEN 'scheduled' ELSE 'pending' END
+                  CASE WHEN $3::date > CURRENT_DATE THEN 'scheduled' ELSE 'pending' END
                 ) as status,
                 CASE WHEN dl.status = 'taken' THEN true ELSE false END as taken
          FROM dose_schedules ds
          JOIN prescription_items pi ON ds.prescription_item_id = pi.id
          JOIN prescriptions p ON pi.prescription_id = p.id
-         LEFT JOIN dose_logs dl ON dl.schedule_id = ds.id AND DATE(dl.scheduled_at) = $2::date
+         LEFT JOIN dose_logs dl ON dl.schedule_id = ds.id AND DATE(dl.scheduled_at) = $3::date
          WHERE (p.member_id = $1 OR p.member_id = $2) AND p.status = 'active'
            AND (pi.start_date IS NULL OR pi.start_date <= $3::date)
            AND (pi.end_date IS NULL OR pi.end_date >= $3::date)
