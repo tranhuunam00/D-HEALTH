@@ -3,12 +3,14 @@ import { Bell } from 'lucide-react';
 
 export interface HomeHeaderProps {
   fullName: string;
+  avatarUrl?: string;
   onOpenProfile?: () => void;
   onOpenEmergency: () => void;
 }
 
 export const HomeHeader: React.FC<HomeHeaderProps> = ({
   fullName,
+  avatarUrl,
   onOpenProfile,
   onOpenEmergency,
 }) => {
@@ -26,10 +28,14 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
         <button
           type="button"
           onClick={onOpenProfile}
-          className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center font-black text-base shadow-sm hover:opacity-90 active:scale-95 transition-all shrink-0"
+          className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center font-black text-base shadow-sm hover:opacity-90 active:scale-95 transition-all shrink-0 overflow-hidden border border-slate-200"
           aria-label="Xem thông tin cá nhân"
         >
-          {initial}
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+          ) : (
+            initial
+          )}
         </button>
         <div
           onClick={onOpenProfile}
@@ -48,21 +54,21 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => alert('Chưa có thông báo khẩn cấp mới.')}
-          className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white text-slate-700 flex items-center justify-center shadow-2xs border border-slate-100 shrink-0 hover:bg-slate-50 transition"
+          onClick={() => alert('Thông báo hệ thống: Chưa có thông báo mới.')}
+          className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-slate-600 hover:text-slate-900 active:scale-95 transition-all shrink-0"
           aria-label="Thông báo"
         >
           <Bell className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Greeting Title & Date Pill */}
-      <div className="flex flex-col gap-1 pt-1">
-        <h1 className="text-2xl font-black text-slate-900 leading-tight">Hôm nay bạn thế nào?</h1>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200/70 text-slate-700 text-xs font-semibold shadow-2xs w-fit">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          Hôm nay: {formattedToday}
-        </span>
+      {/* Date Pill + Status */}
+      <div className="flex items-center justify-between text-xs px-1">
+        <span className="text-slate-500 font-semibold">{formattedToday}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-slate-600 font-medium text-[11px]">D-Health Đồng bộ Live</span>
+        </div>
       </div>
     </div>
   );

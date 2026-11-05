@@ -20,9 +20,17 @@ export const PassportIdentityCard: React.FC<PassportIdentityCardProps> = ({
   return (
     <div className="bg-white rounded-[24px] p-4 shadow-sm border border-slate-100 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-12 h-12 rounded-full bg-sky-100 flex-shrink-0 flex items-center justify-center text-xl overflow-hidden border-2 border-sky-200">
-          <span role="img" aria-label="avatar">👨‍💼</span>
-        </div>
+        {member.avatarUrl ? (
+          <img
+            src={member.avatarUrl}
+            alt={member.fullName}
+            className="w-12 h-12 rounded-full object-cover border-2 border-sky-200 shadow-2xs shrink-0"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white font-extrabold text-base shrink-0 flex items-center justify-center shadow-2xs border-2 border-sky-200">
+            {member.fullName.charAt(0)}
+          </div>
+        )}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-black text-slate-800 text-[15px] truncate">

@@ -53,7 +53,7 @@ export function createUserProfileRouter(pool: Pool): Router {
     const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       const memRes = await pool.query(
-        `SELECT id, full_name, relationship, gender, birth_date, blood_type, height_cm, weight_kg 
+        `SELECT id, full_name, relationship, gender, birth_date, blood_type, height_cm, weight_kg, avatar_url 
          FROM family_members WHERE (id = $1 OR id = $2)
          ORDER BY CASE WHEN id = 'mem_145deb71' THEN 0 ELSE 1 END LIMIT 1`,
         [memberId, resolvedMemberId]
@@ -97,6 +97,7 @@ export function createUserProfileRouter(pool: Pool): Router {
             weightKg: weight,
             bmi,
             bloodType: mem?.blood_type || 'O+',
+            avatarUrl: mem?.avatar_url || '',
           },
           counts: {
             allergies: parseInt(counts.allergies, 10) || 0,

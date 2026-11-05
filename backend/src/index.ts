@@ -68,6 +68,23 @@ const minioClient = new Minio.Client({
 const storageService = new MinioStorageService(minioClient, minioEndpoint, minioPort);
 app.use('/api/storage', createStorageRouter(storageService));
 
+// Proxy & Stream trực tiếp tệp tin MinIO S3 (Avatars, DICOM, Reports)
+app.get('/s3/:bucket/*', async (req: Request, res: Response) => {
+  const { bucket } = req.params;
+  const objectKey = req.params[0];
+  try {
+    const stream = await minioClient.getObject(bucket, objectKey);
+    const ext = objectKey.split('.').pop()?.toLowerCase();
+    const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'pdf' ? 'application/pdf' : 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    stream.pipe(res);
+  } catch (err: any) {
+    res.status(404).json({ success: false, error: 'S3 Object not found' });
+  }
+});
+
+
 // Auto-initialize required S3 buckets on startup
 storageService.ensureBuckets()
   .then(() => console.log('✓ [MinIO] All S3 Buckets initialized successfully!'))
@@ -110,7 +127,7 @@ app.get('/api/members', async (req: Request, res: Response) => {
   try {
     const query = userId
       ? 'SELECT * FROM family_members WHERE user_id = $1 ORDER BY created_at ASC'
-      : 'SELECT * FROM family_members ORDER BY created_at ASC';
+      : "SELECT * FROM family_members WHERE id != 'mem_admin' AND full_name NOT ILIKE '%quản trị%' AND full_name NOT ILIKE '%admin%' ORDER BY created_at ASC";
     const params = userId ? [userId] : [];
     const result = await pool.query(query, params);
     res.json({ data: result.rows });

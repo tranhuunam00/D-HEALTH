@@ -11,6 +11,7 @@ export interface PassportMember {
   readonly weightKg: number;
   readonly bmi: number;
   readonly bloodType: string;
+  readonly avatarUrl?: string;
 }
 
 export type PassportMemberInfo = PassportMember;

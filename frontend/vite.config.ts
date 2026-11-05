@@ -18,9 +18,8 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/s3': {
-        target: 'http://127.0.0.1:9000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/s3/, ''),
       },
     },
   },

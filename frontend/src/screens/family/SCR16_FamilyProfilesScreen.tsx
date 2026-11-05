@@ -74,9 +74,17 @@ export const SCR16_FamilyProfilesScreen: React.FC<SCR16Props> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white font-extrabold text-base flex items-center justify-center shadow">
-                        {mem.fullName.charAt(0)}
-                      </div>
+                      {mem.avatarUrl ? (
+                        <img
+                          src={mem.avatarUrl}
+                          alt={mem.fullName}
+                          className="w-12 h-12 rounded-2xl object-cover shadow border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white font-extrabold text-base flex items-center justify-center shadow">
+                          {mem.fullName.charAt(0)}
+                        </div>
+                      )}
                       <div>
                         <div className="text-sm font-bold text-slate-900">{mem.fullName}</div>
                         <div className="text-xs text-slate-500 font-medium">{mem.relationshipText}</div>
