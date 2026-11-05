@@ -1,19 +1,37 @@
 import rateLimit from 'express-rate-limit';
 
 /**
- * Giới hạn nghiêm ngặt cho các endpoint xác thực (Login, Register, OTP, Google Auth)
- * Chống tấn công dò mật khẩu Brute-force & Credential Stuffing (Tối đa 5 lần / 15 phút)
+ * Giới hạn nghiêm ngặt cho endpoint đăng nhập (Login)
+ * Chống tấn công dò mật khẩu Brute-force & Credential Stuffing (Tối đa 5 lần thử sai / 15 phút)
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
   max: 5, // Tối đa 5 lần thử
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // Chỉ tính các lần đăng nhập thất bại
   message: {
     success: false,
     error: {
       code: 'AUTH_RATE_LIMIT_EXCEEDED',
       message: 'Bạn đã thử đăng nhập quá nhiều lần (tối đa 5 lần). Vui lòng đợi 15 phút để thử lại.',
+    },
+  },
+});
+
+/**
+ * Giới hạn đăng ký tài khoản (Register) để chống bot spam tài khoản
+ */
+export const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // Cho phép tối đa 20 lần đăng ký / 15 phút
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'REGISTER_RATE_LIMIT_EXCEEDED',
+      message: 'Quá nhiều yêu cầu đăng ký từ thiết bị của bạn. Vui lòng thử lại sau 15 phút.',
     },
   },
 });

@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { hashPassword, verifyPassword } from '../../infrastructure/security/password-hasher';
 import { generateToken } from '../../infrastructure/security/token-provider';
-import { authLimiter } from '../../infrastructure/security/rate-limiters';
+import { authLimiter, registerLimiter } from '../../infrastructure/security/rate-limiters';
 import { parseGooglePayload, generateRandomOAuthSecret } from '../../application/services/google-auth.service';
 import { authenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
 
@@ -10,10 +10,8 @@ export function createAuthRouter(pool: Pool): Router {
   const router = Router();
 
   // Áp dụng Rate Limiting chống Brute-Force (Tối đa 5 lần / 15 phút)
-  router.use(authLimiter);
-
   // 1. ĐĂNG KÝ TÀI KHOẢN (REGISTER)
-  router.post('/register', async (req: Request, res: Response) => {
+  router.post('/register', registerLimiter, async (req: Request, res: Response) => {
     const { phoneNumber, email, password, fullName } = req.body;
     if (!phoneNumber || !password || !fullName) {
       return res.status(400).json({
@@ -70,7 +68,7 @@ export function createAuthRouter(pool: Pool): Router {
   });
 
   // 2. ĐĂNG NHẬP MẬT KHẨU (LOGIN)
-  router.post('/login', async (req: Request, res: Response) => {
+  router.post('/login', authLimiter, async (req: Request, res: Response) => {
     const { identifier, password } = req.body; // identifier: phone hoặc email
     if (!identifier || !password) {
       return res.status(400).json({
