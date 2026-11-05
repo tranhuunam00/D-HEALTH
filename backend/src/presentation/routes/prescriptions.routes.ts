@@ -144,6 +144,9 @@ export function createPrescriptionsRouter(pool: Pool): Router {
       dosePerIntake = '1 viên',
       timingInstructions = '1 viên sau ăn',
       scheduledTime = '08:00:00',
+      durationMode = 'daily',
+      startDate,
+      endDate,
     } = req.body;
 
     if (!medicationName) {
@@ -168,12 +171,44 @@ export function createPrescriptionsRouter(pool: Pool): Router {
         );
       }
 
+      const effectiveStartDate = startDate || new Date().toISOString().split('T')[0];
+      let effectiveEndDate = endDate;
+      let computedQuantity = 30;
+
+      if (durationMode === '3days') {
+        const d = new Date(effectiveStartDate);
+        d.setDate(d.getDate() + 2);
+        effectiveEndDate = d.toISOString().split('T')[0];
+        computedQuantity = 3;
+      } else if (durationMode === '5days') {
+        const d = new Date(effectiveStartDate);
+        d.setDate(d.getDate() + 4);
+        effectiveEndDate = d.toISOString().split('T')[0];
+        computedQuantity = 5;
+      } else if (durationMode === '1week') {
+        const d = new Date(effectiveStartDate);
+        d.setDate(d.getDate() + 6);
+        effectiveEndDate = d.toISOString().split('T')[0];
+        computedQuantity = 7;
+      } else if (durationMode === 'custom' && endDate) {
+        effectiveEndDate = endDate;
+        const s = new Date(effectiveStartDate).getTime();
+        const e = new Date(endDate).getTime();
+        const diff = Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1);
+        computedQuantity = diff;
+      } else {
+        const d = new Date(effectiveStartDate);
+        d.setDate(d.getDate() + 365);
+        effectiveEndDate = d.toISOString().split('T')[0];
+        computedQuantity = 30;
+      }
+
       const itemRes = await pool.query(
         `INSERT INTO prescription_items 
-           (prescription_id, medication_name, dosage, quantity_prescribed, quantity_unit, frequency_per_day, timing_instructions, start_date, dose_per_intake)
-         VALUES ($1, $2, $3, 30, 'viên', 1, $4, CURRENT_DATE, $5)
+           (prescription_id, medication_name, dosage, quantity_prescribed, quantity_unit, frequency_per_day, timing_instructions, start_date, end_date, dose_per_intake)
+         VALUES ($1, $2, $3, $4, 'viên', 1, $5, $6, $7, $8)
          RETURNING *`,
-        [rxId, medicationName, dosage, timingInstructions, dosePerIntake]
+        [rxId, medicationName, dosage, computedQuantity, timingInstructions, effectiveStartDate, effectiveEndDate, dosePerIntake]
       );
       const newItem = itemRes.rows[0];
 

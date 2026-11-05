@@ -16,3 +16,4 @@ ALTER TABLE clinical_reports
 DELETE FROM clinical_reports 
 WHERE member_id = 'nam' 
   AND (kind = 'pathology' OR category = 'GPB' OR title ILIKE 'Giải phẫu bệnh%');
+

@@ -154,6 +154,35 @@ describe('PrescriptionsRoutes TDD', () => {
       expect(output.success).toBe(true);
       expect(output.data.medication_name).toBe('Aspirin');
     });
+
+    it('thêm thuốc với thời lượng tuỳ chọn (3 ngày, 5 ngày, 1 tuần, custom) tính đúng số lượng và ngày kết thúc', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'rx_nam_01' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'pi_new_2', medication_name: 'Amoxicillin' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'ds_new_2' }] });
+
+      const handler = getHandler('POST', '/:memberId/items');
+      const { req, res } = createReqRes({
+        params: { memberId: 'nam' },
+        body: {
+          medicationName: 'Amoxicillin',
+          dosage: '500 mg',
+          durationMode: '5days',
+          startDate: '2026-10-26',
+        },
+      });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+
+      const insertItemCall = mockPool.query.mock.calls[1];
+      expect(insertItemCall[0]).toContain('quantity_prescribed');
+      expect(insertItemCall[1][3]).toBe(5); // computedQuantity = 5
+      expect(insertItemCall[1][6]).toBe('2026-10-30'); // 26 + 4 days = 30
+    });
+
   });
 
   describe('POST /:memberId/send-history', () => {
