@@ -38,6 +38,9 @@ export default {
       borderRadius: {
         'card': '20px',
         'sheet': '28px',
+      },
+      spacing: {
+        '4.5': '1.125rem',
       }
     },
   },
