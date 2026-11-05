@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   X,
   User,
@@ -17,13 +17,13 @@ import {
   AlertTriangle,
   FlaskConical,
   Camera,
-  Microscope,
   CheckCircle2,
   Clock,
   Eye,
   AlertCircle,
   Sparkles,
   Stethoscope,
+  RefreshCw,
 } from 'lucide-react';
 
 interface PatientDossierModalProps {
@@ -33,10 +33,9 @@ interface PatientDossierModalProps {
   userName?: string;
 }
 
-const getReportKind = (r: any): 'lab' | 'imaging' | 'pathology' => {
-  if (r.kind === 'pathology' || r.category === 'GPB') return 'pathology';
-  if (r.kind === 'imaging' || ['XQ', 'CT', 'MRI', 'US', 'CDHA'].includes(r.category) || r.imaging_study) return 'imaging';
-  return 'lab';
+const getReportKind = (r: any): 'lab' | 'imaging' => {
+  if (r.kind === 'lab' || ['HH', 'SH', 'VS', 'PT', 'DT'].includes(r.category)) return 'lab';
+  return 'imaging';
 };
 
 const getLabRefRange = (name: string, min?: any, max?: any) => {
@@ -121,36 +120,41 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   userName,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'biometrics' | 'prescriptions' | 'reports' | 'chronic' | 'family'>('overview');
-  const [reportFilter, setReportFilter] = useState<'all' | 'lab' | 'imaging' | 'pathology'>('all');
+  const [reportFilter, setReportFilter] = useState<'all' | 'lab' | 'imaging' | 'chronic'>('all');
   const [loading, setLoading] = useState(false);
   const [dossier, setDossier] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchDossier = useCallback(() => {
+    if (!userId) return;
+    setLoading(true);
+    setError(null);
+    fetch(`/api/admin/users/${userId}/dossier`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể tải bệnh án bệnh nhân');
+        return res.json();
+      })
+      .then((json) => {
+        if (json.success && json.data) {
+          setDossier(json.data);
+        } else {
+          throw new Error('Dữ liệu hồ sơ rỗng');
+        }
+      })
+      .catch((err) => {
+        console.error('Lỗi tải hồ sơ bệnh nhân:', err);
+        setError(err.message || 'Lỗi kết nối máy chủ');
+      })
+      .finally(() => setLoading(false));
+  }, [userId]);
+
   useEffect(() => {
     if (isOpen && userId) {
-      setLoading(true);
-      setError(null);
-      fetch(`/api/admin/users/${userId}/dossier`)
-        .then((res) => {
-          if (!res.ok) throw new Error('Không thể tải bệnh án bệnh nhân');
-          return res.json();
-        })
-        .then((json) => {
-          if (json.success && json.data) {
-            setDossier(json.data);
-          } else {
-            throw new Error('Dữ liệu hồ sơ rỗng');
-          }
-        })
-        .catch((err) => {
-          console.error('Lỗi tải hồ sơ bệnh nhân:', err);
-          setError(err.message || 'Lỗi kết nối máy chủ');
-        })
-        .finally(() => setLoading(false));
+      fetchDossier();
     } else {
       setDossier(null);
     }
-  }, [isOpen, userId]);
+  }, [isOpen, userId, fetchDossier]);
 
   if (!isOpen) return null;
 
@@ -158,10 +162,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   const ownerMember = dossier?.members?.find((m: any) => m.relationship === 'owner') || dossier?.members?.[0];
   const displayName = ownerMember?.full_name || user?.full_name || userName || 'Bệnh Nhân';
 
-  const allReports = dossier?.reports || [];
+  const allReports = (dossier?.reports || []).filter((r: any) => r.kind !== 'pathology' && r.category !== 'GPB');
   const labReports = allReports.filter((r: any) => getReportKind(r) === 'lab');
   const imagingReports = allReports.filter((r: any) => getReportKind(r) === 'imaging');
-  const pathologyReports = allReports.filter((r: any) => getReportKind(r) === 'pathology');
+  const chronicConditions = dossier?.conditions || [];
 
   const filteredReports = allReports.filter((r: any) => {
     if (reportFilter === 'all') return true;
@@ -196,6 +200,13 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchDossier()}
+              className="p-2 rounded-xl text-slate-500 hover:text-[#1F7A8C] hover:bg-teal-50 transition cursor-pointer"
+              title="Làm mới dữ liệu từ API"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#1F7A8C]' : ''}`} />
+            </button>
             <button
               onClick={() => window.print()}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition cursor-pointer"
@@ -568,7 +579,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       { id: 'all', label: 'Tất Cả Báo Cáo', count: allReports.length, icon: FileText },
                       { id: 'lab', label: 'Xét Nghiệm Máu & Sinh Hóa', count: labReports.length, icon: FlaskConical },
                       { id: 'imaging', label: 'Chẩn Đoán Hình Ảnh (CĐHA)', count: imagingReports.length, icon: Camera },
-                      { id: 'pathology', label: 'Giải Phẫu Bệnh & Sinh Thiết', count: pathologyReports.length, icon: Microscope },
+                      { id: 'chronic', label: 'Bệnh Mãn Tính', count: chronicConditions.length, icon: Activity },
                     ].map((btn) => (
                       <button
                         key={btn.id}
@@ -590,7 +601,118 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     ))}
                   </div>
 
-                  {filteredReports.length === 0 ? (
+                  {reportFilter === 'chronic' ? (
+                    chronicConditions.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">
+                        Chưa ghi nhận bệnh lý mạn tính nào từ hồ sơ bệnh nhân.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {chronicConditions.map((c: any) => (
+                          <div key={c.id} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3.5">
+                            {/* Header Bệnh Mãn Tính */}
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h4 className="font-bold text-slate-900 text-sm">{c.condition_name}</h4>
+                                  {c.icd10_code && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-mono font-bold border border-blue-200">
+                                      Mã ICD-10: {c.icd10_code}
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-[#1F7A8C] font-bold border border-teal-200 flex items-center gap-1">
+                                    <Activity className="w-3 h-3" /> Bệnh Mãn Tính
+                                  </span>
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">
+                                    {c.trend_status === 'stable' ? 'Tiến triển ổn định' : c.trend_status || 'Đang theo dõi'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-500 pt-1">
+                                  Đánh giá lâm sàng: <strong className="text-slate-800">{c.status_summary || 'Đang duy trì phác đồ điều trị'}</strong>
+                                  {c.risk_level && (
+                                    <> · Phân tầng rủi ro: <strong className="text-amber-700 font-bold capitalize">{c.risk_level === 'high' ? 'Nguy cơ cao' : c.risk_level === 'medium' ? 'Nguy cơ trung bình' : 'Nguy cơ thấp'}</strong></>
+                                  )}
+                                </p>
+                              </div>
+
+                              <div className="text-right">
+                                {c.next_checkup_date ? (
+                                  <span className="text-xs font-mono text-teal-700 font-bold flex items-center md:justify-end gap-1">
+                                    <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                                    Tái khám dự kiến: {new Date(c.next_checkup_date).toLocaleDateString('vi-VN')}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-slate-400">Chưa lên lịch tái khám</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Mục tiêu sinh trắc & lâm sàng (target_metrics) */}
+                            {Array.isArray(c.target_metrics) && c.target_metrics.length > 0 && (
+                              <div className="space-y-2">
+                                <span className="text-[11px] font-bold uppercase text-slate-400">
+                                  Chỉ Số Mục Tiêu Theo Dõi Lâm Sàng ({c.target_metrics.length})
+                                </span>
+                                <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+                                  {c.target_metrics.map((m: any, mIdx: number) => {
+                                    const isGood = m.type === 'good';
+                                    const isWarn = m.type === 'warning';
+                                    const isDanger = m.type === 'danger';
+                                    return (
+                                      <div
+                                        key={mIdx}
+                                        className={`p-2.5 rounded-xl border text-center space-y-0.5 ${
+                                          isGood
+                                            ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800'
+                                            : isWarn
+                                            ? 'bg-amber-50/70 border-amber-200 text-amber-800'
+                                            : isDanger
+                                            ? 'bg-rose-50/70 border-rose-200 text-rose-800'
+                                            : 'bg-slate-50 border-slate-200 text-slate-800'
+                                        }`}
+                                      >
+                                        <div className="text-xs font-bold truncate">{m.name}</div>
+                                        <span
+                                          className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full inline-block ${
+                                            isGood
+                                              ? 'bg-emerald-100 text-emerald-800'
+                                              : isWarn
+                                              ? 'bg-amber-100 text-amber-800'
+                                              : isDanger
+                                              ? 'bg-rose-100 text-rose-800'
+                                              : 'bg-slate-100 text-slate-700'
+                                          }`}
+                                        >
+                                          {m.status || (isGood ? 'Mục tiêu' : isWarn ? 'Theo dõi' : 'Cần khám')}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Kế hoạch hành động & nhiệm vụ (action_items) */}
+                            {Array.isArray(c.action_items) && c.action_items.length > 0 && (
+                              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                                <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                                  Kế Hoạch Bác Sĩ Giao:
+                                </span>
+                                <div className="space-y-1">
+                                  {c.action_items.map((act: any, aIdx: number) => (
+                                    <div key={aIdx} className="flex items-center gap-2 text-slate-700">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-teal-600 shrink-0" />
+                                      <span>{act.text || act.title || act}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  ) : filteredReports.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">
                       Không có báo cáo nào thuộc danh mục này.
                     </div>
@@ -619,13 +741,6 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold border border-purple-200 flex items-center gap-1">
                                     <Camera className="w-3 h-3" />
                                     CĐHA: {r.imaging_study?.modality || r.category || 'X-Quang'} · {r.imaging_study?.body_part || 'Lồng ngực'}
-                                  </span>
-                                )}
-
-                                {kind === 'pathology' && (
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 flex items-center gap-1">
-                                    <Microscope className="w-3 h-3" />
-                                    Giải Phẫu Bệnh (GPB)
                                   </span>
                                 )}
                               </div>
@@ -766,69 +881,6 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                               </div>
                             </div>
                           )}
-
-                          {/* C. LOẠI GIẢI PHẪU BỆNH & SINH THIẾT */}
-                          {kind === 'pathology' && (
-                            <div className="space-y-3">
-                              {/* Hộp Kết Luận Giải Phẫu Bệnh */}
-                              <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1.5">
-                                <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-                                  <Microscope className="w-4 h-4 text-amber-600 shrink-0" />
-                                  <span>CHẨN ĐOÁN MÔ BỆNH HỌC:</span>
-                                </div>
-                                <p className="text-amber-950 font-bold text-xs leading-relaxed pl-5">
-                                  {r.conclusion || 'Đã ghi nhận kết quả mô bệnh học.'}
-                                </p>
-                              </div>
-
-                              {/* Các Thông Số Thực Tế Đã Nhập */}
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                                {r.specimen_site && (
-                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Vị trí sinh thiết</span>
-                                    <strong className="text-slate-800">{r.specimen_site}</strong>
-                                  </div>
-                                )}
-                                {r.accession_number && (
-                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Mã số GPB / tiêu bản</span>
-                                    <strong className="font-mono text-slate-800">{r.accession_number}</strong>
-                                  </div>
-                                )}
-                                {r.histological_grade && (
-                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Độ mô học</span>
-                                    <strong className="text-slate-800">{r.histological_grade}</strong>
-                                  </div>
-                                )}
-                                {r.surgical_margin && (
-                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Diện cắt phẫu thuật</span>
-                                    <strong className="text-emerald-700">{r.surgical_margin}</strong>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Dấu Ấn Hóa Mô Miễn Dịch (IHC Markers) nếu có */}
-                              {r.ihc_markers && Array.isArray(r.ihc_markers) && r.ihc_markers.filter((m: any) => m.marker && m.result).length > 0 && (
-                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                                    Dấu ấn Hóa mô miễn dịch (IHC):
-                                  </span>
-                                  <div className="flex flex-wrap gap-2">
-                                    {r.ihc_markers.filter((m: any) => m.marker && m.result).map((ihc: any, ihcIdx: number) => (
-                                      <span
-                                        key={ihcIdx}
-                                        className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-[11px] text-slate-800"
-                                      >
-                                        <strong>{ihc.marker}</strong>: {ihc.result}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       );
                     })
@@ -889,12 +941,45 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                         <p className="text-slate-400 text-xs">Không có bệnh mạn tính nào.</p>
                       ) : (
                         dossier.conditions.map((c: any) => (
-                          <div key={c.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-                            <div className="font-bold text-slate-800">{c.condition_name}</div>
+                          <div key={c.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                                <span>{c.condition_name}</span>
+                                {c.icd10_code && (
+                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                    {c.icd10_code}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-[#1F7A8C] font-semibold border border-teal-200">
+                                {c.risk_level === 'high' ? 'Nguy cơ cao' : c.risk_level === 'medium' ? 'Nguy cơ trung bình' : 'Ổn định'}
+                              </span>
+                            </div>
                             <div className="text-[11px] text-slate-600">{c.status_summary}</div>
+
+                            {/* Chỉ số mục tiêu rút gọn */}
+                            {Array.isArray(c.target_metrics) && c.target_metrics.length > 0 && (
+                              <div className="flex flex-wrap gap-1 pt-1">
+                                {c.target_metrics.map((m: any, mIdx: number) => (
+                                  <span
+                                    key={mIdx}
+                                    className={`text-[10px] px-2 py-0.5 rounded-md font-medium border ${
+                                      m.type === 'good'
+                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                        : m.type === 'warning'
+                                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                        : 'bg-rose-50 text-rose-800 border-rose-200'
+                                    }`}
+                                  >
+                                    {m.name}: <strong>{m.status || (m.type === 'good' ? 'Tốt' : 'Theo dõi')}</strong>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
                             {c.next_checkup_date && (
-                              <div className="text-[10px] text-teal-700 flex items-center gap-1 font-semibold">
-                                <Calendar className="w-3 h-3" /> Tái khám: {new Date(c.next_checkup_date).toLocaleDateString('vi-VN')}
+                              <div className="text-[10px] text-teal-700 flex items-center gap-1 font-semibold pt-1 border-t border-slate-200/60">
+                                <Calendar className="w-3 h-3 text-teal-600" /> Tái khám: {new Date(c.next_checkup_date).toLocaleDateString('vi-VN')}
                               </div>
                             )}
                           </div>

@@ -161,3 +161,4 @@ export const AppointmentsGrid: React.FC<AppointmentsGridProps> = ({ appointments
     </div>
   );
 };
+
