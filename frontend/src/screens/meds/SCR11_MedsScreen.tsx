@@ -4,6 +4,8 @@ import { useMedsLogic } from './useMedsLogic';
 import { MedAdherenceCard } from './components/MedAdherenceCard';
 import { MedMonthCalendar } from './components/MedMonthCalendar';
 import { TodayDoseList } from './components/TodayDoseList';
+import { ActiveMedsTab } from './components/ActiveMedsTab';
+import { HistoryMedsTab } from './components/HistoryMedsTab';
 import { AddMedicationSheet } from './components/AddMedicationSheet';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
@@ -24,6 +26,8 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
     selectedDay,
     setSelectedDay,
     doses,
+    prescriptions,
+    activeMedications,
     adherence,
     isAddOpen,
     setIsAddOpen,
@@ -104,66 +108,86 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
           </div>
         )}
 
-        {/* 4. Banner Tuân thủ 30 ngày */}
-        <MedAdherenceCard
-          adherencePercent={adherence.adherencePercent}
-          takenCount={adherence.takenCount}
-          missedCount={adherence.missedCount}
-          skippedCount={adherence.skippedCount}
-          todayTaken={adherence.todayTaken}
-          todayTotal={adherence.todayTotal}
-        />
+        {/* TAB 1: Lịch thuốc */}
+        {activeTab === 'schedule' && (
+          <>
+            <MedAdherenceCard
+              adherencePercent={adherence.adherencePercent}
+              takenCount={adherence.takenCount}
+              missedCount={adherence.missedCount}
+              skippedCount={adherence.skippedCount}
+              todayTaken={adherence.todayTaken}
+              todayTotal={adherence.todayTotal}
+            />
 
-        {/* 5. Calendar Tháng 10/2026 */}
-        <MedMonthCalendar
-          days={adherence.calendarDays}
-          selectedDay={selectedDay}
-          onSelectDay={setSelectedDay}
-        />
+            <MedMonthCalendar
+              days={adherence.calendarDays}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+            />
 
-        {/* 6. Danh sách cữ thuốc theo ngày được chọn */}
-        <TodayDoseList
-          selectedDay={selectedDay}
-          doses={doses}
-          onTakeDose={handleTakeDose}
-          onSkipDose={handleSkipDose}
-          onSnoozeDose={handleSnoozeDose}
-        />
+            <TodayDoseList
+              selectedDay={selectedDay}
+              doses={doses}
+              onTakeDose={handleTakeDose}
+              onSkipDose={handleSkipDose}
+              onSnoozeDose={handleSnoozeDose}
+            />
 
-        {/* 7. Card Thêm thuốc (Nhập thủ công + AI Camera) */}
-        <div className="bg-white rounded-[28px] p-4.5 shadow-xs border border-slate-100 flex flex-col gap-2">
-          <h4 className="text-sm font-extrabold text-slate-900">Thêm thuốc</h4>
-          <p className="text-xs text-slate-400 font-medium">
-            Thuốc mới sẽ tự động vào lịch nhắc và Calendar
-          </p>
-          <div className="grid grid-cols-2 gap-3 mt-1.5">
+            <div className="bg-white rounded-[28px] p-4.5 shadow-xs border border-slate-100 flex flex-col gap-2">
+              <h4 className="text-sm font-extrabold text-slate-900">Thêm thuốc</h4>
+              <p className="text-xs text-slate-400 font-medium">
+                Thuốc mới sẽ tự động vào lịch nhắc và Calendar
+              </p>
+              <div className="grid grid-cols-2 gap-3 mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(true)}
+                  className="py-3 px-3 rounded-2xl border border-slate-200/90 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-95 transition"
+                >
+                  <Edit3 className="w-4 h-4 text-slate-600" />
+                  <span>Nhập thủ công</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('camera-ocr')}
+                  className="py-3 px-3 rounded-2xl border border-slate-200/90 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-95 transition"
+                >
+                  <Camera className="w-4 h-4 text-slate-600" />
+                  <span>AI Camera</span>
+                </button>
+              </div>
+            </div>
+
             <button
               type="button"
-              onClick={() => setIsAddOpen(true)}
-              className="py-3 px-3 rounded-2xl border border-slate-200/90 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-95 transition"
+              onClick={handleSendHistory}
+              className="w-full py-3.5 rounded-2xl bg-[#2563EB] hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition text-center"
             >
-              <Edit3 className="w-4 h-4 text-slate-600" />
-              <span>Nhập thủ công</span>
+              Gửi tiền sử dùng thuốc cho bác sĩ
             </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('camera-ocr')}
-              className="py-3 px-3 rounded-2xl border border-slate-200/90 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-95 transition"
-            >
-              <Camera className="w-4 h-4 text-slate-600" />
-              <span>AI Camera</span>
-            </button>
-          </div>
-        </div>
+          </>
+        )}
 
-        {/* 8. Nút Gửi tiền sử dùng thuốc cho bác sĩ */}
-        <button
-          type="button"
-          onClick={handleSendHistory}
-          className="w-full py-3.5 rounded-2xl bg-[#2563EB] hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition text-center"
-        >
-          Gửi tiền sử dùng thuốc cho bác sĩ
-        </button>
+        {/* TAB 2: Đang dùng */}
+        {activeTab === 'active' && (
+          <ActiveMedsTab
+            medications={activeMedications}
+            onAddMedication={() => setIsAddOpen(true)}
+          />
+        )}
+
+        {/* TAB 3: Tiền sử */}
+        {activeTab === 'history' && (
+          <HistoryMedsTab
+            prescriptions={prescriptions}
+            adherencePercent={adherence.adherencePercent}
+            takenCount={adherence.takenCount}
+            missedCount={adherence.missedCount}
+            skippedCount={adherence.skippedCount}
+            onSendHistory={handleSendHistory}
+          />
+        )}
       </div>
 
       {/* Add Medication Bottom Sheet */}

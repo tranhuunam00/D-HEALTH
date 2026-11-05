@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 export interface DoseItem {
   id: string;
@@ -25,6 +25,22 @@ export interface AdherenceData {
   calendarDays: AdherenceDay[];
 }
 
+export interface ActiveMedicationItem {
+  id: string;
+  prescriptionId: string;
+  name: string;
+  dosage: string;
+  dosePerIntake?: string;
+  timingInstructions?: string;
+  startDate?: string;
+  endDate?: string;
+  diagnosis?: string;
+  facilityName?: string;
+  doctorName?: string;
+  schedules?: { scheduledTime: string; mealRelation?: string }[];
+  status?: string;
+}
+
 const EMPTY_ADHERENCE: AdherenceData = {
   adherencePercent: 0,
   takenCount: 0,
@@ -39,6 +55,7 @@ export function useMedsLogic(memberId = 'nam') {
   const [activeTab, setActiveTab] = useState<'schedule' | 'active' | 'history'>('schedule');
   const [selectedDay, setSelectedDay] = useState<number>(26);
   const [doses, setDoses] = useState<DoseItem[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [adherence, setAdherence] = useState<AdherenceData>(EMPTY_ADHERENCE);
   const [loading, setLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -93,11 +110,32 @@ export function useMedsLogic(memberId = 'nam') {
     }
   }, [memberId]);
 
+  // 3. Tải danh sách toàn bộ đơn thuốc của thành viên
+  const fetchPrescriptions = useCallback(async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`/api/prescriptions/${memberId}`, { headers });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json?.data)) {
+          setPrescriptions(json.data);
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi tải danh sách đơn thuốc:', err);
+    }
+  }, [memberId]);
+
   const fetchMedsData = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchDosesForDay(selectedDay), fetchAdherenceSummary()]);
+    await Promise.all([
+      fetchDosesForDay(selectedDay),
+      fetchAdherenceSummary(),
+      fetchPrescriptions(),
+    ]);
     setLoading(false);
-  }, [fetchDosesForDay, fetchAdherenceSummary, selectedDay]);
+  }, [fetchDosesForDay, fetchAdherenceSummary, fetchPrescriptions, selectedDay]);
 
   useEffect(() => {
     fetchMedsData();
@@ -107,6 +145,33 @@ export function useMedsLogic(memberId = 'nam') {
   useEffect(() => {
     fetchDosesForDay(selectedDay);
   }, [selectedDay, fetchDosesForDay]);
+
+  // Trích xuất danh sách thuốc đang hoạt động từ các đơn đang dùng
+  const activeMedications = useMemo<ActiveMedicationItem[]>(() => {
+    const list: ActiveMedicationItem[] = [];
+    for (const rx of prescriptions) {
+      if (rx.status === 'active' || !rx.status) {
+        for (const item of (rx.items || [])) {
+          list.push({
+            id: item.id,
+            prescriptionId: rx.id,
+            name: item.medicationName,
+            dosage: item.dosage,
+            dosePerIntake: item.dosePerIntake,
+            timingInstructions: item.timingInstructions,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            diagnosis: rx.diagnosis,
+            facilityName: rx.facility_name,
+            doctorName: rx.doctor_name,
+            schedules: item.schedules,
+            status: rx.status,
+          });
+        }
+      }
+    }
+    return list;
+  }, [prescriptions]);
 
   const handleTakeDose = async (doseId: string) => {
     setDoses((prev) =>
@@ -184,6 +249,8 @@ export function useMedsLogic(memberId = 'nam') {
     selectedDay,
     setSelectedDay,
     doses,
+    prescriptions,
+    activeMedications,
     adherence,
     loading,
     isAddOpen,
