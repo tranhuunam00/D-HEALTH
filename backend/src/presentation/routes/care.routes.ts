@@ -26,14 +26,15 @@ export function createCareRouter(pool: Pool): Router {
   // 1. GET /:memberId/care-summary - Lấy tổng quan Lịch hẹn & My Care Team
   router.get('/:memberId/care-summary', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
-      const upcomingAppointment = await getUpcomingAppointment(pool, memberId);
+      const upcomingAppointment = await getUpcomingAppointment(pool, resolvedMemberId);
       let grantsRes = await pool.query(
         `SELECT id, grantee_id, grantee_name, grantee_role, grantee_org, grantee_phone, grantee_email, expires_at
          FROM share_grants
-         WHERE member_id = $1 AND status = 'active'
+         WHERE (member_id = $1 OR member_id = $2) AND status = 'active'
          ORDER BY created_at ASC`,
-        [memberId]
+        [memberId, resolvedMemberId]
       );
 
       if (grantsRes.rows.length === 0 && memberId !== 'nam') {

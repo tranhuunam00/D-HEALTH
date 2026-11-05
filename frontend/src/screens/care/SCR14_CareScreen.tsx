@@ -5,7 +5,6 @@ import { useCareLogic } from './useCareLogic';
 import { AppointmentCard } from './components/AppointmentCard';
 import { CareTeamRow } from './components/CareTeamRow';
 import { DoctorProfileCard } from './components/DoctorProfileCard';
-import { DataSharingBox } from './components/DataSharingBox';
 import { AddDoctorSheet } from './components/AddDoctorSheet';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 
@@ -18,7 +17,7 @@ interface SCR14Props {
 export const SCR14_CareScreen: React.FC<SCR14Props> = ({
   onNavigate,
   activeMemberName = '',
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
 }) => {
   const {
     upcomingAppointment,
@@ -27,7 +26,6 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
     selectedMemberId,
     setSelectedMemberId,
     selectedCategory,
-    sharingStats,
     isAddDoctorOpen,
     setIsAddDoctorOpen,
     openAddDoctorModal,
@@ -100,13 +98,6 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             onEdit={() => openAddDoctorModal(selectedMember.role)}
           />
         )}
-
-        {/* 6. Data Sharing Permission Box */}
-        <DataSharingBox
-          activeCount={sharingStats.activeCount}
-          expiringDays={sharingStats.expiringDays}
-          onManage={() => alert('Quản lý phân quyền truy cập hồ sơ y tế theo Nghị định 13/2023/NĐ-CP.')}
-        />
       </div>
 
       {/* Add / Select Doctor Bottom Sheet */}

@@ -27,7 +27,7 @@ export interface SharingStats {
   readonly expiringDays: number;
 }
 
-export function useCareLogic(memberId = 'nam') {
+export function useCareLogic(memberId = 'mem_145deb71') {
   const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointment | null>(null);
   const [careTeam, setCareTeam] = useState<CareTeamMember[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
