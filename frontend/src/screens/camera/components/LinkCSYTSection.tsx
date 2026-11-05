@@ -1,108 +1,56 @@
 import React from 'react';
-import { QrCode, RefreshCw } from 'lucide-react';
+import { Link2, Building2, Clock, ArrowRight } from 'lucide-react';
 
 interface LinkCSYTSectionProps {
-  linkUrl: string;
-  onLinkUrlChange: (val: string) => void;
-  linkUsername: string;
-  onLinkUsernameChange: (val: string) => void;
-  linkPassword: string;
-  onLinkPasswordChange: (val: string) => void;
-  captchaCode: string;
-  onCaptchaCodeChange: (val: string) => void;
+  readonly linkUrl?: string;
+  readonly onLinkUrlChange?: (val: string) => void;
+  readonly linkUsername?: string;
+  readonly onLinkUsernameChange?: (val: string) => void;
+  readonly linkPassword?: string;
+  readonly onLinkPasswordChange?: (val: string) => void;
+  readonly captchaCode?: string;
+  readonly onCaptchaCodeChange?: (val: string) => void;
+  readonly onSwitchToManual?: () => void;
 }
 
-export const LinkCSYTSection: React.FC<LinkCSYTSectionProps> = ({
-  linkUrl,
-  onLinkUrlChange,
-  linkUsername,
-  onLinkUsernameChange,
-  linkPassword,
-  onLinkPasswordChange,
-  captchaCode,
-  onCaptchaCodeChange,
-}) => {
+export const LinkCSYTSection: React.FC<LinkCSYTSectionProps> = ({ onSwitchToManual }) => {
   return (
-    <div className="flex flex-col gap-3">
-      {/* Banner hướng dẫn */}
-      <div className="bg-gradient-to-r from-[#DDF4EE] to-[#E3EBFF] rounded-2xl p-3.5 text-xs text-[#134E4A] font-medium leading-relaxed border border-teal-200/60 shadow-xs">
-        Nhập link và thông tin đăng nhập mà cơ sở y tế gửi cho bạn (SMS, email hoặc in trên phiếu hẹn). D-Health tải kết quả, AI đọc và chuẩn hoá, bạn xác nhận trước khi lưu.
+    <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-200/80 flex flex-col items-center text-center gap-3.5 my-1">
+      <div className="w-16 h-16 rounded-2xl bg-sky-50 border border-sky-200/80 flex items-center justify-center text-sky-600 shadow-2xs">
+        <Link2 className="w-8 h-8" />
       </div>
 
-      <div className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex flex-col gap-3">
-        <div>
-          <label className="text-slate-500 text-xs font-bold block mb-1">Đường link kết quả</label>
-          <div className="flex gap-2">
-            <input
-              type="url"
-              value={linkUrl}
-              onChange={(e) => onLinkUrlChange(e.target.value)}
-              placeholder="https://ketqua.benhvien.vn/..."
-              className="flex-1 h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
-            />
-            <button
-              type="button"
-              aria-label="Quét mã QR trên phiếu"
-              onClick={() => alert('Mở camera quét mã QR trên phiếu hẹn')}
-              className="w-11 h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 active:scale-95 transition"
-            >
-              <QrCode className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-slate-500 text-xs font-bold block mb-1">Tên đăng nhập</label>
-          <input
-            value={linkUsername}
-            onChange={(e) => onLinkUsernameChange(e.target.value)}
-            placeholder="Mã bệnh nhân / mã tra cứu"
-            className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="text-slate-500 text-xs font-bold block mb-1">Mật khẩu</label>
-          <input
-            type="password"
-            value={linkPassword}
-            onChange={(e) => onLinkPasswordChange(e.target.value)}
-            placeholder="Mật khẩu tra cứu"
-            className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="text-slate-500 text-xs font-bold block mb-1">Mã xác thực (captcha)</label>
-          <div className="flex items-center gap-2">
-            <div
-              role="img"
-              aria-label="Ảnh mã xác thực của cơ sở y tế"
-              className="w-28 h-11 rounded-xl border-1.5 border-dashed border-slate-300 bg-slate-100 flex items-center justify-center text-xs font-black tracking-widest text-slate-700 select-none shrink-0"
-            >
-              7X9K2
-            </div>
-            <button
-              type="button"
-              aria-label="Tải mã khác"
-              onClick={() => alert('Đã làm mới captcha')}
-              className="w-11 h-11 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center shrink-0 active:scale-95"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <input
-              placeholder="Nhập mã"
-              value={captchaCode}
-              onChange={(e) => onCaptchaCodeChange(e.target.value)}
-              className="flex-1 h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
-            />
-          </div>
-        </div>
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100/80 border border-sky-200 text-sky-800 text-[11px] font-black uppercase tracking-wider">
+        <Clock className="w-3.5 h-3.5 text-sky-600" />
+        <span>Tính năng sắp ra mắt</span>
       </div>
 
-      <span className="text-[11px] text-slate-500 leading-relaxed px-1">
-        Mật khẩu chỉ dùng một lần để tải kết quả, không được lưu lại. Sau khi tải, AI sẽ đề xuất phân loại để bạn xác nhận.
-      </span>
+      <div className="space-y-1">
+        <h3 className="text-base font-black text-slate-900">
+          Đồng bộ kết quả từ Link Cơ Sở Y Tế
+        </h3>
+        <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[320px] mx-auto">
+          Cổng kết nối liên thông dữ liệu tự động từ cổng thông tin bệnh viện / phòng khám theo chuẩn HL7 FHIR đang được triển khai thử nghiệm với các đối tác y tế.
+        </p>
+      </div>
+
+      <div className="w-full bg-slate-50 rounded-2xl p-3 border border-slate-100 flex items-start gap-2.5 text-left">
+        <Building2 className="w-4 h-4 text-[#1F7A8C] shrink-0 mt-0.5" />
+        <span className="text-[11px] text-slate-600 leading-snug">
+          Hệ thống sẽ cập nhật ngay khi hoàn tất tích hợp API với các bệnh viện. Hiện tại, bạn có thể lưu trữ kết quả bằng phương thức <b>Nhập thủ công</b>.
+        </span>
+      </div>
+
+      {onSwitchToManual && (
+        <button
+          type="button"
+          onClick={onSwitchToManual}
+          className="w-full py-3 px-4 rounded-xl bg-[#1F7A8C] hover:bg-[#165B69] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98]"
+        >
+          <span>Chuyển sang Nhập thủ công</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 };

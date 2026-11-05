@@ -1,56 +1,50 @@
 import React from 'react';
-import { ClinicalDocKind, CAM_READINGS, CamField } from '../camera-input.types';
+import { Camera, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ClinicalDocKind } from '../camera-input.types';
 
 interface AICameraSectionProps {
-  kind: ClinicalDocKind;
+  readonly kind?: ClinicalDocKind;
+  readonly onSwitchToManual?: () => void;
 }
 
-export const AICameraSection: React.FC<AICameraSectionProps> = ({ kind }) => {
-  const currentDoc = CAM_READINGS[kind];
-
+export const AICameraSection: React.FC<AICameraSectionProps> = ({ onSwitchToManual }) => {
   return (
-    <div className="flex flex-col gap-2.5">
-      {/* 1. Header tệp tài liệu đã quét */}
-      <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
-        <div className="w-11 h-14 rounded-lg bg-slate-100 border border-slate-200 flex flex-col justify-center gap-1 p-1.5 shrink-0">
-          <span className="w-3/4 h-1 bg-slate-400 rounded-full" />
-          <span className="w-full h-1 bg-slate-300 rounded-full" />
-          <span className="w-full h-1 bg-slate-300 rounded-full" />
-          <span className="w-1/2 h-1 bg-slate-300 rounded-full" />
-        </div>
+    <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-200/80 flex flex-col items-center text-center gap-3.5 my-1">
+      <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 shadow-2xs">
+        <Camera className="w-8 h-8" />
+      </div>
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <span className="text-xs font-bold text-slate-900 truncate">{currentDoc.doc}</span>
-          <span className="text-[11px] text-slate-500">
-            Chụp → Đọc → <b className="text-teal-700">Xác nhận</b> → Lưu
-          </span>
-        </div>
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-200 text-amber-800 text-[11px] font-black uppercase tracking-wider">
+        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+        <span>Tính năng sắp ra mắt</span>
+      </div>
 
+      <div className="space-y-1">
+        <h3 className="text-base font-black text-slate-900">
+          Quét phiếu kết quả bằng AI Camera
+        </h3>
+        <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[320px] mx-auto">
+          Mô hình AI OCR nhận diện tự động ảnh chụp phiếu xét nghiệm và phim cận lâm sàng đang trong giai đoạn huấn luyện và kiểm định chất lượng y khoa.
+        </p>
+      </div>
+
+      <div className="w-full bg-slate-50 rounded-2xl p-3 border border-slate-100 flex items-start gap-2.5 text-left">
+        <ShieldCheck className="w-4 h-4 text-[#1F7A8C] shrink-0 mt-0.5" />
+        <span className="text-[11px] text-slate-600 leading-snug">
+          Để đảm bảo tính chính xác 100% của hồ sơ sức khỏe, vui lòng sử dụng phương thức <b>Nhập thủ công</b> trong thời gian này.
+        </span>
+      </div>
+
+      {onSwitchToManual && (
         <button
           type="button"
-          onClick={() => alert('Xem ảnh chụp gốc')}
-          className="text-xs font-bold text-[#1F7A8C] hover:underline shrink-0"
+          onClick={onSwitchToManual}
+          className="w-full py-3 px-4 rounded-xl bg-[#1F7A8C] hover:bg-[#165B69] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98]"
         >
-          Ảnh gốc
+          <span>Chuyển sang Nhập thủ công</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
-      </div>
-
-      {/* 2. Danh sách các trường dữ liệu AI trích xuất */}
-      <div className="bg-white rounded-2xl px-4 py-1 shadow-sm border border-slate-100 flex flex-col divide-y divide-slate-100">
-        {currentDoc.fields.map((f: CamField, idx: number) => (
-          <div key={idx} className="flex items-center gap-2 py-3">
-            <span className="w-24 text-xs font-bold text-slate-500 shrink-0">{f.key}</span>
-            <span className="flex-1 text-xs font-extrabold text-slate-900">{f.value}</span>
-            <span className={`text-[11px] font-bold shrink-0 ${f.normal ? 'text-emerald-700' : 'text-amber-700'}`}>
-              {f.conf}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <span className="text-[11px] text-slate-500 leading-relaxed px-1">
-        Dữ liệu chỉ được ghi vào hồ sơ khi bạn xác nhận. Ảnh gốc được lưu an toàn để đối chiếu.
-      </span>
+      )}
     </div>
   );
 };

@@ -58,9 +58,9 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
           onSetMethod={logic.setMethod}
         />
 
-        {/* NHẬP DỮ LIỆU */}
+        {/* NHẬP DỮ LIỆU HOẶC THÔNG TIN TÍNH NĂNG */}
         <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
-          NHẬP DỮ LIỆU
+          {logic.method === 'manual' ? 'NHẬP DỮ LIỆU THỦ CÔNG' : 'THÔNG TIN TÍNH NĂNG'}
         </span>
 
         {/* Form chung khi nhập thủ công */}
@@ -148,18 +148,16 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
 
         {logic.method === 'link' && (
           <LinkCSYTSection
-            linkUrl={logic.linkUrl}
-            onLinkUrlChange={logic.setLinkUrl}
-            linkUsername={logic.linkUsername}
-            onLinkUsernameChange={logic.setLinkUsername}
-            linkPassword={logic.linkPassword}
-            onLinkPasswordChange={logic.setLinkPassword}
-            captchaCode={logic.captchaCode}
-            onCaptchaCodeChange={logic.setCaptchaCode}
+            onSwitchToManual={() => logic.setMethod('manual')}
           />
         )}
 
-        {logic.method === 'cam' && <AICameraSection kind={logic.kind} />}
+        {logic.method === 'cam' && (
+          <AICameraSection
+            kind={logic.kind}
+            onSwitchToManual={() => logic.setMethod('manual')}
+          />
+        )}
       </div>
 
       {/* Floating Bottom Action Bar */}
@@ -167,6 +165,7 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
         method={logic.method}
         isSaving={logic.isSaving}
         onSaveAndReturn={handleSaveAndReturn}
+        onSwitchToManual={() => logic.setMethod('manual')}
       />
     </div>
   );

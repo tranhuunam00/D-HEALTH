@@ -52,9 +52,9 @@ export const CameraTypeAndMethodTabs: React.FC<CameraTypeAndMethodTabsProps> = (
         </span>
         <div className="grid grid-cols-3 gap-2" role="tablist">
           {[
-            { id: 'manual', label: 'Nhập thủ công', icon: Edit3 },
-            { id: 'link', label: 'Từ link CSYT', icon: Link2 },
-            { id: 'cam', label: 'AI Camera', icon: Camera },
+            { id: 'manual', label: 'Nhập thủ công', icon: Edit3, badge: '' },
+            { id: 'link', label: 'Từ link CSYT', icon: Link2, badge: 'Sắp ra mắt' },
+            { id: 'cam', label: 'AI Camera', icon: Camera, badge: 'Sắp ra mắt' },
           ].map((m) => {
             const Icon = m.icon;
             const isSelected = method === m.id;
@@ -64,13 +64,24 @@ export const CameraTypeAndMethodTabs: React.FC<CameraTypeAndMethodTabsProps> = (
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => onSetMethod(m.id as InputMethod)}
-                className={`h-20 min-h-[56px] rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 text-xs font-extrabold transition p-2 active:scale-95 ${
+                className={`relative h-20 min-h-[56px] rounded-2xl border-2 flex flex-col items-center justify-center gap-1 text-xs font-extrabold transition p-2 active:scale-95 ${
                   isSelected
                     ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
                     : 'border-transparent bg-white text-slate-700 hover:bg-slate-50 shadow-xs'
                 }`}
               >
-                <Icon className="w-5.5 h-5.5" />
+                {m.badge && (
+                  <span
+                    className={`absolute -top-1.5 px-1.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-tight shadow-xs ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 font-black'
+                        : 'bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}
+                  >
+                    {m.badge}
+                  </span>
+                )}
+                <Icon className="w-5 h-5 shrink-0" />
                 <span className="leading-tight text-center">{m.label}</span>
               </button>
             );
