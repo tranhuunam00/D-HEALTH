@@ -64,6 +64,34 @@ describe('ChronicConditionsRoutes TDD', () => {
       expect(output.data.tasks.length).toBe(1);
       expect(output.data.conditions[0].condition_name).toBe('Tim mạch');
     });
+
+    it('fallback lấy dữ liệu mẫu khi thành viên mới chưa có hồ sơ bệnh mạn tính riêng', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [] }) // condRes rỗng
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'pcc_tim_mach',
+              condition_name: 'Tim mạch',
+              status_summary: 'Nguy cơ trung bình · xu hướng ổn định',
+            },
+          ],
+        }) // fallback cond
+        .mockResolvedValueOnce({ rows: [] }) // taskRes rỗng
+        .mockResolvedValueOnce({
+          rows: [{ id: 't1', title: 'Theo dõi huyết áp sáng và tối' }],
+        }); // fallback tasks
+
+      const handler = getHandler('GET', '/:memberId');
+      const { req, res } = createReqRes({ params: { memberId: 'mem_new_123' } });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.conditions.length).toBe(1);
+      expect(output.data.tasks.length).toBe(1);
+    });
   });
 
   describe('PATCH /tasks/:taskId', () => {
