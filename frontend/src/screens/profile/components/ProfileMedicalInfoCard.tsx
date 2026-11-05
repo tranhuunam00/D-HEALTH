@@ -1,19 +1,24 @@
 import React from 'react';
+import { ChevronDown } from 'lucide-react';
 
 export interface ProfileMedicalInfoCardProps {
   bloodType: string;
+  setBloodType: (val: string) => void;
   heightCm: string;
+  setHeightCm: (val: string) => void;
   weightKg: string;
+  setWeightKg: (val: string) => void;
   bmi: string;
-  onOpenEditModal: () => void;
 }
 
 export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
   bloodType,
+  setBloodType,
   heightCm,
+  setHeightCm,
   weightKg,
+  setWeightKg,
   bmi,
-  onOpenEditModal,
 }) => {
   const getBmiCategory = (val: string) => {
     const n = parseFloat(val);
@@ -32,33 +37,66 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
         <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
           THÔNG TIN Y TẾ
         </span>
-        <button
-          type="button"
-          onClick={onOpenEditModal}
-          className="text-xs font-bold text-[#1F7A8C] hover:underline"
-        >
-          Chỉnh sửa chi tiết
-        </button>
+        <span className="text-[10px] text-[#1F7A8C] font-semibold bg-[#E0F2FE]/60 px-2 py-0.5 rounded-full">
+          Nhập trực tiếp • Tự tính BMI
+        </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5 text-center pt-1">
-        <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100">
-          <span className="text-[11px] font-medium text-slate-500 block">Nhóm máu</span>
-          <span className="text-lg font-black text-rose-600 block mt-0.5">{bloodType || 'O+'}</span>
+      <div className="grid grid-cols-3 gap-2.5 pt-1">
+        {/* Nhóm máu */}
+        <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100 flex flex-col items-center">
+          <label className="text-[11px] font-medium text-slate-500 block mb-1">Nhóm máu</label>
+          <div className="relative w-full">
+            <select
+              value={bloodType || 'O+'}
+              onChange={(e) => setBloodType(e.target.value)}
+              className="w-full text-sm font-black text-rose-600 bg-white border border-slate-200 rounded-xl px-2 py-1.5 outline-none focus:border-[#1F7A8C] text-center appearance-none cursor-pointer"
+            >
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-1.5 top-2.5 pointer-events-none" />
+          </div>
         </div>
 
-        <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100">
-          <span className="text-[11px] font-medium text-slate-500 block">Chiều cao</span>
-          <span className="text-lg font-black text-slate-900 block mt-0.5">
-            {heightCm} <span className="text-xs font-normal text-slate-500">cm</span>
-          </span>
+        {/* Chiều cao */}
+        <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100 flex flex-col items-center">
+          <label className="text-[11px] font-medium text-slate-500 block mb-1">Chiều cao (cm)</label>
+          <div className="relative w-full">
+            <input
+              type="number"
+              step="0.5"
+              min="30"
+              max="250"
+              value={heightCm}
+              placeholder="cm"
+              onChange={(e) => setHeightCm(e.target.value)}
+              className="w-full text-sm font-black text-slate-900 bg-white border border-slate-200 rounded-xl px-2 py-1.5 outline-none focus:border-[#1F7A8C] text-center"
+            />
+          </div>
         </div>
 
-        <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100">
-          <span className="text-[11px] font-medium text-slate-500 block">Cân nặng</span>
-          <span className="text-lg font-black text-slate-900 block mt-0.5">
-            {weightKg.replace('.', ',')} <span className="text-xs font-normal text-slate-500">kg</span>
-          </span>
+        {/* Cân nặng */}
+        <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100 flex flex-col items-center">
+          <label className="text-[11px] font-medium text-slate-500 block mb-1">Cân nặng (kg)</label>
+          <div className="relative w-full">
+            <input
+              type="number"
+              step="0.1"
+              min="2"
+              max="300"
+              value={weightKg}
+              placeholder="kg"
+              onChange={(e) => setWeightKg(e.target.value)}
+              className="w-full text-sm font-black text-slate-900 bg-white border border-slate-200 rounded-xl px-2 py-1.5 outline-none focus:border-[#1F7A8C] text-center"
+            />
+          </div>
         </div>
       </div>
 
@@ -73,4 +111,3 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
     </div>
   );
 };
-

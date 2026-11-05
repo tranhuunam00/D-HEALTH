@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle, LogOut } from 'lucide-react';
 import { useProfileLogic } from './useProfileLogic';
-import { EditProfileBottomSheet } from './EditProfileBottomSheet';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
 import { User as UserType } from '../../types/auth.types';
 import { ProfileIdentityCard } from './components/ProfileIdentityCard';
@@ -37,8 +36,11 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     birthDate,
     setBirthDate,
     bloodType,
+    setBloodType,
     heightCm,
+    setHeightCm,
     weightKg,
+    setWeightKg,
     avatarUrl,
     setAvatarUrl,
     citizenId,
@@ -144,10 +146,12 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
         {/* Medical Info Card */}
         <ProfileMedicalInfoCard
           bloodType={bloodType}
+          setBloodType={setBloodType}
           heightCm={heightCm}
+          setHeightCm={setHeightCm}
           weightKg={weightKg}
+          setWeightKg={setWeightKg}
           bmi={bmi}
-          onOpenEditModal={() => setIsEditOpen(true)}
         />
 
         {/* PC Admin Switcher (Chỉ hiển thị cho tài khoản Quản trị viên) */}
@@ -185,13 +189,7 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
         </div>
       </div>
 
-      {/* Edit Profile Bottom Sheet Modal */}
-      <EditProfileBottomSheet
-        isOpen={isEditOpen}
-        member={activeMember}
-        onClose={() => setIsEditOpen(false)}
-        onSubmit={handleUpdateProfile}
-      />
+
     </div>
   );
 };
