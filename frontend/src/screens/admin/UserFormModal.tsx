@@ -51,7 +51,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setEmail(targetUser.email || '');
       setRole(targetUser.role || 'patient');
       setIsActive(targetUser.is_active ?? true);
-      setPassword(''); // Mặc định trống khi chỉnh sửa
+      setPassword('');
 
       setNationalId(targetUser.national_id || '');
       setAddress(targetUser.address || '');
@@ -130,84 +130,95 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-[#0B132B] border border-slate-700 w-full max-w-5xl rounded-3xl shadow-2xl relative text-white flex flex-col my-4 overflow-hidden">
-        {/* Header Bar */}
-        <div className="px-7 py-4.5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
+      <div className="bg-white border border-slate-200 w-full max-w-5xl rounded-3xl shadow-2xl relative text-slate-800 flex flex-col my-4 overflow-hidden">
+        {/* Header Bar (White Theme) */}
+        <div className="px-7 py-4.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center shadow-md shadow-teal-500/20">
+            <div className="w-10 h-10 rounded-xl bg-teal-100 text-[#1F7A8C] flex items-center justify-center shadow-xs">
               <User className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-bold text-slate-900">
                   {targetUser ? 'Chỉnh Sửa Toàn Diện Hồ Sơ Người Dùng' : 'Thêm Người Dùng Mới'}
                 </h3>
                 {targetUser && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-[#1F7A8C] font-bold border border-teal-200">
                     ID: {targetUser.id.substring(0, 8)}...
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Quản lý định danh cá nhân, vai trò hệ thống, cấp đổi mật khẩu và thông tin y tế cơ bản
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-7 space-y-6 text-xs max-h-[82vh] overflow-y-auto">
+        {/* Form Body (White Theme) */}
+        <form onSubmit={handleSubmit} className="p-7 space-y-6 text-xs max-h-[82vh] overflow-y-auto bg-slate-50/40">
           {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-300 font-medium">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-medium">
               {errorMsg}
             </div>
           )}
 
-          {/* SECTION 1: Thông tin tài khoản & Mật khẩu (Full Width - 3 Columns) */}
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-              <div className="flex items-center gap-2 text-teal-400 font-bold text-xs">
+          {/* SECTION 1: Thông tin tài khoản & Mật khẩu */}
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2 text-[#1F7A8C] font-bold text-xs">
                 <Lock className="w-4 h-4" />
                 <span>1. TÀI KHOẢN ĐĂNG NHẬP, PHÂN QUYỀN & MẬT KHẨU</span>
               </div>
               {targetUser && (
-                <span className="text-[11px] text-amber-400 flex items-center gap-1 font-medium">
-                  <KeyRound className="w-3.5 h-3.5" /> Có thể đổi mật khẩu mới trực tiếp
+                <span className="text-[11px] text-amber-700 flex items-center gap-1 font-semibold">
+                  <KeyRound className="w-3.5 h-3.5 text-amber-600" /> Cấp đổi mật khẩu mới trực tiếp tại đây
                 </span>
               )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                label="Họ và tên *"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                placeholder="Ví dụ: Trần Hữu Nam"
-              />
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-semibold text-slate-700">Họ và tên *</label>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Ví dụ: Trần Hữu Nam"
+                  className="w-full min-h-[46px] px-4 py-2 rounded-2xl bg-white border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#1F7A8C]"
+                />
+              </div>
 
-              <Input
-                label="Số điện thoại đăng nhập *"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                required
-                placeholder="0961766816"
-              />
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-semibold text-slate-700">Số điện thoại đăng nhập *</label>
+                <input
+                  type="text"
+                  required
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="0961766816"
+                  className="w-full min-h-[46px] px-4 py-2 rounded-2xl bg-white border border-slate-300 text-slate-900 font-mono text-sm focus:outline-none focus:border-[#1F7A8C]"
+                />
+              </div>
 
-              <Input
-                label="Địa chỉ Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="bacsi@dhealth.vn"
-              />
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-semibold text-slate-700">Địa chỉ Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="bacsi@dhealth.vn"
+                  className="w-full min-h-[46px] px-4 py-2 rounded-2xl bg-white border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#1F7A8C]"
+                />
+              </div>
 
               <div className="space-y-1">
                 <Input
@@ -221,17 +232,17 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 />
                 {targetUser && (
                   <p className="text-[10px] text-slate-400 italic">
-                    Nhập $\ge 6$ ký tự nếu muốn cấp lại mật khẩu đăng nhập mới cho người dùng.
+                    Chỉ nhập nếu người dùng yêu cầu cấp lại mật khẩu đăng nhập mới.
                   </p>
                 )}
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Vai trò hệ thống</label>
+                <label className="text-xs font-semibold text-slate-700">Vai trò hệ thống</label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full min-h-[48px] bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm"
+                  className="w-full min-h-[46px] bg-white border border-slate-300 rounded-2xl px-4 py-2 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
                 >
                   <option value="patient">Bệnh Nhân (Patient)</option>
                   <option value="doctor">Bác Sĩ Điều Trị (Doctor)</option>
@@ -241,19 +252,19 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Trạng thái tài khoản</label>
-                <div className="flex items-center gap-5 pt-3">
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-200">
+                <label className="text-xs font-semibold text-slate-700">Trạng thái tài khoản</label>
+                <div className="flex items-center gap-5 pt-2.5">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-700">
                     <input
                       type="radio"
                       name="user_active_status"
                       checked={isActive === true}
                       onChange={() => setIsActive(true)}
-                      className="accent-teal-500 w-4 h-4"
+                      className="accent-[#1F7A8C] w-4 h-4"
                     />
-                    <span className="font-medium text-emerald-400">Đang hoạt động</span>
+                    <span className="font-semibold text-emerald-700">Đang hoạt động</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-200">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-700">
                     <input
                       type="radio"
                       name="user_active_status"
@@ -261,72 +272,76 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                       onChange={() => setIsActive(false)}
                       className="accent-rose-500 w-4 h-4"
                     />
-                    <span className="font-medium text-rose-400">Tạm khóa</span>
+                    <span className="font-semibold text-rose-700">Tạm khóa</span>
                   </label>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* TWO COLUMNS: SECTION 2 & SECTION 3 SIDE-BY-SIDE */}
+          {/* TWO COLUMNS: SECTION 2 & SECTION 3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Section 2: Định danh công dân & Cư trú (eKYC) */}
-            <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-              <div className="flex items-center gap-2 text-purple-400 font-bold text-xs border-b border-slate-800 pb-2.5">
-                <ShieldCheck className="w-4 h-4" />
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 text-purple-700 font-bold text-xs border-b border-slate-100 pb-2.5">
+                <ShieldCheck className="w-4 h-4 text-purple-600" />
                 <span>2. ĐỊNH DANH CÔNG DÂN & XÁC THỰC (eKYC)</span>
               </div>
 
               <div className="space-y-3.5">
-                <Input
-                  label="Số CCCD / CMTND"
-                  value={nationalId}
-                  onChange={(e) => setNationalId(e.target.value)}
-                  placeholder="VD: 001200001234"
-                />
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-xs font-semibold text-slate-700">Số CCCD / CMTND</label>
+                  <input
+                    type="text"
+                    value={nationalId}
+                    onChange={(e) => setNationalId(e.target.value)}
+                    placeholder="VD: 001200001234"
+                    className="w-full min-h-[46px] px-4 py-2 rounded-2xl bg-white border border-slate-300 text-slate-900 font-mono text-sm focus:outline-none focus:border-purple-600"
+                  />
+                </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Trạng thái eKYC</label>
-                  <div className="pt-2">
-                    <label className="flex items-center gap-2.5 cursor-pointer text-slate-300 p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 transition">
+                  <label className="text-xs font-semibold text-slate-700">Trạng thái eKYC</label>
+                  <div className="pt-1">
+                    <label className="flex items-center gap-2.5 cursor-pointer text-slate-800 p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-purple-400 transition">
                       <input
                         type="checkbox"
                         checked={isEkycVerified}
                         onChange={(e) => setIsEkycVerified(e.target.checked)}
-                        className="accent-purple-500 w-4 h-4 rounded"
+                        className="accent-purple-600 w-4 h-4 rounded"
                       />
-                      <span className="font-medium text-purple-200">Đã thẩm định định danh điện tử (eKYC Verified)</span>
+                      <span className="font-semibold text-purple-900">Đã thẩm định định danh điện tử (eKYC Verified)</span>
                     </label>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Địa chỉ cư trú thường trú</label>
+                  <label className="text-xs font-semibold text-slate-700">Địa chỉ cư trú thường trú</label>
                   <input
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="VD: Số 12 Chùa Bộc, Phường Quang Trung, Đống Đa, Hà Nội"
-                    className="w-full min-h-[48px] px-4 py-2.5 rounded-2xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-purple-500"
+                    className="w-full min-h-[46px] px-4 py-2 rounded-2xl bg-white border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-purple-600"
                   />
                 </div>
               </div>
             </div>
 
             {/* Section 3: Hồ sơ sức khỏe & Sinh trắc cơ bản */}
-            <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-              <div className="flex items-center gap-2 text-rose-400 font-bold text-xs border-b border-slate-800 pb-2.5">
-                <Activity className="w-4 h-4" />
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 text-rose-700 font-bold text-xs border-b border-slate-100 pb-2.5">
+                <Activity className="w-4 h-4 text-rose-600" />
                 <span>3. SINH TRẮC HỌC & HỒ SƠ Y TẾ CƠ BẢN</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Giới tính</label>
+                  <label className="text-xs font-semibold text-slate-700">Giới tính</label>
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
-                    className="w-full min-h-[48px] bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2 text-white focus:outline-none focus:border-rose-500 text-sm"
+                    className="w-full min-h-[46px] bg-white border border-slate-300 rounded-2xl px-4 py-2 text-slate-900 focus:outline-none focus:border-rose-600 text-sm"
                   >
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
@@ -335,21 +350,21 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Ngày sinh</label>
+                  <label className="text-xs font-semibold text-slate-700">Ngày sinh</label>
                   <input
                     type="date"
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full min-h-[48px] bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2 text-white focus:outline-none focus:border-rose-500 text-sm"
+                    className="w-full min-h-[46px] bg-white border border-slate-300 rounded-2xl px-4 py-2 text-slate-900 focus:outline-none focus:border-rose-600 text-sm"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Nhóm máu</label>
+                  <label className="text-xs font-semibold text-slate-700">Nhóm máu</label>
                   <select
                     value={bloodType}
                     onChange={(e) => setBloodType(e.target.value)}
-                    className="w-full min-h-[48px] bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2 text-white font-mono focus:outline-none focus:border-rose-500 text-sm"
+                    className="w-full min-h-[46px] bg-white border border-slate-300 rounded-2xl px-4 py-2 text-slate-900 font-mono font-bold focus:outline-none focus:border-rose-600 text-sm"
                   >
                     {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((bt) => (
                       <option key={bt} value={bt}>{bt}</option>
@@ -358,26 +373,26 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Chiều cao (cm)</label>
+                  <label className="text-xs font-semibold text-slate-700">Chiều cao (cm)</label>
                   <input
                     type="number"
                     step="0.5"
                     value={heightCm}
                     onChange={(e) => setHeightCm(e.target.value)}
                     placeholder="170"
-                    className="w-full min-h-[48px] bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2 text-white font-mono focus:outline-none focus:border-rose-500 text-sm"
+                    className="w-full min-h-[46px] bg-white border border-slate-300 rounded-2xl px-4 py-2 text-slate-900 font-mono text-sm focus:outline-none focus:border-rose-600"
                   />
                 </div>
 
                 <div className="space-y-1 col-span-2">
-                  <label className="text-xs font-semibold text-slate-300">Cân nặng (kg)</label>
+                  <label className="text-xs font-semibold text-slate-700">Cân nặng (kg)</label>
                   <input
                     type="number"
                     step="0.5"
                     value={weightKg}
                     onChange={(e) => setWeightKg(e.target.value)}
                     placeholder="68"
-                    className="w-full min-h-[48px] bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2 text-white font-mono focus:outline-none focus:border-rose-500 text-sm"
+                    className="w-full min-h-[46px] bg-white border border-slate-300 rounded-2xl px-4 py-2 text-slate-900 font-mono text-sm focus:outline-none focus:border-rose-600"
                   />
                 </div>
               </div>
@@ -385,7 +400,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
 
           {/* Action Buttons Bar */}
-          <div className="flex items-center justify-between pt-5 border-t border-slate-800">
+          <div className="flex items-center justify-between pt-5 border-t border-slate-200">
             <span className="text-slate-400 text-xs">
               Mọi thay đổi sẽ được ghi nhận vào nhật ký kiểm toán hệ thống.
             </span>
@@ -396,7 +411,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] hover:brightness-110 text-white font-semibold flex items-center gap-2 shadow-lg shadow-teal-500/20 transition cursor-pointer text-xs"
+                className="px-6 py-2.5 rounded-xl bg-[#1F7A8C] hover:bg-[#186473] text-white font-semibold flex items-center gap-2 shadow-sm transition cursor-pointer text-xs"
               >
                 {submitting ? (
                   <>

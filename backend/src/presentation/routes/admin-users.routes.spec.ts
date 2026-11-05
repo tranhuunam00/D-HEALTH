@@ -212,4 +212,30 @@ describe('AdminUsersRoutes', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
     });
   });
+
+  describe('GET /:id/dossier', () => {
+    it('trả về toàn bộ hồ sơ lâm sàng chi tiết của bệnh nhân (bệnh án tổng hợp)', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'u1', phone_number: '0961766816' }] }) // user
+        .mockResolvedValueOnce({ rows: [{ id: 'nam', full_name: 'Trần Hữu Nam' }] }) // members
+        .mockResolvedValueOnce({ rows: [{ id: 'bio_1', systolic: 120, diastolic: 80 }] }) // biometrics
+        .mockResolvedValueOnce({ rows: [{ id: 'cond_1', condition_name: 'Tim mạch' }] }) // conditions
+        .mockResolvedValueOnce({ rows: [{ id: 'task_1', title: 'Đo huyết áp' }] }) // tasks
+        .mockResolvedValueOnce({ rows: [{ id: 'rep_1', report_type: 'blood_test' }] }) // reports
+        .mockResolvedValueOnce({ rows: [{ id: 'rx_1', diagnosis: 'Tăng huyết áp' }] }) // prescriptions
+        .mockResolvedValueOnce({ rows: [{ id: 'grant_1', grantee_name: 'BS B' }] }); // care team
+
+      const handler = getHandler('GET', '/:id/dossier');
+      const { req, res } = createReqRes({ params: { id: 'u1' } });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.user.phone_number).toBe('0961766816');
+      expect(output.data.biometrics.length).toBe(1);
+      expect(output.data.conditions.length).toBe(1);
+      expect(output.data.reports.length).toBe(1);
+    });
+  });
 });

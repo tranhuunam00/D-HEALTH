@@ -12,3 +12,4 @@ ALTER TABLE care_tasks DROP COLUMN IF EXISTS is_deleted;
 ALTER TABLE patient_chronic_conditions DROP COLUMN IF EXISTS is_deleted;
 ALTER TABLE admin_users DROP COLUMN IF EXISTS is_deleted;
 ALTER TABLE users DROP COLUMN IF EXISTS is_deleted;
+

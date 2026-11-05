@@ -25,3 +25,4 @@ CREATE INDEX IF NOT EXISTS idx_patient_chronic_conditions_is_deleted ON patient_
 CREATE INDEX IF NOT EXISTS idx_care_tasks_is_deleted ON care_tasks(is_deleted);
 CREATE INDEX IF NOT EXISTS idx_master_facilities_is_deleted ON master_facilities(is_deleted);
 CREATE INDEX IF NOT EXISTS idx_master_doctors_is_deleted ON master_doctors(is_deleted);
+

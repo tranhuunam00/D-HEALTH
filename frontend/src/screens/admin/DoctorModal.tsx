@@ -82,56 +82,56 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#0B132B] border border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+      <div className="bg-white border border-slate-200 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-800">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#1F7A8C] flex items-center justify-center">
               <Stethoscope className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-slate-900">
                 {doctor ? 'Chỉnh Sửa Thông Tin Bác Sĩ' : 'Thêm Bác Sĩ Chuyên Khoa Mới'}
               </h3>
-              <p className="text-[10px] text-slate-400">Hồ sơ danh bạ bác sĩ & đội ngũ My Care Team</p>
+              <p className="text-[10px] text-slate-500">Hồ sơ danh bạ bác sĩ & đội ngũ My Care Team</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs bg-slate-50/40">
           {errorMsg && (
-            <div className="p-2.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-300">
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-medium">
               {errorMsg}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Họ và tên bác sĩ <span className="text-rose-400">*</span></label>
+              <label className="text-slate-700 font-semibold">Họ và tên bác sĩ <span className="text-rose-500">*</span></label>
               <input
                 type="text"
                 required
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 placeholder="VD: Nguyễn Văn An"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Học hàm / Học vị</label>
+              <label className="text-slate-700 font-semibold">Học hàm / Học vị</label>
               <select
                 value={formData.academic_title}
                 onChange={(e) => setFormData({ ...formData, academic_title: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-200 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               >
                 {ACADEMIC_TITLES.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -140,11 +140,11 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Chuyên khoa / Khoa phòng</label>
+              <label className="text-slate-700 font-semibold">Chuyên khoa / Khoa phòng</label>
               <select
                 value={formData.department_id}
                 onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-200 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               >
                 <option value="">-- Chọn chuyên khoa --</option>
                 {departments.map((d) => (
@@ -154,11 +154,11 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Cơ sở y tế công tác</label>
+              <label className="text-slate-700 font-semibold">Cơ sở y tế công tác</label>
               <select
                 value={formData.facility_id}
                 onChange={(e) => setFormData({ ...formData, facility_id: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-200 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               >
                 <option value="">-- Chọn cơ sở y tế --</option>
                 {facilities.map((f) => (
@@ -168,58 +168,58 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Số giấy phép CCHN</label>
+              <label className="text-slate-700 font-semibold">Số giấy phép CCHN</label>
               <input
                 type="text"
                 value={formData.license_number}
                 onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
                 placeholder="VD: CCHN-01928"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 font-mono text-purple-300 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 font-mono text-[#1F7A8C] font-bold text-sm focus:outline-none focus:border-[#1F7A8C]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Số điện thoại liên hệ</label>
+              <label className="text-slate-700 font-semibold">Số điện thoại liên hệ</label>
               <input
                 type="text"
                 value={formData.phone_number}
                 onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                 placeholder="VD: 090 123 4567"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white font-mono focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 font-mono text-sm focus:outline-none focus:border-[#1F7A8C]"
               />
             </div>
 
             <div className="space-y-1 col-span-2">
-              <label className="text-slate-300 font-semibold">Email bác sĩ</label>
+              <label className="text-slate-700 font-semibold">Email bác sĩ</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="VD: bs.an@bachmai.vn"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-[#1F7A8C]"
               />
             </div>
 
             <div className="space-y-1 col-span-2">
-              <label className="text-slate-300 font-semibold">Trạng thái công tác</label>
+              <label className="text-slate-700 font-semibold">Trạng thái công tác</label>
               <div className="flex items-center gap-4 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-800 font-medium">
                   <input
                     type="radio"
                     name="doctor_is_active"
                     checked={formData.is_active === true}
                     onChange={() => setFormData({ ...formData, is_active: true })}
-                    className="accent-emerald-500"
+                    className="accent-[#1F7A8C] w-4 h-4"
                   />
                   <span>Đang công tác</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-800 font-medium">
                   <input
                     type="radio"
                     name="doctor_is_active"
                     checked={formData.is_active === false}
                     onChange={() => setFormData({ ...formData, is_active: false })}
-                    className="accent-rose-500"
+                    className="accent-rose-500 w-4 h-4"
                   />
                   <span>Nghỉ phép / Tạm ngừng</span>
                 </label>
@@ -228,19 +228,19 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold transition"
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-xl bg-[#1F7A8C] hover:bg-[#186473] text-white font-semibold flex items-center gap-2 shadow-lg shadow-teal-500/20 transition"
+              className="px-5 py-2 rounded-xl bg-[#1F7A8C] hover:bg-[#186473] text-white font-semibold flex items-center gap-2 shadow-sm transition cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -260,4 +260,3 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
     </div>
   );
 };
-

@@ -76,67 +76,67 @@ export const FacilityModal: React.FC<FacilityModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#0B132B] border border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+      <div className="bg-white border border-slate-200 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-800">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#1F7A8C] flex items-center justify-center">
               <Building2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-slate-900">
                 {facility ? 'Chỉnh Sửa Cơ Sở Y Tế' : 'Thêm Cơ Sở Y Tế Mới'}
               </h3>
-              <p className="text-[10px] text-slate-400">Danh mục cơ sở đối tác kết nối liên thông</p>
+              <p className="text-[10px] text-slate-500">Danh mục cơ sở đối tác kết nối liên thông</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs bg-slate-50/40">
           {errorMsg && (
-            <div className="p-2.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-300">
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-medium">
               {errorMsg}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1 col-span-2">
-              <label className="text-slate-300 font-semibold">Tên cơ sở y tế <span className="text-rose-400">*</span></label>
+              <label className="text-slate-700 font-semibold">Tên cơ sở y tế <span className="text-rose-500">*</span></label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="VD: Bệnh viện Bạch Mai"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Mã định danh (Code)</label>
+              <label className="text-slate-700 font-semibold">Mã định danh (Code)</label>
               <input
                 type="text"
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 placeholder="VD: 01001"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 font-mono text-purple-300 focus:outline-none focus:border-teal-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 font-mono text-[#1F7A8C] font-bold text-sm focus:outline-none focus:border-[#1F7A8C]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Phân loại tuyến</label>
+              <label className="text-slate-700 font-semibold">Phân loại tuyến</label>
               <select
                 value={formData.facility_type}
                 onChange={(e) => setFormData({ ...formData, facility_type: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-200 focus:outline-none focus:border-teal-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               >
                 <option value="hospital_tw">Hospital Tw (Tuyến TW)</option>
                 <option value="hospital_provincial">Hospital Provincial (Tuyến Tỉnh)</option>
@@ -146,58 +146,58 @@ export const FacilityModal: React.FC<FacilityModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Tỉnh / Thành phố</label>
+              <label className="text-slate-700 font-semibold">Tỉnh / Thành phố</label>
               <input
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 placeholder="VD: Hà Nội"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-semibold">Hotline tổng đài</label>
+              <label className="text-slate-700 font-semibold">Hotline tổng đài</label>
               <input
                 type="text"
                 value={formData.hotline}
                 onChange={(e) => setFormData({ ...formData, hotline: e.target.value })}
                 placeholder="VD: 024 3869 3731"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white font-mono focus:outline-none focus:border-teal-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 font-mono text-sm focus:outline-none focus:border-[#1F7A8C]"
               />
             </div>
 
             <div className="space-y-1 col-span-2">
-              <label className="text-slate-300 font-semibold">Địa chỉ chi tiết</label>
+              <label className="text-slate-700 font-semibold">Địa chỉ chi tiết</label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="VD: 78 Giải Phóng, Phương Mai, Đống Đa, Hà Nội"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
               />
             </div>
 
             <div className="space-y-1 col-span-2">
-              <label className="text-slate-300 font-semibold">Trạng thái kết nối</label>
+              <label className="text-slate-700 font-semibold">Trạng thái kết nối</label>
               <div className="flex items-center gap-4 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-800 font-medium">
                   <input
                     type="radio"
                     name="is_active"
                     checked={formData.is_active === true}
                     onChange={() => setFormData({ ...formData, is_active: true })}
-                    className="accent-teal-500"
+                    className="accent-[#1F7A8C] w-4 h-4"
                   />
                   <span>Đang hoạt động</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-800 font-medium">
                   <input
                     type="radio"
                     name="is_active"
                     checked={formData.is_active === false}
                     onChange={() => setFormData({ ...formData, is_active: false })}
-                    className="accent-rose-500"
+                    className="accent-rose-500 w-4 h-4"
                   />
                   <span>Tạm dừng kết nối</span>
                 </label>
@@ -206,19 +206,19 @@ export const FacilityModal: React.FC<FacilityModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold transition"
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-xl bg-[#1F7A8C] hover:bg-[#186473] text-white font-semibold flex items-center gap-2 shadow-lg shadow-teal-500/20 transition"
+              className="px-5 py-2 rounded-xl bg-[#1F7A8C] hover:bg-[#186473] text-white font-semibold flex items-center gap-2 shadow-sm transition cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -238,4 +238,3 @@ export const FacilityModal: React.FC<FacilityModalProps> = ({
     </div>
   );
 };
-

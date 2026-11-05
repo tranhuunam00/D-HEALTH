@@ -1,8 +1,9 @@
-import React from 'react';
-import { UserPlus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { UserPlus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, CheckCircle2, XCircle, FileText } from 'lucide-react';
 import { useAdminUsersLogic } from './useAdminUsersLogic';
 import { UserFormModal } from './UserFormModal';
 import { DeleteUserModal } from './DeleteUserModal';
+import { PatientDossierModal } from './PatientDossierModal';
 
 export const AdminUserManagement: React.FC = () => {
   const {
@@ -24,24 +25,28 @@ export const AdminUserManagement: React.FC = () => {
     handleDeleteUser,
   } = useAdminUsersLogic();
 
+  // State for Patient Dossier Modal (Toàn bộ thông tin bệnh nhân)
+  const [dossierUserId, setDossierUserId] = useState<string | null>(null);
+  const [dossierUserName, setDossierUserName] = useState<string>('');
+
   const renderRoleBadge = (role: string) => {
     if (role === 'super_admin') {
-      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30">Super Admin</span>;
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-purple-50 text-purple-700 font-bold border border-purple-200">Super Admin</span>;
     }
     if (role === 'clinical_admin') {
-      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">Quản Trị Lâm Sàng</span>;
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-blue-50 text-blue-700 font-bold border border-blue-200">Quản Trị Lâm Sàng</span>;
     }
     if (role === 'doctor') {
-      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">Bác Sĩ</span>;
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">Bác Sĩ</span>;
     }
-    return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30">Bệnh Nhân</span>;
+    return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-teal-50 text-[#1F7A8C] font-bold border border-teal-200">Bệnh Nhân</span>;
   };
 
   return (
     <div className="space-y-4">
       {/* 1. Header & Actions Bar */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-xl w-80 text-xs">
+        <div className="flex items-center gap-2 bg-white border border-slate-200 px-3.5 py-2 rounded-2xl w-80 text-xs shadow-xs">
           <Search className="w-4 h-4 text-slate-400" />
           <input
             placeholder="Tìm theo tên, SĐT hoặc email..."
@@ -50,31 +55,31 @@ export const AdminUserManagement: React.FC = () => {
               setSearch(e.target.value);
               fetchUsers(1, e.target.value);
             }}
-            className="bg-transparent text-white focus:outline-none w-full"
+            className="bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none w-full"
           />
         </div>
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-[#1F7A8C]/20 hover:brightness-105"
+          className="px-4 py-2.5 rounded-2xl bg-[#1F7A8C] hover:bg-[#186473] text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-teal-500/20 transition cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
-          Thêm Người Dùng
+          <span>Thêm Người Dùng</span>
         </button>
       </div>
 
       {error && (
-        <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-xs flex items-center gap-2">
-          <XCircle className="w-4 h-4 shrink-0" />
+        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs flex items-center gap-2">
+          <XCircle className="w-4 h-4 shrink-0 text-rose-500" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* 2. High-Density Data Grid Table */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/90 overflow-hidden shadow-2xl">
+      {/* 2. High-Density Data Grid Table (White Theme) */}
+      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
               <tr>
                 <th className="px-5 py-3.5">Họ Và Tên</th>
                 <th className="px-5 py-3.5">Thông Tin Liên Hệ</th>
@@ -84,49 +89,68 @@ export const AdminUserManagement: React.FC = () => {
                 <th className="px-5 py-3.5 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80">
+            <tbody className="divide-y divide-slate-100">
               {users.length > 0 ? (
                 users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-5 py-3.5 font-semibold text-white flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-slate-800 text-[#1F7A8C] font-bold flex items-center justify-center text-xs">
+                  <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-5 py-3.5 font-semibold text-slate-900 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-teal-50 text-[#1F7A8C] font-bold flex items-center justify-center text-xs border border-teal-200">
                         {u.full_name.charAt(0)}
                       </div>
-                      {u.full_name}
+                      <div>
+                        <div className="font-bold">{u.full_name}</div>
+                        {u.national_id && (
+                          <div className="text-[10px] font-mono text-slate-400">CCCD: {u.national_id}</div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="text-white font-mono">{u.phone_number}</div>
-                      <div className="text-[10px] text-slate-400">{u.email || 'Chưa liên kết email'}</div>
+                      <div className="text-slate-900 font-mono font-medium">{u.phone_number}</div>
+                      <div className="text-[10px] text-slate-500">{u.email || 'Chưa liên kết email'}</div>
                     </td>
                     <td className="px-5 py-3.5">
                       {renderRoleBadge(u.role)}
                     </td>
                     <td className="px-5 py-3.5">
                       {u.is_active ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Hoạt động
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Hoạt động
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-rose-400 font-medium">
-                          <XCircle className="w-3.5 h-3.5" /> Tạm khóa
+                        <span className="inline-flex items-center gap-1 text-[11px] text-rose-700 font-semibold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                          <XCircle className="w-3.5 h-3.5 text-rose-600" /> Tạm khóa
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-400">
+                    <td className="px-5 py-3.5 text-slate-500">
                       {new Date(u.created_at).toLocaleDateString('vi-VN')}
                     </td>
-                    <td className="px-5 py-3.5 text-right space-x-1">
+                    <td className="px-5 py-3.5 text-right space-x-1.5 whitespace-nowrap">
+                      {/* Nút Xem Hồ Sơ Bệnh Nhân Toàn Bộ */}
+                      <button
+                        onClick={() => {
+                          setDossierUserId(u.id);
+                          setDossierUserName(u.full_name);
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#1F7A8C] text-[11px] font-bold inline-flex items-center gap-1 border border-teal-200 transition cursor-pointer"
+                        title="Xem toàn bộ hồ sơ y tế bệnh nhân"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Xem Hồ Sơ</span>
+                      </button>
+
                       <button
                         onClick={() => setEditingUser(u)}
-                        className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
-                        title="Chỉnh sửa"
+                        className="p-1.5 text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+                        title="Chỉnh sửa thông tin"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
+
                       <button
                         onClick={() => setDeletingUser(u)}
-                        className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800"
-                        title="Xóa người dùng"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition cursor-pointer"
+                        title="Xóa mềm người dùng"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -135,7 +159,7 @@ export const AdminUserManagement: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
                     {loading ? 'Đang tải dữ liệu...' : 'Không tìm thấy người dùng nào phù hợp.'}
                   </td>
                 </tr>
@@ -145,25 +169,25 @@ export const AdminUserManagement: React.FC = () => {
         </div>
 
         {/* 3. Server-side Pagination Bar */}
-        <div className="px-5 py-3 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between text-xs text-slate-400">
+        <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
           <div>
-            Hiển thị <strong className="text-white">{users.length}</strong> / <strong className="text-white">{meta.total}</strong> người dùng
+            Hiển thị <strong className="text-slate-800">{users.length}</strong> / <strong className="text-slate-800">{meta.total}</strong> người dùng
           </div>
           <div className="flex items-center gap-2">
             <button
               disabled={meta.page <= 1}
               onClick={() => fetchUsers(meta.page - 1)}
-              className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-800 text-slate-300"
+              className="p-1.5 rounded-xl border border-slate-200 bg-white disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-100 text-slate-600 transition"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="px-2 font-medium">
-              Trang <strong className="text-white">{meta.page}</strong> / {meta.totalPages}
+              Trang <strong className="text-slate-800">{meta.page}</strong> / {meta.totalPages}
             </span>
             <button
               disabled={meta.page >= meta.totalPages}
               onClick={() => fetchUsers(meta.page + 1)}
-              className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-800 text-slate-300"
+              className="p-1.5 rounded-xl border border-slate-200 bg-white disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-100 text-slate-600 transition"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -197,6 +221,17 @@ export const AdminUserManagement: React.FC = () => {
             await handleDeleteUser(deletingUser.id);
           }
         }}
+      />
+
+      {/* Full Patient Dossier Modal */}
+      <PatientDossierModal
+        isOpen={!!dossierUserId}
+        onClose={() => {
+          setDossierUserId(null);
+          setDossierUserName('');
+        }}
+        userId={dossierUserId}
+        userName={dossierUserName}
       />
     </div>
   );

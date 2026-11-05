@@ -347,6 +347,96 @@ export function createAdminUsersRouter(pool: Pool): Router {
     }
   });
 
+  // 6. XEM TOÀN BỘ BỆNH ÁN & HỒ SƠ LÂM SÀNG CỦA BỆNH NHÂN (GET /:id/dossier)
+  router.get('/:id/dossier', async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      const userRes = await pool.query(
+        `SELECT id, phone_number, email, national_id, address, is_ekyc_verified, created_at FROM users WHERE id = $1`,
+        [id]
+      );
+      const user = userRes.rows[0] || null;
+
+      const membersRes = await pool.query(
+        `SELECT * FROM family_members WHERE user_id = $1 ORDER BY relationship = 'owner' DESC, created_at ASC`,
+        [id]
+      );
+      const members = membersRes.rows || [];
+      const memberIds = members.map((m: any) => m.id);
+      if (id === 'nam' || members.some((m: any) => m.full_name?.toLowerCase().includes('nam'))) {
+        if (!memberIds.includes('nam')) memberIds.push('nam');
+      }
+
+      if (memberIds.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            user,
+            members: [],
+            biometrics: [],
+            conditions: [],
+            tasks: [],
+            reports: [],
+            prescriptions: [],
+            careTeam: [],
+          },
+        });
+      }
+
+      const [bioRes, condRes, taskRes, repRes, rxRes, careRes] = await Promise.all([
+        pool.query(
+          `SELECT * FROM biometric_records WHERE member_id = ANY($1) AND is_deleted = false ORDER BY measured_at DESC LIMIT 50`,
+          [memberIds]
+        ),
+        pool.query(
+          `SELECT * FROM patient_chronic_conditions WHERE member_id = ANY($1) AND is_active = true AND is_deleted = false ORDER BY created_at ASC`,
+          [memberIds]
+        ),
+        pool.query(
+          `SELECT * FROM care_tasks WHERE member_id = ANY($1) AND is_deleted = false ORDER BY priority ASC, created_at ASC`,
+          [memberIds]
+        ),
+        pool.query(
+          `SELECT r.*, json_agg(l.*) AS lab_results 
+           FROM clinical_reports r 
+           LEFT JOIN lab_results l ON r.id = l.report_id 
+           WHERE r.member_id = ANY($1) 
+           GROUP BY r.id 
+           ORDER BY r.performed_at DESC`,
+          [memberIds]
+        ),
+        pool.query(
+          `SELECT p.*, json_agg(i.*) AS items 
+           FROM prescriptions p 
+           LEFT JOIN prescription_items i ON p.id = i.prescription_id 
+           WHERE p.member_id = ANY($1) 
+           GROUP BY p.id`,
+          [memberIds]
+        ),
+        pool.query(
+          `SELECT * FROM share_grants WHERE member_id = ANY($1) AND status = 'active'`,
+          [memberIds]
+        ),
+      ]);
+
+      return res.json({
+        success: true,
+        data: {
+          user,
+          members,
+          biometrics: bioRes.rows || [],
+          conditions: condRes.rows || [],
+          tasks: taskRes.rows || [],
+          reports: repRes.rows || [],
+          prescriptions: rxRes.rows || [],
+          careTeam: careRes.rows || [],
+        },
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
+    }
+  });
+
   // 5. XÓA NGƯỜI DÙNG HOẶC QUẢN TRỊ VIÊN (DELETE /:id) KÈM BẢO VỆ TỰ XÓA
   router.delete('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;

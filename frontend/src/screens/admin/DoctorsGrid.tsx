@@ -32,17 +32,17 @@ export const DoctorsGrid: React.FC<DoctorsGridProps> = ({
 }) => {
   return (
     <div>
-      {/* Header Bar with Action Button */}
-      <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+      {/* Header Bar with Action Button (White Theme) */}
+      <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">
-            Tổng cộng: <strong className="text-white">{doctors.length}</strong> bác sĩ chuyên khoa
+          <span className="text-xs text-slate-500">
+            Tổng cộng: <strong className="text-slate-800">{doctors.length}</strong> bác sĩ chuyên khoa
           </span>
         </div>
         {onAdd && (
           <button
             onClick={onAdd}
-            className="px-3 py-1.5 rounded-xl bg-[#1F7A8C] hover:bg-[#186473] text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-teal-500/20 transition cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-[#1F7A8C] hover:bg-[#186473] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Thêm Bác Sĩ</span>
@@ -51,13 +51,13 @@ export const DoctorsGrid: React.FC<DoctorsGridProps> = ({
       </div>
 
       {doctors.length === 0 ? (
-        <div className="p-8 text-center text-slate-500 text-xs">
+        <div className="p-8 text-center text-slate-400 text-xs">
           Không có dữ liệu bác sĩ nào.
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
               <tr>
                 <th className="px-4 py-3">Bác Sĩ</th>
                 <th className="px-4 py-3">Khoa / Chuyên Ngành</th>
@@ -70,34 +70,34 @@ export const DoctorsGrid: React.FC<DoctorsGridProps> = ({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80">
+            <tbody className="divide-y divide-slate-100">
               {doctors.map((d) => (
-                <tr key={d.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-white">
+                <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="px-4 py-3 font-semibold text-slate-900">
                     <div className="font-bold">{d.full_name}</div>
                     {d.academic_title && (
-                      <div className="text-[10px] text-purple-400">{d.academic_title}</div>
+                      <div className="text-[10px] text-purple-700 font-semibold">{d.academic_title}</div>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="text-emerald-400 font-medium">
+                    <div className="text-[#1F7A8C] font-semibold">
                       {d.department_name || d.specialty || '--'}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-300">{d.facility_name || '--'}</td>
-                  <td className="px-4 py-3 font-mono text-slate-400">{d.license_number || d.license_no || '--'}</td>
-                  <td className="px-4 py-3 text-slate-400">
-                    {d.phone_number && <div className="font-mono text-[11px] text-slate-300">{d.phone_number}</div>}
-                    {d.email && <div className="text-[10px] text-slate-500 truncate max-w-[140px]">{d.email}</div>}
-                    {!d.phone_number && !d.email && <span className="text-slate-600">--</span>}
+                  <td className="px-4 py-3 text-slate-700">{d.facility_name || '--'}</td>
+                  <td className="px-4 py-3 font-mono text-slate-600">{d.license_number || d.license_no || '--'}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {d.phone_number && <div className="font-mono text-[11px] text-slate-800">{d.phone_number}</div>}
+                    {d.email && <div className="text-[10px] text-slate-400 truncate max-w-[140px]">{d.email}</div>}
+                    {!d.phone_number && !d.email && <span className="text-slate-300">--</span>}
                   </td>
                   <td className="px-4 py-3">
                     {d.is_active ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
                         Đang công tác
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-400 font-semibold">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 font-bold border border-rose-200">
                         Nghỉ phép
                       </span>
                     )}
@@ -107,7 +107,7 @@ export const DoctorsGrid: React.FC<DoctorsGridProps> = ({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(d)}
-                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 text-[11px] font-semibold inline-flex items-center gap-1 transition cursor-pointer"
+                          className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#1F7A8C] text-[11px] font-bold inline-flex items-center gap-1 border border-slate-200 transition cursor-pointer"
                           title="Chỉnh sửa bác sĩ"
                         >
                           <Edit2 className="w-3 h-3" />
@@ -117,7 +117,7 @@ export const DoctorsGrid: React.FC<DoctorsGridProps> = ({
                       {onDelete && (
                         <button
                           onClick={() => onDelete(d)}
-                          className="px-2 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-[11px] font-semibold inline-flex items-center gap-1 transition cursor-pointer"
+                          className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold inline-flex items-center gap-1 border border-rose-200 transition cursor-pointer"
                           title={d.is_active ? 'Ngừng kích hoạt' : 'Xóa'}
                         >
                           <Trash2 className="w-3 h-3" />
