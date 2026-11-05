@@ -12,6 +12,8 @@ export interface ChronicConditionItem {
   readonly id: string;
   readonly condition_name: string;
   readonly status_summary: string;
+  readonly risk_level?: string;
+  readonly trend_status?: string;
   readonly next_checkup_date?: string;
   readonly target_metrics: readonly MetricItem[];
 }

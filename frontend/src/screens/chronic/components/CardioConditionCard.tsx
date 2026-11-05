@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Calendar } from 'lucide-react';
 import { ChronicConditionItem } from '../useChronicLogic';
 
 interface CardioConditionCardProps {
@@ -24,23 +24,54 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
     return null;
   }
 
+  const summaryLower = (condition.status_summary || '').toLowerCase();
+  const isHighRisk = summaryLower.includes('nguy cơ cao') || summaryLower.includes('cần khám');
+  const isLowRisk = summaryLower.includes('nguy cơ thấp') || summaryLower.includes('tốt');
+
+  const theme = isHighRisk
+    ? {
+        badgeBg: 'bg-rose-50 text-rose-800 border-rose-200',
+        dotBg: 'bg-rose-500',
+        iconBg: 'bg-rose-50 text-rose-600 border-rose-200',
+        cardBorder: 'border-rose-200/90 shadow-rose-100/30',
+        sparkline: '#E11D48',
+      }
+    : isLowRisk
+    ? {
+        badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        dotBg: 'bg-emerald-500',
+        iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+        cardBorder: 'border-emerald-200/90 shadow-emerald-100/30',
+        sparkline: '#059669',
+      }
+    : {
+        badgeBg: 'bg-amber-50 text-amber-800 border-amber-200',
+        dotBg: 'bg-amber-500',
+        iconBg: 'bg-amber-50 text-amber-600 border-amber-200',
+        cardBorder: 'border-amber-200/90 shadow-amber-100/30',
+        sparkline: '#D97706',
+      };
+
   const metrics = condition.target_metrics || [];
 
   return (
-    <div className="bg-[#BE123C] text-white rounded-3xl p-4 flex flex-col gap-3.5 shadow-sm">
+    <div className={`bg-white rounded-3xl p-4 border ${theme.cardBorder} shadow-xs flex flex-col gap-3.5 transition-all`}>
       {/* 1. Header with Icon, Title & ECG Sparkline */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
-            <Heart className="w-5 h-5 text-white fill-white" />
+          <div className={`w-10 h-10 rounded-2xl border ${theme.iconBg} flex items-center justify-center shrink-0`}>
+            <Heart className="w-5 h-5 fill-current" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-white leading-tight">
+            <h2 className="text-base font-black text-slate-900 leading-tight">
               {condition.condition_name}
             </h2>
-            <span className="text-xs text-white/90 font-medium block mt-0.5">
-              {condition.status_summary || 'Theo dõi định kỳ'}
-            </span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${theme.badgeBg}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${theme.dotBg}`} />
+                <span>{condition.status_summary || 'Theo dõi định kỳ'}</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -50,7 +81,7 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
             <path
               d="M 0 10 L 15 10 L 22 2 L 28 18 L 35 7 L 42 12 L 50 10 L 70 10"
               fill="none"
-              stroke="#ffffff"
+              stroke={theme.sparkline}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -62,14 +93,18 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
       {/* 2. Grid of metrics from Database */}
       <div className="grid grid-cols-3 gap-2">
         {metrics.map((m, idx) => {
-          const isGood = m.type === 'good';
-          const colorClass = isGood ? 'text-emerald-600' : 'text-amber-600';
-          const bgDotClass = isGood ? 'bg-emerald-500' : 'bg-amber-500';
+          const statusLower = (m.status || '').toLowerCase();
+          const isDanger = m.type === 'danger' || statusLower.includes('khám');
+          const isWarning = m.type === 'warning' || statusLower.includes('dõi');
+          const isGood = m.type === 'good' || statusLower.includes('tốt');
+
+          const colorClass = isDanger ? 'text-rose-700' : isWarning ? 'text-amber-700' : 'text-emerald-700';
+          const bgDotClass = isDanger ? 'bg-rose-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500';
 
           return (
             <div
               key={`${m.name}-${idx}`}
-              className="bg-white rounded-2xl p-2.5 shadow-2xs flex flex-col justify-between h-14"
+              className="bg-slate-50/80 border border-slate-200/60 rounded-2xl p-2.5 flex flex-col justify-between h-14"
             >
               <span className="text-[11px] font-semibold text-slate-600 block truncate">
                 {m.name}
@@ -83,12 +118,15 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
         })}
 
         {/* Tái khám box */}
-        <div className="bg-black/20 rounded-2xl p-2.5 flex flex-col justify-between h-14">
-          <span className="text-[11px] font-semibold text-white/80 block">Tái khám</span>
-          <span className="text-xs font-black text-white block">
-            {formatDateDisplay(condition.next_checkup_date)}
-          </span>
-        </div>
+        {condition.next_checkup_date && (
+          <div className="bg-slate-50/80 border border-slate-200/60 rounded-2xl p-2.5 flex flex-col justify-between h-14">
+            <span className="text-[11px] font-semibold text-slate-500 block truncate">Tái khám</span>
+            <div className="flex items-center gap-1 text-xs font-black text-slate-800 truncate">
+              <Calendar className="w-3 h-3 text-[#1F7A8C] shrink-0" />
+              <span>{formatDateDisplay(condition.next_checkup_date)}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
