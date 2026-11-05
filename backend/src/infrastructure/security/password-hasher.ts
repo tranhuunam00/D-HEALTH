@@ -10,8 +10,8 @@ export async function hashPassword(password: string): Promise<string> {
   if (!password || typeof password !== 'string') {
     throw new Error('Mật khẩu không được để trống.');
   }
-  if (password.length < 8) {
-    throw new Error('Mật khẩu phải chứa ít nhất 8 ký tự.');
+  if (password.length < 6) {
+    throw new Error('Mật khẩu phải chứa ít nhất 6 ký tự.');
   }
   return bcrypt.hash(password, SALT_ROUNDS);
 }

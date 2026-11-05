@@ -13,8 +13,14 @@ describe('PasswordHasher', () => {
     });
 
     // 2. BOUNDARY & ERROR
-    it('ném ngoại lệ khi mật khẩu ngắn hơn 8 ký tự', async () => {
-      await expect(hashPassword('1234567')).rejects.toThrow('Mật khẩu phải chứa ít nhất 8 ký tự.');
+    it('ném ngoại lệ khi mật khẩu ngắn hơn 6 ký tự', async () => {
+      await expect(hashPassword('12345')).rejects.toThrow('Mật khẩu phải chứa ít nhất 6 ký tự.');
+    });
+
+    it('chấp nhận mật khẩu đạt tối thiểu đúng 6 ký tự', async () => {
+      const hash = await hashPassword('123456');
+      expect(typeof hash).toBe('string');
+      expect(await verifyPassword('123456', hash)).toBe(true);
     });
 
     it('ném ngoại lệ khi mật khẩu rỗng hoặc null', async () => {
