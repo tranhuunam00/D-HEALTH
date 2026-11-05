@@ -10,10 +10,11 @@ export function createBiometricsRouter(pool: Pool): Router {
   // 1. GET /:memberId - Lấy danh sách số đo sinh trắc
   router.get('/:memberId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       const result = await pool.query(
-        `SELECT * FROM biometric_records WHERE member_id = $1 AND is_deleted = false ORDER BY measured_at DESC LIMIT 50`,
-        [memberId]
+        `SELECT * FROM biometric_records WHERE (member_id = $1 OR member_id = $2) AND is_deleted = false ORDER BY measured_at DESC LIMIT 50`,
+        [memberId, resolvedMemberId]
       );
       return res.json({ success: true, data: result.rows });
     } catch (err: any) {
@@ -42,12 +43,13 @@ export function createBiometricsRouter(pool: Pool): Router {
       const numDia = diastolic ? Number(diastolic) : null;
       const numVal = valueNumeric ? Number(valueNumeric) : (numSys || null);
 
+      const targetMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
       const insertRes = await pool.query(
         `INSERT INTO biometric_records 
           (member_id, biometric_type, value_numeric, systolic, diastolic, unit, device_id, source, severity_level, measured_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual', 1, NOW())
          RETURNING *`,
-        [memberId, bType, numVal, numSys, numDia, unit || '', deviceId || null]
+        [targetMemberId, bType, numVal, numSys, numDia, unit || '', deviceId || null]
       );
 
       return res.status(201).json({ success: true, data: insertRes.rows[0] });

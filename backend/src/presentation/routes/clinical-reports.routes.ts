@@ -195,8 +195,8 @@ export function createClinicalReportsRouter(pool: Pool): Router {
   // 1. GET /:memberId - Lấy danh sách phiếu xét nghiệm / chẩn đoán hình ảnh
   router.get('/:memberId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     const { kind } = req.query;
-
     try {
       let query = `
         SELECT r.*, 
@@ -217,12 +217,12 @@ export function createClinicalReportsRouter(pool: Pool): Router {
         LEFT JOIN master_doctors d_ord ON r.ordering_doctor_id = d_ord.id
         LEFT JOIN master_doctors d_int ON r.interpreting_doctor_id = d_int.id
         LEFT JOIN imaging_studies ist ON ist.report_id = r.id
-        WHERE r.member_id = $1
+        WHERE (r.member_id = $1 OR r.member_id = $2)
       `;
-      const params: any[] = [memberId];
+      const params: any[] = [memberId, resolvedMemberId];
 
       if (kind) {
-        query += ` AND r.kind = $2`;
+        query += ` AND r.kind = $3`;
         params.push(kind);
       }
 

@@ -55,7 +55,7 @@ const EMPTY_ADHERENCE: AdherenceData = {
   calendarDays: [],
 };
 
-export function useMedsLogic(memberId = 'nam') {
+export function useMedsLogic(memberId = 'mem_145deb71') {
   const now = new Date();
   const [activeTab, setActiveTab] = useState<'schedule' | 'active' | 'history'>('schedule');
   const [currentYear, setCurrentYear] = useState<number>(() => now.getFullYear());

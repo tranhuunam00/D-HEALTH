@@ -104,7 +104,7 @@ export const TRACKED_METRICS_CONFIG: readonly TrackedMetric[] = Object.freeze([
   },
 ]);
 
-export function useLabsLogic(memberId = 'nam') {
+export function useLabsLogic(memberId = 'mem_145deb71') {
   const [selectedCategory, setSelectedCategory] = useState<LabSpecialtyCode>('all');
   const [trackedMetricIds, setTrackedMetricIds] = useState<string[]>(['hba1c', 'ldlc']);
   const [reports, setReports] = useState<readonly LabReportItem[]>([]);

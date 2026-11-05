@@ -9,6 +9,7 @@ export function createPrescriptionsRouter(pool: Pool): Router {
   // 1. GET /:memberId - Lấy danh sách đơn thuốc của thành viên kèm danh mục thuốc
   router.get('/:memberId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       const result = await pool.query(
         `SELECT p.*, f.name AS facility_name, d.full_name AS doctor_name,
@@ -34,9 +35,9 @@ export function createPrescriptionsRouter(pool: Pool): Router {
         FROM prescriptions p
         LEFT JOIN master_facilities f ON p.facility_id = f.id
         LEFT JOIN master_doctors d ON p.doctor_id = d.id
-        WHERE p.member_id = $1
+        WHERE (p.member_id = $1 OR p.member_id = $2)
         ORDER BY p.prescribed_date DESC`,
-        [memberId]
+        [memberId, resolvedMemberId]
       );
       return res.json({ success: true, data: result.rows });
     } catch (err: any) {
@@ -47,6 +48,7 @@ export function createPrescriptionsRouter(pool: Pool): Router {
   // 2. GET /:memberId/today-doses - Lấy cữ thuốc theo ngày (SCR-02 & SCR-11)
   router.get('/:memberId/today-doses', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     const { date } = req.query;
     try {
       const targetDate = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
@@ -69,11 +71,11 @@ export function createPrescriptionsRouter(pool: Pool): Router {
          JOIN prescription_items pi ON ds.prescription_item_id = pi.id
          JOIN prescriptions p ON pi.prescription_id = p.id
          LEFT JOIN dose_logs dl ON dl.schedule_id = ds.id AND DATE(dl.scheduled_at) = $2::date
-         WHERE p.member_id = $1 AND p.status = 'active'
-           AND (pi.start_date IS NULL OR pi.start_date <= $2::date)
-           AND (pi.end_date IS NULL OR pi.end_date >= $2::date)
+         WHERE (p.member_id = $1 OR p.member_id = $2) AND p.status = 'active'
+           AND (pi.start_date IS NULL OR pi.start_date <= $3::date)
+           AND (pi.end_date IS NULL OR pi.end_date >= $3::date)
          ORDER BY ds.scheduled_time ASC, pi.medication_name ASC`,
-        [memberId, targetDate]
+        [memberId, resolvedMemberId, targetDate]
       );
       return res.json({ success: true, data: result.rows });
     } catch (err: any) {
@@ -84,12 +86,13 @@ export function createPrescriptionsRouter(pool: Pool): Router {
   // 3. GET /:memberId/adherence-summary - Lấy tỷ lệ tuân thủ 30 ngày và ma trận Calendar
   router.get('/:memberId/adherence-summary', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       const checkRes = await pool.query(
         `SELECT COUNT(*) FROM prescription_items pi
          JOIN prescriptions p ON pi.prescription_id = p.id
-         WHERE p.member_id = $1 AND p.status = 'active'`,
-        [memberId]
+         WHERE (p.member_id = $1 OR p.member_id = $2) AND p.status = 'active'`,
+        [memberId, resolvedMemberId]
       );
       const totalItems = parseInt(checkRes.rows[0]?.count || '0', 10);
       if (totalItems === 0) {
@@ -113,10 +116,10 @@ export function createPrescriptionsRouter(pool: Pool): Router {
          JOIN prescription_items pi ON ds.prescription_item_id = pi.id
          JOIN prescriptions p ON pi.prescription_id = p.id
          LEFT JOIN dose_logs dl ON dl.schedule_id = ds.id AND DATE(dl.scheduled_at) = CURRENT_DATE
-         WHERE p.member_id = $1 AND p.status = 'active'
+         WHERE (p.member_id = $1 OR p.member_id = $2) AND p.status = 'active'
            AND (pi.start_date IS NULL OR pi.start_date <= CURRENT_DATE)
            AND (pi.end_date IS NULL OR pi.end_date >= CURRENT_DATE)`,
-        [memberId]
+        [memberId, resolvedMemberId]
       );
       const actualTodayTotal = todayDosesRes.rows.length;
       const actualTodayTaken = todayDosesRes.rows.filter((r) => r.status === 'taken').length;

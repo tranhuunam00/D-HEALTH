@@ -44,7 +44,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     recentReports,
     handleRecordVitals,
     handleTakeDose,
-  } = useHomeLogic(propMemberId || user?.activeMemberId || 'nam', user);
+  } = useHomeLogic(propMemberId || user?.activeMemberId || 'mem_145deb71', user);
 
   const activeMember = members.find((m) => m.id === activeMemberId) || {
     id: activeMemberId,

@@ -145,15 +145,16 @@ app.get('/api/biometrics/:memberId', async (req: Request, res: Response) => {
 // Lấy kết quả xét nghiệm (SCR-05 / SCR-06)
 app.get('/api/reports/:memberId', async (req: Request, res: Response) => {
   const { memberId } = req.params;
+  const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
   try {
     const result = await pool.query(
       `SELECT r.*, json_agg(l.*) AS lab_results 
        FROM clinical_reports r 
        LEFT JOIN lab_results l ON r.id = l.report_id 
-       WHERE r.member_id = $1 
+       WHERE (r.member_id = $1 OR r.member_id = $2) 
        GROUP BY r.id 
        ORDER BY r.performed_at DESC`,
-      [memberId]
+      [memberId, resolvedMemberId]
     );
     res.json({ data: result.rows });
   } catch (err: any) {
@@ -190,9 +191,10 @@ app.get('/api/conditions', async (req: Request, res: Response) => {
 // 5. Thẻ cấp cứu & Liên hệ khẩn cấp (SCR-16)
 app.get('/api/emergency/:memberId', async (req: Request, res: Response) => {
   const { memberId } = req.params;
+  const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
   try {
-    const cardRes = await pool.query('SELECT * FROM emergency_cards WHERE member_id = $1', [memberId]);
-    const contactsRes = await pool.query('SELECT * FROM emergency_contacts WHERE member_id = $1 ORDER BY priority_order ASC', [memberId]);
+    const cardRes = await pool.query('SELECT * FROM emergency_cards WHERE (member_id = $1 OR member_id = $2)', [memberId, resolvedMemberId]);
+    const contactsRes = await pool.query('SELECT * FROM emergency_contacts WHERE (member_id = $1 OR member_id = $2) ORDER BY priority_order ASC', [memberId, resolvedMemberId]);
     res.json({ 
       data: {
         card: cardRes.rows[0] || null,

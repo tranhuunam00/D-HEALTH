@@ -20,7 +20,7 @@ export const SCR03_BiometricsScreen: React.FC<SCR03Props> = ({
   onNavigate,
   onSelectMember,
   activeMemberName = '',
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
 }) => {
   const {
     activeMetric,

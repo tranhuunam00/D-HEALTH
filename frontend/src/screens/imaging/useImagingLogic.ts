@@ -103,7 +103,7 @@ function mapStudyItem(r: any): ImagingStudyItem {
   };
 }
 
-export function useImagingLogic(memberId = 'nam') {
+export function useImagingLogic(memberId = 'mem_145deb71') {
   const [selectedModality, setSelectedModality] = useState<ModalityCode>('ALL');
   const [studies, setStudies] = useState<readonly ImagingStudyItem[]>([]);
   const [dbEval, setDbEval] = useState<any>(null);

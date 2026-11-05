@@ -39,7 +39,7 @@ export const ZERO_COUNTS: PassportCounts = Object.freeze({
   facilities: 0,
 });
 
-export function useRecordsLogic(memberId = 'nam') {
+export function useRecordsLogic(memberId = 'mem_145deb71') {
   const [member, setMember] = useState<PassportMember | null>(null);
   const [counts, setCounts] = useState<PassportCounts>(ZERO_COUNTS);
   const [loading, setLoading] = useState(false);

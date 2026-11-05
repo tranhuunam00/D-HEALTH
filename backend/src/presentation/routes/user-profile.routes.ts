@@ -11,9 +11,10 @@ export function createUserProfileRouter(pool: Pool): Router {
   router.get('/', async (req: AuthenticatedRequest, res: Response) => {
     let userId = req.user?.userId || (req.query.userId as string);
     const memberId = req.query.memberId as string;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       if (!userId && memberId) {
-        const mRes = await pool.query(`SELECT user_id FROM family_members WHERE id = $1 LIMIT 1`, [memberId]);
+        const mRes = await pool.query(`SELECT user_id FROM family_members WHERE (id = $1 OR id = $2) LIMIT 1`, [memberId, resolvedMemberId]);
         if (mRes.rows[0]) {
           userId = mRes.rows[0].user_id;
         }
@@ -49,11 +50,13 @@ export function createUserProfileRouter(pool: Pool): Router {
   // 1b. LẤY TỔNG HỢP SỔ SỨC KHOẺ MEDICAL PASSPORT (SCR-10)
   router.get('/passport-summary/:memberId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       const memRes = await pool.query(
         `SELECT id, full_name, relationship, gender, birth_date, blood_type, height_cm, weight_kg 
-         FROM family_members WHERE id = $1`,
-        [memberId]
+         FROM family_members WHERE (id = $1 OR id = $2)
+         ORDER BY CASE WHEN id = 'mem_145deb71' THEN 0 ELSE 1 END LIMIT 1`,
+        [memberId, resolvedMemberId]
       );
 
       const mem = memRes.rows[0];
@@ -65,16 +68,16 @@ export function createUserProfileRouter(pool: Pool): Router {
 
       const countRes = await pool.query(
         `SELECT
-          COALESCE((SELECT jsonb_array_length(allergies) FROM emergency_cards WHERE member_id = $1), 0)::int as allergies,
-          COALESCE((SELECT COUNT(*) FROM patient_chronic_conditions WHERE member_id = $1 AND is_active = true), 0)::int as chronic,
-          COALESCE((SELECT COUNT(*) FROM prescription_items WHERE prescription_id IN (SELECT id FROM prescriptions WHERE member_id = $1)), 0)::int as meds,
-          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE member_id = $1 AND kind = 'lab'), 0)::int as labs,
-          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE member_id = $1 AND kind = 'imaging'), 0)::int as imaging,
-          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE member_id = $1 AND kind = 'pathology'), 0)::int as pathology,
-          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE member_id = $1), 0)::int as documents,
+          COALESCE((SELECT jsonb_array_length(allergies) FROM emergency_cards WHERE (member_id = $1 OR member_id = $2)), 0)::int as allergies,
+          COALESCE((SELECT COUNT(*) FROM patient_chronic_conditions WHERE (member_id = $1 OR member_id = $2) AND is_active = true AND is_deleted = false), 0)::int as chronic,
+          COALESCE((SELECT COUNT(*) FROM prescription_items WHERE prescription_id IN (SELECT id FROM prescriptions WHERE (member_id = $1 OR member_id = $2))), 0)::int as meds,
+          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2) AND kind = 'lab'), 0)::int as labs,
+          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2) AND kind = 'imaging'), 0)::int as imaging,
+          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2) AND kind = 'pathology'), 0)::int as pathology,
+          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2)), 0)::int as documents,
           COALESCE((SELECT COUNT(*) FROM master_doctors WHERE is_active = true), 0)::int as doctors,
           COALESCE((SELECT COUNT(*) FROM master_facilities WHERE is_active = true), 0)::int as facilities`,
-        [memberId]
+        [memberId, resolvedMemberId]
       );
 
       const counts = countRes.rows[0] || {};
@@ -131,6 +134,7 @@ export function createUserProfileRouter(pool: Pool): Router {
   router.put('/members/:memberId', async (req: AuthenticatedRequest, res: Response) => {
     let userId = req.user?.userId;
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     const fullName = req.body.fullName || req.body.full_name;
     const gender = req.body.gender;
     const birthDate = req.body.birthDate || req.body.birth_date;
@@ -161,9 +165,9 @@ export function createUserProfileRouter(pool: Pool): Router {
              avatar_url = COALESCE($7, avatar_url),
              insurance_number = COALESCE($8, insurance_number),
              updated_at = NOW()
-         WHERE id = $9
+         WHERE (id = $9 OR id = $10)
          RETURNING *`,
-        [fullName, gender, birthDate, bloodType, heightCm, weightKg, avatarUrl, nationalId || null, memberId]
+        [fullName, gender, birthDate, bloodType, heightCm, weightKg, avatarUrl, nationalId || null, memberId, resolvedMemberId]
       );
 
       if (updateRes.rowCount === 0) {

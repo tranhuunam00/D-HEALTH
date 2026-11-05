@@ -24,7 +24,7 @@ export interface MetricSummary {
   readonly codeColor: string;
 }
 
-export function useBiometricsLogic(memberId = 'nam') {
+export function useBiometricsLogic(memberId = 'mem_145deb71') {
   const [activeMetric, setActiveMetric] = useState<MetricType>('bp');
   const [history, setHistory] = useState<readonly BiometricReading[]>([]);
   const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);

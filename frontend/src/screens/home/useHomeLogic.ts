@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FamilyMember, HealthScore } from '../../types/member.types';
 import { BiometricRecord, ManualVitalsInput } from '../../types/biometric.types';
 
-export function useHomeLogic(initialMemberId = 'nam', user?: any) {
+export function useHomeLogic(initialMemberId = 'mem_145deb71', user?: any) {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [activeMemberId, setActiveMemberId] = useState<string>(initialMemberId);
   const [healthScore, setHealthScore] = useState<HealthScore>({
