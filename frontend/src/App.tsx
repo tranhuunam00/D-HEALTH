@@ -36,9 +36,37 @@ export default function App() {
     return 'mobile_patient';
   });
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('dhealth_token');
+      const savedUser = localStorage.getItem('dhealth_user');
+      if (token && savedUser) {
+        try {
+          return JSON.parse(savedUser);
+        } catch {}
+      }
+    }
+    return null;
+  });
 
-  const [currentScreen, setCurrentScreen] = useState<MobileScreenId>('login');
+  const [currentScreen, setCurrentScreen] = useState<MobileScreenId>(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('dhealth_token');
+      const savedUser = localStorage.getItem('dhealth_user');
+      const savedScreen = localStorage.getItem('dhealth_screen') as MobileScreenId;
+      if (token && savedUser) {
+        return savedScreen && savedScreen !== 'login' ? savedScreen : 'home';
+      }
+    }
+    return 'login';
+  });
+
+  const navigateTo = (screen: MobileScreenId) => {
+    setCurrentScreen(screen);
+    if (typeof window !== 'undefined' && screen !== 'login') {
+      localStorage.setItem('dhealth_screen', screen);
+    }
+  };
 
   const [selectedLabReportId, setSelectedLabReportId] = useState<string | null>(null);
   const [selectedImagingReportId, setSelectedImagingReportId] = useState<string | null>(null);
@@ -46,14 +74,34 @@ export default function App() {
   useEffect(() => {
     const verifySession = async () => {
       try {
-        const res = await fetch('/api/auth/me');
+        const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch('/api/auth/me', { headers });
         if (res.ok) {
           const json = await res.json();
           if (json?.data) {
             setCurrentUser(json.data);
-            localStorage.setItem('dhealth_user', JSON.stringify(json.data));
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('dhealth_user', JSON.stringify(json.data));
+            }
+            setCurrentScreen((prev) => {
+              if (prev === 'login') {
+                const savedScreen = typeof window !== 'undefined' ? (localStorage.getItem('dhealth_screen') as MobileScreenId) : null;
+                return savedScreen && savedScreen !== 'login' ? savedScreen : 'home';
+              }
+              return prev;
+            });
           }
-        } else if (!currentUser) {
+        } else if (res.status === 401) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('dhealth_user');
+            localStorage.removeItem('dhealth_token');
+            localStorage.removeItem('dhealth_screen');
+          }
+          setCurrentUser(null);
           setCurrentScreen('login');
         }
       } catch {
@@ -68,6 +116,7 @@ export default function App() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('dhealth_user');
       localStorage.removeItem('dhealth_token');
+      localStorage.removeItem('dhealth_screen');
     }
     setCurrentUser(null);
     setCurrentScreen('login');
@@ -82,7 +131,7 @@ export default function App() {
         <SCR01_LoginScreen
           onLoginSuccess={(u) => {
             setCurrentUser(u);
-            setCurrentScreen('home');
+            navigateTo('home');
           }}
         />
       );
@@ -95,8 +144,8 @@ export default function App() {
             user={currentUser}
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onOpenEmergency={() => setCurrentScreen('emergency')}
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onOpenEmergency={() => navigateTo('emergency')}
+            onNavigate={(s) => navigateTo(s as any)}
           />
         );
       case 'biometrics':
@@ -104,11 +153,11 @@ export default function App() {
           <SCR03_BiometricsScreen
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s) => navigateTo(s as any)}
           />
         );
       case 'devices':
-        return <SCR04_DevicesScreen onNavigate={(s) => setCurrentScreen(s as any)} activeMemberName={activeMemberName} />;
+        return <SCR04_DevicesScreen onNavigate={(s) => navigateTo(s as any)} activeMemberName={activeMemberName} />;
       case 'labs':
         return (
           <SCR05_LabsScreen
@@ -116,7 +165,7 @@ export default function App() {
             activeMemberName={activeMemberName}
             onNavigate={(s, id) => {
               if (id) setSelectedLabReportId(id);
-              setCurrentScreen(s as any);
+              navigateTo(s as any);
             }}
           />
         );
@@ -126,7 +175,7 @@ export default function App() {
             reportId={selectedLabReportId}
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s) => navigateTo(s as any)}
           />
         );
       case 'imaging':
@@ -136,7 +185,7 @@ export default function App() {
             activeMemberName={activeMemberName}
             onNavigate={(s, id) => {
               if (id) setSelectedImagingReportId(id);
-              setCurrentScreen(s as any);
+              navigateTo(s as any);
             }}
           />
         );
@@ -146,13 +195,13 @@ export default function App() {
             reportId={selectedImagingReportId}
             activeMemberName={activeMemberName}
             activeMemberId={activeMemberId}
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s) => navigateTo(s as any)}
           />
         );
       case 'chronic':
         return (
           <SCR09_ChronicScreen
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s) => navigateTo(s as any)}
             activeMemberName={activeMemberName}
             activeMemberId={activeMemberId}
           />
@@ -162,14 +211,14 @@ export default function App() {
           <SCR10_RecordsScreen
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onNavigate={(s) => setCurrentScreen(s as any)}
-            onSelectMember={() => setCurrentScreen('family')}
+            onNavigate={(s) => navigateTo(s as any)}
+            onSelectMember={() => navigateTo('family')}
           />
         );
       case 'meds':
         return (
           <SCR11_MedsScreen
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s) => navigateTo(s as any)}
             activeMemberName={activeMemberName}
             activeMemberId={activeMemberId}
           />
@@ -177,17 +226,17 @@ export default function App() {
       case 'camera-ocr':
         return (
           <SCR12_CameraInputScreen
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s) => navigateTo(s as any)}
             activeMemberName={activeMemberName}
             activeMemberId={activeMemberId}
           />
         );
       case 'ai':
-        return <SCR13_AIAssistantScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return <SCR13_AIAssistantScreen onNavigate={(s) => navigateTo(s as any)} />;
       case 'care':
         return (
           <SCR14_CareScreen
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onNavigate={(s) => navigateTo(s as any)}
             activeMemberName={activeMemberName}
             activeMemberId={activeMemberId}
           />
@@ -197,18 +246,19 @@ export default function App() {
           <SCR15_UserProfileScreen
             user={currentUser}
             activeMemberId={activeMemberId}
-            onBack={() => setCurrentScreen('home')}
+            onBack={() => navigateTo('home')}
             onNavigateToAdmin={() => setViewMode('pc_admin')}
+            onLogout={handleLogout}
           />
         );
       case 'family':
-        return <SCR16_FamilyProfilesScreen onNavigate={(s) => setCurrentScreen(s as any)} />;
+        return <SCR16_FamilyProfilesScreen onNavigate={(s) => navigateTo(s as any)} />;
       case 'emergency':
         return (
           <SCR17_EmergencyScreen
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onNavigate={() => setCurrentScreen('home')}
+            onNavigate={() => navigateTo('home')}
           />
         );
       default:
@@ -217,8 +267,8 @@ export default function App() {
             user={currentUser}
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
-            onOpenEmergency={() => setCurrentScreen('emergency')}
-            onNavigate={(s) => setCurrentScreen(s as any)}
+            onOpenEmergency={() => navigateTo('emergency')}
+            onNavigate={(s) => navigateTo(s as any)}
           />
         );
     }
