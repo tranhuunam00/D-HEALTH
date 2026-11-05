@@ -270,7 +270,7 @@ export default function App() {
         </div>
 
         {/* Screen Quick Selector for Quick Testing */}
-        {viewMode === 'mobile_patient' && (
+        {viewMode === 'mobile_patient' && currentUser && (
           <div className="hidden md:flex items-center gap-1.5 text-[11px]">
             <select
               value={currentScreen}

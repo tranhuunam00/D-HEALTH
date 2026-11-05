@@ -34,3 +34,4 @@ UPDATE clinical_reports SET interpreting_doctor_name = interpreting_doctor WHERE
 UPDATE clinical_reports SET interpreting_doctor = interpreting_doctor_name WHERE interpreting_doctor IS NULL AND interpreting_doctor_name IS NOT NULL;
 UPDATE clinical_reports SET conclusion = summary WHERE conclusion IS NULL AND summary IS NOT NULL;
 UPDATE clinical_reports SET summary = conclusion WHERE summary IS NULL AND conclusion IS NOT NULL;
+

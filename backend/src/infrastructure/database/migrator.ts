@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { Client } from 'pg';
 import dotenv from 'dotenv';
 
+dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 dotenv.config();
 
 const MIGRATIONS_DIR = fs.existsSync(path.resolve(__dirname, '../../../migrations'))

@@ -3,3 +3,4 @@
 
 ALTER TABLE clinical_reports
     DROP COLUMN IF EXISTS ordering_doctor;
+
