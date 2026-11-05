@@ -52,6 +52,67 @@ const getLabRefRange = (name: string, min?: any, max?: any) => {
   return '4.0 - 10.0';
 };
 
+const formatBiometricType = (typeRaw: string) => {
+  const type = (typeRaw || '').toLowerCase();
+  switch (type) {
+    case 'bp':
+    case 'blood_pressure':
+      return 'Huyết Áp';
+    case 'hr':
+    case 'heart_rate':
+      return 'Nhịp Tim';
+    case 'glucose':
+      return 'Đường Huyết';
+    case 'spo2':
+      return 'SpO2';
+    case 'weight':
+      return 'Cân Nặng';
+    case 'bmi':
+      return 'Chỉ Số BMI';
+    case 'height':
+      return 'Chiều Cao';
+    case 'temp':
+    case 'temperature':
+      return 'Thân Nhiệt';
+    default:
+      return (typeRaw || '--').toUpperCase();
+  }
+};
+
+const formatBiometricValue = (b: any) => {
+  const type = (b.biometric_type || '').toLowerCase();
+  if (type === 'bp' || type === 'blood_pressure') {
+    const sys = b.systolic != null ? Math.round(Number(b.systolic)) : null;
+    const dia = b.diastolic != null ? Math.round(Number(b.diastolic)) : null;
+    if (sys != null && dia != null) {
+      const pulse = b.pulse_bpm ? ` (Mạch: ${Math.round(Number(b.pulse_bpm))} bpm)` : '';
+      return `${sys}/${dia} mmHg${pulse}`;
+    }
+    if (b.value_numeric) return `${b.value_numeric} mmHg`;
+  }
+  if (type === 'hr' || type === 'heart_rate') {
+    const hr = b.pulse_bpm || b.value_numeric;
+    return hr ? `${Math.round(Number(hr))} bpm` : '--';
+  }
+  if (type === 'weight') {
+    const w = b.value_numeric;
+    return w ? `${parseFloat(Number(w).toFixed(1))} kg` : '--';
+  }
+  if (type === 'bmi') {
+    const bmi = b.value_numeric;
+    return bmi ? `${parseFloat(Number(bmi).toFixed(1))} kg/m²` : '--';
+  }
+  if (type === 'glucose') {
+    const g = b.glucose_value || b.value_numeric;
+    return g ? `${parseFloat(Number(g).toFixed(1))} mmol/L` : '--';
+  }
+  if (type === 'spo2') {
+    const s = b.spo2_percent || b.value_numeric;
+    return s ? `${Math.round(Number(s))}%` : '--';
+  }
+  return b.value_numeric ? `${b.value_numeric} ${b.unit || ''}`.trim() : '--';
+};
+
 export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   isOpen,
   onClose,
@@ -128,7 +189,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 )}
               </div>
               <p className="text-xs text-slate-500">
-                Toàn bộ dữ liệu lâm sàng, sinh trắc IoT, kết quả xét nghiệm & đơn thuốc điều trị
+                Toàn bộ dữ liệu lâm sàng, sinh trắc học, kết quả xét nghiệm & đơn thuốc điều trị
               </p>
             </div>
           </div>
@@ -154,7 +215,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         <div className="flex border-b border-slate-200 bg-white px-6 gap-2 text-xs font-semibold overflow-x-auto">
           {[
             { id: 'overview', label: 'Tổng Quan & Định Danh', icon: User, count: null },
-            { id: 'biometrics', label: 'Sinh Trắc Học IoT', icon: Heart, count: dossier?.biometrics?.length },
+            { id: 'biometrics', label: 'Sinh Trắc Học', icon: Heart, count: dossier?.biometrics?.length },
             { id: 'prescriptions', label: 'Đơn Thuốc & Tuân Thủ', icon: Pill, count: dossier?.prescriptions?.length },
             { id: 'reports', label: 'Xét Nghiệm & CĐHA', icon: FileText, count: dossier?.reports?.length },
             { id: 'chronic', label: 'Bệnh Mạn Tính & Lịch Hẹn', icon: Activity, count: dossier?.conditions?.length },
@@ -272,7 +333,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 2: SINH TRẮC HỌC IOT */}
+              {/* TAB 2: SINH TRẮC HỌC */}
               {activeTab === 'biometrics' && (
                 <div className="space-y-4">
                   {dossier.biometrics.length === 0 ? (
@@ -298,21 +359,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                                 {new Date(b.measured_at).toLocaleString('vi-VN')}
                               </td>
                               <td className="px-4 py-3 font-bold text-slate-800 uppercase">
-                                {b.biometric_type === 'blood_pressure'
-                                  ? 'Huyết Áp'
-                                  : b.biometric_type === 'glucose'
-                                  ? 'Đường Huyết'
-                                  : b.biometric_type === 'spo2'
-                                  ? 'SpO2'
-                                  : b.biometric_type === 'heart_rate'
-                                  ? 'Nhịp Tim'
-                                  : b.biometric_type}
+                                {formatBiometricType(b.biometric_type)}
                               </td>
                               <td className="px-4 py-3 font-mono font-bold text-teal-700">
-                                {b.biometric_type === 'blood_pressure' && `${b.systolic}/${b.diastolic} mmHg (Mạch: ${b.pulse_bpm || '--'})`}
-                                {b.biometric_type === 'glucose' && `${b.glucose_value || b.value_numeric} mmol/L`}
-                                {b.biometric_type === 'spo2' && `${b.spo2_percent || b.value_numeric}%`}
-                                {b.biometric_type === 'heart_rate' && `${b.pulse_bpm || b.value_numeric} bpm`}
+                                {formatBiometricValue(b)}
                               </td>
                               <td className="px-4 py-3 text-slate-500 capitalize">
                                 {b.context || 'Nghỉ ngơi'} · {b.source === 'device_ble' ? 'Thiết bị BLE' : 'Nhập tay'}
