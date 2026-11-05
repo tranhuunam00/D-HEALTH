@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { Pool } from 'pg';
 import { optionalAuthenticate, AuthenticatedRequest } from '../middlewares/auth-middleware';
+import { normalizeModality } from '../../constants/imaging-taxonomy';
 
 export async function ensureClinicalReportsSchema(pool: Pool): Promise<void> {
   try {
@@ -52,9 +53,23 @@ function normalizeDate(val?: string): string {
 
 function buildReportInsertPayload(params: InsertReportParams): Record<string, any> {
   const { body, reportId } = params;
-  const defaultConclusion = (body.conclusion && String(body.conclusion).trim())
-    || (body.summary && String(body.summary).trim())
-    || (body.kind === 'lab' ? 'Kết quả xét nghiệm hoàn tất' : 'Kết quả cận lâm sàng hoàn tất');
+  let defaultConclusion = (body.conclusion && String(body.conclusion).trim())
+    || (body.summary && String(body.summary).trim());
+
+  if (!defaultConclusion && Array.isArray(body.lesions) && body.lesions.length > 0) {
+    const valid = body.lesions.filter((l: any) => {
+      const s = parseFloat(String(l.size).replace(',', '.'));
+      return !isNaN(s) && s > 0;
+    });
+    if (valid.length > 0) {
+      const desc = valid.map((l: any) => `${l.type || 'Tổn thương'}${l.side ? ` (${l.side})` : ''} ${l.size} mm`).join('; ');
+      defaultConclusion = `Phát hiện ${valid.length} tổn thương: ${desc}`;
+    }
+  }
+
+  if (!defaultConclusion) {
+    defaultConclusion = body.kind === 'lab' ? 'Kết quả xét nghiệm hoàn tất' : 'Không ghi nhận tổn thương bất thường';
+  }
 
   const insertData: Record<string, any> = {
     id: reportId,
@@ -116,11 +131,14 @@ async function insertLabMetricRows(pool: Pool, reportId: string, rows: any[]): P
 
 async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: any): Promise<void> {
   const studyId = `std_${reportId}`;
+  const modality = normalizeModality(body.category || 'CT', body.title);
+  const organ = body.organ || 'Gan · ổ bụng';
+
   await pool.query(
     `INSERT INTO imaging_studies (id, report_id, modality, body_part)
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (id) DO NOTHING`,
-    [studyId, reportId, body.category || 'CT', body.organ || 'Gan · ổ bụng']
+    [studyId, reportId, modality, organ]
   ).catch(() => null);
 
   if (Array.isArray(body.lesions) && body.lesions.length > 0) {
@@ -131,6 +149,7 @@ async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: 
 
     const firstLesion = body.lesions[0];
     const lesionTypeName = firstLesion?.type || 'Khối u đặc';
+    const sideText = firstLesion?.side ? ` (${firstLesion.side})` : '';
 
     await pool.query(
       `INSERT INTO tumor_tracking_evaluations 
@@ -138,8 +157,8 @@ async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         studyId,
-        body.organ || 'Gan',
-        `${lesionTypeName} · ${body.organ || 'Gan'}`,
+        organ,
+        `${lesionTypeName}${sideText} · ${organ}`,
         body.lesions.length,
         sumDiameters,
         sumDiameters,

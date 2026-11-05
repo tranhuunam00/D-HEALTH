@@ -267,3 +267,13 @@ export function getLateralityOptionsForBodyPart(modalityCode: string, bodyPartNa
   if (part.hasLaterality === false) return null;
   return part.lateralityOptions || ['Bên phải', 'Bên trái', 'Cả hai bên'];
 }
+
+export function normalizeModality(cat?: string, title?: string): 'SA' | 'XQ' | 'MM' | 'CT' | 'MRI' {
+  const text = `${cat || ''} ${title || ''}`.toUpperCase();
+  if (text.includes('MRI') || text.includes('CỘNG HƯỞNG TỪ')) return 'MRI';
+  if (text.includes('CT') || text.includes('CẮT LỚP') || text.includes('SCAN')) return 'CT';
+  if (text.includes('SA') || text.includes('SIÊU ÂM') || text.includes('US')) return 'SA';
+  if (text.includes('MM') || text.includes('NHŨ ẢNH') || text.includes('MAMMO')) return 'MM';
+  if (text.includes('XQ') || text.includes('X-QUANG') || text.includes('XR') || text.includes('XRAY')) return 'XQ';
+  return 'CT';
+}

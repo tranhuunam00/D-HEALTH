@@ -17,6 +17,7 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
       setKind(initialKind);
     }
   }, [initialKind]);
+
   const [method, setMethod] = useState<InputMethod>('manual');
   const [testDate, setTestDate] = useState('2026-10-26');
   const [doctorName, setDoctorName] = useState('');
@@ -29,12 +30,13 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
   const [selectedCls, setSelectedCls] = useState<ClassificationCategory | null>(null);
 
   // 2. Chẩn đoán hình ảnh
-  const [modality, setModality] = useState('CT');
-  const [organ, setOrgan] = useState('Gan');
+  const [modality, setModality] = useState('XQ');
+  const [organ, setOrgan] = useState('Phổi · Lồng ngực');
   const [organOther, setOrganOther] = useState('');
   const [conclusion, setConclusion] = useState('');
+  const [isNormal, setIsNormal] = useState(false);
   const [lesions, setLesions] = useState<ImagingLesion[]>([
-    { type: 'Khối u đặc', side: 'Bên phải', size: '', target: false },
+    { type: 'Nốt mờ / Khối mờ phổi', side: 'Phổi phải', size: '', target: false },
   ]);
 
   // 3. Giải phẫu bệnh
@@ -153,6 +155,41 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
       };
 
       const validRows = rows.filter((r) => r.name && String(r.value).trim() !== '');
+
+      // Tự động xử lý kết luận thông minh cho CĐHA (không bao giờ gán 'Kết quả bình thường' khi có tổn thương)
+      let finalConclusion = (conclusion || '').trim();
+      let finalLesions = lesions;
+
+      if (kind === 'img') {
+        if (isNormal) {
+          finalConclusion = finalConclusion || 'Không ghi nhận tổn thương bất thường';
+          finalLesions = [];
+        } else {
+          const validLesions = lesions.filter((l) => {
+            const s = parseFloat(String(l.size).replace(',', '.'));
+            return l.type && !isNaN(s) && s > 0;
+          });
+
+          if (!finalConclusion) {
+            if (validLesions.length > 0) {
+              const summary = validLesions.map((l) => `${l.type}${l.side ? ` (${l.side})` : ''} ${l.size} mm`).join('; ');
+              finalConclusion = `Phát hiện ${validLesions.length} tổn thương: ${summary}`;
+            } else {
+              finalConclusion = 'Ghi nhận tổn thương nghi ngờ';
+            }
+          }
+          finalLesions = validLesions.length > 0 ? validLesions : lesions;
+        }
+      } else if (kind === 'lab') {
+        if (!finalConclusion) {
+          finalConclusion = `Đã ghi nhận ${validRows.length} chỉ số xét nghiệm`;
+        }
+      } else {
+        if (!finalConclusion) {
+          finalConclusion = diagnosis || 'Kết quả giải phẫu bệnh hoàn tất';
+        }
+      }
+
       const body = {
         memberId: initialMemberId,
         kind: kind === 'lab' ? 'lab' : kind === 'img' ? 'imaging' : 'pathology',
@@ -161,9 +198,9 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
         performedAt: testDate,
         facilityName,
         doctorName,
-        conclusion: conclusion || (kind === 'lab' ? `Đã ghi nhận ${validRows.length} chỉ số xét nghiệm` : 'Kết quả bình thường'),
+        conclusion: finalConclusion,
         rows: validRows.length > 0 ? validRows : rows,
-        lesions,
+        lesions: finalLesions,
         markers,
         specimenCode,
         histologicGrade,
@@ -219,6 +256,8 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
     setOrganOther,
     conclusion,
     setConclusion,
+    isNormal,
+    setIsNormal,
     lesions,
     addLesion,
     removeLesion,
