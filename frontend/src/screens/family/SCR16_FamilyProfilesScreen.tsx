@@ -5,12 +5,14 @@ import { useFamilyLogic } from './useFamilyLogic';
 
 export interface SCR16Props {
   readonly onNavigate: (screen: string) => void;
-  readonly onSelectMember?: (memberId: string) => void;
+  readonly onSelectMember?: (memberId: string, memberName?: string) => void;
+  readonly activeMemberId?: string;
 }
 
 export const SCR16_FamilyProfilesScreen: React.FC<SCR16Props> = ({
   onNavigate,
   onSelectMember,
+  activeMemberId,
 }) => {
   const { members, loading } = useFamilyLogic();
 
@@ -33,8 +35,8 @@ export const SCR16_FamilyProfilesScreen: React.FC<SCR16Props> = ({
 
           <button
             type="button"
-            onClick={() => alert('Thêm hồ sơ thành viên mới')}
-            className="h-10 min-h-[40px] px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow active:scale-95"
+            onClick={() => alert('Chức năng thêm người thân đang phát triển.')}
+            className="h-10 min-h-[40px] px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 cursor-pointer"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Thêm người thân</span>
@@ -63,46 +65,53 @@ export const SCR16_FamilyProfilesScreen: React.FC<SCR16Props> = ({
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {members.map((mem) => (
-              <div
-                key={mem.id}
-                className="bg-white rounded-3xl p-4 flex flex-col gap-3 shadow-xs border border-slate-200/60"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white font-extrabold text-base flex items-center justify-center shadow">
-                      {mem.fullName.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-slate-900">{mem.fullName}</div>
-                      <div className="text-xs text-slate-500 font-medium">{mem.relationshipText}</div>
-                      <div className="text-[11px] text-slate-400">
-                        {mem.age} tuổi · {mem.gender} · Nhóm máu <b>{mem.bloodType}</b>
+            {members.map((mem) => {
+              const isSelected = activeMemberId === mem.id;
+              return (
+                <div
+                  key={mem.id}
+                  className="bg-white rounded-3xl p-4 flex flex-col gap-3 shadow-xs border border-slate-200/60"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white font-extrabold text-base flex items-center justify-center shadow">
+                        {mem.fullName.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{mem.fullName}</div>
+                        <div className="text-xs text-slate-500 font-medium">{mem.relationshipText}</div>
+                        <div className="text-[11px] text-slate-400">
+                          {mem.age} tuổi · {mem.gender} · Nhóm máu <b>{mem.bloodType}</b>
+                        </div>
                       </div>
                     </div>
+
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-[#1F7A8C]">
+                      {mem.condition}
+                    </span>
                   </div>
 
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-[#1F7A8C]">
-                    {mem.condition}
-                  </span>
-                </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Đã đồng thuận chia sẻ
+                    </span>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Đã đồng thuận chia sẻ
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => onSelectMember?.(mem.id)}
-                    className="px-3.5 py-1.5 min-h-[36px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold active:scale-95 transition"
-                  >
-                    Chọn xem hồ sơ
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => onSelectMember?.(mem.id, mem.fullName)}
+                      className={`px-3.5 py-1.5 min-h-[36px] rounded-xl text-xs font-bold active:scale-95 transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-900 hover:bg-slate-800 text-white'
+                      }`}
+                    >
+                      {isSelected ? 'Đang chọn' : 'Chọn xem hồ sơ'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,12 +1,16 @@
 import React from 'react';
-import { Building2, Stethoscope, Pill, ShieldCheck, Database, RefreshCw, Activity, Search, Users, UserCheck, HardDrive } from 'lucide-react';
+import { Building2, Stethoscope, Pill, ShieldCheck, Database, RefreshCw, Activity, Search, Users, UserCheck, HardDrive, LogOut } from 'lucide-react';
 import { useAdminLogic } from './useAdminLogic';
 import { AdminUserManagement } from './AdminUserManagement';
 import { FacilitiesGrid } from './FacilitiesGrid';
 import { DoctorsGrid } from './DoctorsGrid';
 import { MedicationsGrid } from './MedicationsGrid';
 
-export const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  readonly onLogout?: () => void;
+}
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const { stats, health, facilities, doctors, medications, activeTab, setActiveTab, loading, refresh } = useAdminLogic();
 
   return (
@@ -86,6 +90,16 @@ export const AdminDashboard: React.FC = () => {
             </button>
             <div className="h-4 w-[1px] bg-slate-800" />
             <span className="text-xs text-slate-300 font-medium">Admin Tổng: <strong className="text-white">Admin NamTH</strong></span>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-3 py-1.5 rounded-xl bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 text-xs font-bold flex items-center gap-1.5 transition ml-2 cursor-pointer"
+                title="Đăng xuất"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Đăng xuất</span>
+              </button>
+            )}
           </div>
         </header>
 

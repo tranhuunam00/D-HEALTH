@@ -61,3 +61,4 @@ ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   due_date = EXCLUDED.due_date,
   is_completed = EXCLUDED.is_completed;
+

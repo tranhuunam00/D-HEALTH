@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Monitor, LogOut, HeartPulse } from 'lucide-react';
 import { SCR01_LoginScreen } from './screens/auth/SCR01_LoginScreen';
 import { SCR02_HomeScreen } from './screens/home/SCR02_HomeScreen';
 import { SCR03_BiometricsScreen } from './screens/health/SCR03_BiometricsScreen';
@@ -26,16 +25,6 @@ export type MobileScreenId =
   | 'camera-ocr' | 'ai' | 'care' | 'profile' | 'family' | 'emergency';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState<'mobile_patient' | 'pc_admin'>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('mode') === 'admin' || window.location.pathname.startsWith('/admin')) {
-        return 'pc_admin';
-      }
-    }
-    return 'mobile_patient';
-  });
-
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('dhealth_token');
@@ -47,6 +36,23 @@ export default function App() {
       }
     }
     return null;
+  });
+
+  const [viewMode, setViewMode] = useState<'mobile_patient' | 'pc_admin'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('dhealth_user');
+      if (savedUser) {
+        try {
+          const u = JSON.parse(savedUser);
+          if (u.role === 'admin' || u.role === 'super_admin') return 'pc_admin';
+        } catch {}
+      }
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'admin' || window.location.pathname.startsWith('/admin')) {
+        return 'pc_admin';
+      }
+    }
+    return 'mobile_patient';
   });
 
   const [currentScreen, setCurrentScreen] = useState<MobileScreenId>(() => {
@@ -71,6 +77,7 @@ export default function App() {
   const [selectedLabReportId, setSelectedLabReportId] = useState<string | null>(null);
   const [selectedImagingReportId, setSelectedImagingReportId] = useState<string | null>(null);
   const [cameraInputKind, setCameraInputKind] = useState<'lab' | 'img' | 'gpb'>('lab');
+  const [selectedMember, setSelectedMember] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     const verifySession = async () => {
@@ -85,6 +92,8 @@ export default function App() {
           const json = await res.json();
           if (json?.data) {
             setCurrentUser(json.data);
+            const isAdmin = json.data.role === 'admin' || json.data.role === 'super_admin';
+            setViewMode(isAdmin ? 'pc_admin' : 'mobile_patient');
             if (typeof window !== 'undefined') {
               localStorage.setItem('dhealth_user', JSON.stringify(json.data));
             }
@@ -104,6 +113,7 @@ export default function App() {
           }
           setCurrentUser(null);
           setCurrentScreen('login');
+          setViewMode('mobile_patient');
         }
       } catch {
         // network or server error: maintain local state
@@ -120,22 +130,28 @@ export default function App() {
       localStorage.removeItem('dhealth_screen');
     }
     setCurrentUser(null);
+    setSelectedMember(null);
     setCurrentScreen('login');
+    setViewMode('mobile_patient');
   };
 
-  const activeMemberId = currentUser?.activeMemberId || '';
-  const activeMemberName = currentUser?.fullName || '';
+  const handleLoginSuccess = (u: User) => {
+    setCurrentUser(u);
+    const isAdmin = u.role === 'admin' || u.role === 'super_admin';
+    if (isAdmin) {
+      setViewMode('pc_admin');
+    } else {
+      setViewMode('mobile_patient');
+      navigateTo('home');
+    }
+  };
+
+  const activeMemberId = selectedMember?.id || currentUser?.activeMemberId || 'nam';
+  const activeMemberName = selectedMember?.name || currentUser?.fullName || '';
 
   const renderMobileScreen = () => {
     if (!currentUser || currentScreen === 'login') {
-      return (
-        <SCR01_LoginScreen
-          onLoginSuccess={(u) => {
-            setCurrentUser(u);
-            navigateTo('home');
-          }}
-        />
-      );
+      return <SCR01_LoginScreen onLoginSuccess={handleLoginSuccess} />;
     }
 
     switch (currentScreen) {
@@ -158,15 +174,21 @@ export default function App() {
           />
         );
       case 'devices':
-        return <SCR04_DevicesScreen onNavigate={(s) => navigateTo(s as any)} activeMemberName={activeMemberName} />;
+        return (
+          <SCR04_DevicesScreen
+            onNavigate={(s) => navigateTo(s as any)}
+            activeMemberName={activeMemberName}
+          />
+        );
       case 'labs':
         return (
           <SCR05_LabsScreen
             activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
             onNavigate={(s, id) => {
-              if (id) setSelectedLabReportId(id);
-              if (s === 'camera-ocr') setCameraInputKind('lab');
+              if (s === 'lab-detail' && id) {
+                setSelectedLabReportId(id);
+              }
               navigateTo(s as any);
             }}
           />
@@ -175,19 +197,20 @@ export default function App() {
         return (
           <SCR06_LabDetailScreen
             reportId={selectedLabReportId}
-            activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
+            activeMemberId={activeMemberId}
             onNavigate={(s) => navigateTo(s as any)}
           />
         );
       case 'imaging':
         return (
           <SCR07_ImagingScreen
-            activeMemberId={activeMemberId}
             activeMemberName={activeMemberName}
+            activeMemberId={activeMemberId}
             onNavigate={(s, id) => {
-              if (id) setSelectedImagingReportId(id);
-              if (s === 'camera-ocr') setCameraInputKind('img');
+              if (s === 'imaging-detail' && id) {
+                setSelectedImagingReportId(id);
+              }
               navigateTo(s as any);
             }}
           />
@@ -229,20 +252,28 @@ export default function App() {
       case 'camera-ocr':
         return (
           <SCR12_CameraInputScreen
-            onNavigate={(s) => navigateTo(s as any)}
-            activeMemberName={activeMemberName}
-            activeMemberId={activeMemberId}
             initialKind={cameraInputKind}
+            activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
+            onNavigate={(s) => navigateTo(s as any)}
           />
         );
       case 'ai':
-        return <SCR13_AIAssistantScreen onNavigate={(s) => navigateTo(s as any)} />;
+        return (
+          <SCR13_AIAssistantScreen
+            onNavigate={(s, detailId) => {
+              if (s === 'lab-detail' && detailId) setSelectedLabReportId(detailId);
+              navigateTo(s as any);
+            }}
+            activeMemberName={activeMemberName}
+          />
+        );
       case 'care':
         return (
           <SCR14_CareScreen
-            onNavigate={(s) => navigateTo(s as any)}
-            activeMemberName={activeMemberName}
             activeMemberId={activeMemberId}
+            activeMemberName={activeMemberName}
+            onNavigate={(s) => navigateTo(s as any)}
           />
         );
       case 'profile':
@@ -256,7 +287,16 @@ export default function App() {
           />
         );
       case 'family':
-        return <SCR16_FamilyProfilesScreen onNavigate={(s) => navigateTo(s as any)} />;
+        return (
+          <SCR16_FamilyProfilesScreen
+            onNavigate={(s) => navigateTo(s as any)}
+            onSelectMember={(memId, memName) => {
+              setSelectedMember({ id: memId, name: memName || '' });
+              navigateTo('home');
+            }}
+            activeMemberId={activeMemberId}
+          />
+        );
       case 'emergency':
         return (
           <SCR17_EmergencyScreen
@@ -280,82 +320,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] text-slate-900 flex flex-col font-sans">
-      {/* Ecosystem Top Header - Hidden on mobile viewports so mobile users experience a 100% native app */}
-      <header className="hidden md:flex h-11 bg-slate-950/95 border-b border-slate-800 px-3 items-center justify-between z-50 shrink-0 text-white">
-        <div className="flex items-center gap-2">
-          <HeartPulse className="w-4 h-4 text-[#1F7A8C]" />
-          <span className="text-[11px] font-black tracking-wider uppercase">D-HEALTH ECOSYSTEM</span>
-        </div>
-
-        {/* View Switcher Pills */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-lg">
-          <button
-            onClick={() => setViewMode('mobile_patient')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-all ${
-              viewMode === 'mobile_patient' ? 'bg-[#1F7A8C] text-white shadow' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Smartphone className="w-3 h-3" />
-            <span>Mobile Bệnh Nhân</span>
-          </button>
-          <button
-            onClick={() => setViewMode('pc_admin')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-all ${
-              viewMode === 'pc_admin' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Monitor className="w-3 h-3" />
-            <span>PC Admin Tổng</span>
-          </button>
-        </div>
-
-        {/* Screen Quick Selector for Quick Testing */}
-        {viewMode === 'mobile_patient' && currentUser && (
-          <div className="hidden md:flex items-center gap-1.5 text-[11px]">
-            <select
-              value={currentScreen}
-              onChange={(e) => setCurrentScreen(e.target.value as any)}
-              className="bg-slate-900 border border-slate-700 text-slate-200 rounded-md px-2 py-0.5 text-[11px] font-medium focus:outline-none"
-            >
-              <option value="login">SCR-01: Đăng nhập</option>
-              <option value="home">SCR-02: Trang chủ</option>
-              <option value="biometrics">SCR-03: Sinh trắc học</option>
-              <option value="devices">SCR-04: Kết nối thiết bị</option>
-              <option value="labs">SCR-05: Xét nghiệm</option>
-              <option value="lab-detail">SCR-06: Chi tiết XN</option>
-              <option value="imaging">SCR-07: CĐHA</option>
-              <option value="imaging-detail">SCR-08: Chi tiết CĐHA</option>
-              <option value="chronic">SCR-09: Bệnh mạn tính</option>
-              <option value="records">SCR-10: Hồ sơ y tế</option>
-              <option value="meds">SCR-11: Quản lý dùng thuốc</option>
-              <option value="camera-ocr">SCR-12: Nhập KQ / Camera</option>
-              <option value="ai">SCR-13: Trợ lý AI</option>
-              <option value="care">SCR-14: Chăm sóc</option>
-              <option value="profile">SCR-15: Thông tin người dùng</option>
-              <option value="family">SCR-16: Hồ sơ gia đình</option>
-              <option value="emergency">SCR-17: Thẻ khẩn cấp SOS</option>
-            </select>
-          </div>
-        )}
-
-        <div className="flex items-center gap-1.5">
-          {currentUser && (
-            <button
-              onClick={handleLogout}
-              className="p-1 text-slate-400 hover:text-rose-400 rounded-md hover:bg-slate-800"
-              title="Đăng xuất"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Main View Area (Responsive Real Mobile / Real PC) */}
       <main className="flex-1 flex justify-center bg-[#F1F5F9]">
-        {viewMode === 'pc_admin' ? (
+        {viewMode === 'pc_admin' && currentUser ? (
           <div className="w-full h-full">
-            <AdminDashboard />
+            <AdminDashboard onLogout={handleLogout} />
           </div>
         ) : (
           <div className="w-full md:max-w-[480px] min-h-screen bg-[#F8FAFC] flex flex-col relative md:shadow-md">
