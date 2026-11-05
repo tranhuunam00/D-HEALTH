@@ -48,7 +48,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
 
   const activeMember = members.find((m) => m.id === activeMemberId) || {
     id: activeMemberId,
-    full_name: propMemberName || user?.fullName || 'Trần Hữu Nam',
+    full_name: propMemberName || user?.fullName || '',
   };
 
   return (

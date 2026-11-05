@@ -36,23 +36,9 @@ export default function App() {
     return 'mobile_patient';
   });
 
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('dhealth_user');
-        if (stored) return JSON.parse(stored);
-      } catch {}
-    }
-    return null;
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  const [currentScreen, setCurrentScreen] = useState<MobileScreenId>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('dhealth_user');
-      if (!stored) return 'login';
-    }
-    return 'home';
-  });
+  const [currentScreen, setCurrentScreen] = useState<MobileScreenId>('login');
 
   const [selectedLabReportId, setSelectedLabReportId] = useState<string | null>(null);
   const [selectedImagingReportId, setSelectedImagingReportId] = useState<string | null>(null);
@@ -87,8 +73,8 @@ export default function App() {
     setCurrentScreen('login');
   };
 
-  const activeMemberId = currentUser?.activeMemberId || 'nam';
-  const activeMemberName = currentUser?.fullName || 'Trần Hữu Nam';
+  const activeMemberId = currentUser?.activeMemberId || '';
+  const activeMemberName = currentUser?.fullName || '';
 
   const renderMobileScreen = () => {
     if (!currentUser || currentScreen === 'login') {
