@@ -7,18 +7,142 @@ import {
   isValidRole,
 } from '../../application/services/user-management.service';
 
+interface AdminUpdateData {
+  fullName?: string;
+  email?: string;
+  isActive?: boolean;
+  role?: string;
+}
+
+interface PatientUpdateData {
+  email?: string;
+  phoneNumber?: string;
+  nationalId?: string;
+  address?: string;
+  isEkycVerified?: boolean;
+  isActive?: boolean;
+}
+
+interface MemberUpdateData {
+  fullName?: string;
+  gender?: string;
+  birthDate?: string;
+  bloodType?: string;
+  heightCm?: number | string;
+  weightKg?: number | string;
+}
+
+async function updateAdminRecord(
+  pool: Pool,
+  id: string,
+  data: AdminUpdateData,
+  passwordHash: string | null
+): Promise<boolean> {
+  let query = `
+    UPDATE admin_users
+    SET full_name = COALESCE($1, full_name),
+        email = COALESCE($2, email),
+        is_active = COALESCE($3, is_active),
+        role_id = COALESCE($4, role_id),
+        updated_at = NOW()
+  `;
+  const params: any[] = [data.fullName, data.email, data.isActive, data.role];
+  if (passwordHash) {
+    params.push(passwordHash);
+    query += `, password_hash = $${params.length}`;
+  }
+  params.push(id);
+  query += ` WHERE id = $${params.length} RETURNING id`;
+  const res = await pool.query(query, params);
+  return Boolean(res.rowCount && res.rowCount > 0);
+}
+
+async function updatePatientRecord(
+  pool: Pool,
+  id: string,
+  data: PatientUpdateData,
+  passwordHash: string | null
+): Promise<void> {
+  let query = `
+    UPDATE users
+    SET email = COALESCE($1, email),
+        phone_number = COALESCE($2, phone_number),
+        national_id = COALESCE($3, national_id),
+        address = COALESCE($4, address),
+        is_ekyc_verified = COALESCE($5, is_ekyc_verified),
+        locked_until = CASE WHEN $6 = false THEN NOW() + INTERVAL '100 years' ELSE NULL END,
+        updated_at = NOW()
+  `;
+  const params: any[] = [
+    data.email,
+    data.phoneNumber,
+    data.nationalId,
+    data.address,
+    data.isEkycVerified,
+    data.isActive,
+  ];
+  if (passwordHash) {
+    params.push(passwordHash);
+    query += `, password_hash = $${params.length}`;
+  }
+  params.push(id);
+  query += ` WHERE id = $${params.length}`;
+  await pool.query(query, params);
+}
+
+async function updateOwnerMember(
+  pool: Pool,
+  userId: string,
+  data: MemberUpdateData
+): Promise<void> {
+  const updates: string[] = [];
+  const params: any[] = [];
+  if (data.fullName) {
+    params.push(data.fullName);
+    updates.push(`full_name = $${params.length}`);
+  }
+  if (data.gender) {
+    params.push(data.gender);
+    updates.push(`gender = $${params.length}`);
+  }
+  if (data.birthDate) {
+    params.push(data.birthDate);
+    updates.push(`birth_date = $${params.length}`);
+  }
+  if (data.bloodType) {
+    params.push(data.bloodType);
+    updates.push(`blood_type = $${params.length}`);
+  }
+  if (data.heightCm !== undefined && data.heightCm !== null && data.heightCm !== '') {
+    params.push(Number(data.heightCm));
+    updates.push(`height_cm = $${params.length}`);
+  }
+  if (data.weightKg !== undefined && data.weightKg !== null && data.weightKg !== '') {
+    params.push(Number(data.weightKg));
+    updates.push(`weight_kg = $${params.length}`);
+  }
+
+  if (updates.length > 0) {
+    params.push(userId);
+    const sql = `UPDATE family_members SET ${updates.join(', ')}, updated_at = NOW() WHERE user_id = $${params.length} AND relationship = 'owner'`;
+    await pool.query(sql, params);
+  }
+}
+
 export function createAdminUsersRouter(pool: Pool): Router {
   const router = Router();
 
-  // 1. DANH SÁCH TOÀN BỘ NGƯỜI DÙNG & QUẢN TRỊ VIÊN KÈM PHÂN TRANG (GET /)
+  // 1. DANH SÁCH TOÀN BỘ NGƯỜI DÙNG KÈM ĐẦY ĐỦ THÔNG TIN HỒ SƠ & PHÂN TRANG (GET /)
   router.get('/', async (req: Request, res: Response) => {
     const { page, limit, search, role } = req.query;
     const pagination = buildPagination(page as string, limit as string);
 
     try {
-      let query = `
+      const query = `
         SELECT u.id, u.phone_number, u.email, u.created_at,
+               u.national_id, u.address, u.is_ekyc_verified,
                COALESCE(m.full_name, 'Chưa cập nhật') AS full_name,
+               m.gender, m.birth_date, m.blood_type, m.height_cm, m.weight_kg,
                'patient' AS role,
                CASE WHEN u.locked_until > NOW() THEN false ELSE true END AS is_active,
                'users' AS user_type
@@ -26,7 +150,9 @@ export function createAdminUsersRouter(pool: Pool): Router {
         LEFT JOIN family_members m ON u.id = m.user_id AND m.relationship = 'owner'
         UNION ALL
         SELECT a.id, a.username AS phone_number, a.email, a.created_at,
+               NULL AS national_id, NULL AS address, true AS is_ekyc_verified,
                a.full_name,
+               NULL AS gender, NULL AS birth_date, NULL AS blood_type, NULL AS height_cm, NULL AS weight_kg,
                a.role_id AS role,
                a.is_active,
                'admin_users' AS user_type
@@ -113,48 +239,60 @@ export function createAdminUsersRouter(pool: Pool): Router {
     }
   });
 
-  // 3. SỬA / CẬP NHẬT THÔNG TIN NGƯỜI DÙNG (PUT /:id)
+  // 3. SỬA / CẬP NHẬT THÔNG TIN ĐẦY ĐỦ VÀ ĐỔI MẬT KHẨU (PUT /:id)
   router.put('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { fullName, email, phoneNumber, isActive } = req.body;
+    const {
+      fullName,
+      email,
+      phoneNumber,
+      isActive,
+      password,
+      role,
+      nationalId,
+      address,
+      gender,
+      birthDate,
+      bloodType,
+      heightCm,
+      weightKg,
+      isEkycVerified,
+    } = req.body;
 
     try {
-      // Thử cập nhật trong admin_users trước
-      const adminUpdate = await pool.query(
-        `UPDATE admin_users
-         SET full_name = COALESCE($1, full_name),
-             email = COALESCE($2, email),
-             is_active = COALESCE($3, is_active),
-             updated_at = NOW()
-         WHERE id = $4 RETURNING id`,
-        [fullName, email, isActive, id]
-      );
-
-      if (adminUpdate.rowCount && adminUpdate.rowCount > 0) {
-        return res.json({ success: true, message: 'Cập nhật tài khoản Admin thành công.' });
+      let passwordHash: string | null = null;
+      if (password && typeof password === 'string' && password.trim().length >= 6) {
+        passwordHash = await hashPassword(password.trim());
       }
 
-      // Cập nhật người dùng bệnh nhân
-      await pool.query(
-        `UPDATE users
-         SET email = COALESCE($1, email),
-             phone_number = COALESCE($2, phone_number),
-             locked_until = CASE WHEN $3 = false THEN NOW() + INTERVAL '100 years' ELSE NULL END,
-             updated_at = NOW()
-         WHERE id = $4`,
-        [email, phoneNumber, isActive, id]
+      // 1. Thử cập nhật trong admin_users trước
+      const updatedAdmin = await updateAdminRecord(
+        pool,
+        id,
+        { fullName, email, isActive, role },
+        passwordHash
       );
 
-      if (fullName) {
-        await pool.query(
-          `UPDATE family_members
-           SET full_name = $1, updated_at = NOW()
-           WHERE user_id = $2 AND relationship = 'owner'`,
-          [fullName, id]
-        );
+      if (updatedAdmin) {
+        return res.json({ success: true, message: 'Cập nhật tài khoản Admin và mật khẩu thành công.' });
       }
 
-      return res.json({ success: true, message: 'Cập nhật người dùng thành công.' });
+      // 2. Cập nhật bảng users
+      await updatePatientRecord(
+        pool,
+        id,
+        { email, phoneNumber, nationalId, address, isEkycVerified, isActive },
+        passwordHash
+      );
+
+      // 3. Cập nhật bảng family_members cho chủ tài khoản
+      await updateOwnerMember(
+        pool,
+        id,
+        { fullName, gender, birthDate, bloodType, heightCm, weightKg }
+      );
+
+      return res.json({ success: true, message: 'Cập nhật thông tin người dùng và mật khẩu thành công.' });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
     }
@@ -173,7 +311,6 @@ export function createAdminUsersRouter(pool: Pool): Router {
     }
 
     try {
-      // 1. Kiểm tra nếu đã có trong admin_users
       const checkAdmin = await pool.query(`SELECT id FROM admin_users WHERE id = $1`, [id]);
       if (checkAdmin.rowCount && checkAdmin.rowCount > 0) {
         await pool.query(
@@ -183,7 +320,6 @@ export function createAdminUsersRouter(pool: Pool): Router {
         return res.json({ success: true, message: `Đã cấp quyền ${role} thành công.` });
       }
 
-      // 2. Nếu đang là bệnh nhân trong bảng users -> Thăng cấp lên Admin/Doctor
       const checkUser = await pool.query(
         `SELECT u.id, u.phone_number, u.email, u.password_hash, COALESCE(m.full_name, 'Người dùng') AS full_name
          FROM users u
@@ -222,13 +358,11 @@ export function createAdminUsersRouter(pool: Pool): Router {
     }
 
     try {
-      // Kiểm tra và xóa trong admin_users nếu có
       const adminDel = await pool.query(`DELETE FROM admin_users WHERE id = $1 RETURNING id`, [id]);
       if (adminDel.rowCount && adminDel.rowCount > 0) {
         return res.json({ success: true, message: 'Đã xóa tài khoản Quản trị viên thành công.' });
       }
 
-      // Xóa trong users nếu là bệnh nhân
       const userDel = await pool.query(`DELETE FROM users WHERE id = $1 RETURNING id`, [id]);
       if (userDel.rowCount === 0) {
         return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Không tìm thấy người dùng.' } });

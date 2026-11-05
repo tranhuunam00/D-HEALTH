@@ -93,6 +93,61 @@ describe('AdminUsersRoutes', () => {
     });
   });
 
+  describe('PUT /:id', () => {
+    it('cập nhật tài khoản Admin và đổi mật khẩu thành công', async () => {
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'adm_1' }] });
+      const handler = getHandler('PUT', '/:id');
+      const { req, res } = createReqRes({
+        params: { id: 'adm_1' },
+        body: { fullName: 'Admin Updated', password: 'newSecurePassword123' },
+      });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('password_hash'),
+        expect.any(Array)
+      );
+    });
+
+    it('cập nhật hồ sơ bệnh nhân, sinh trắc và đổi mật khẩu thành công', async () => {
+      // 1. admin_users rowCount = 0 (not admin)
+      // 2. users UPDATE
+      // 3. family_members UPDATE
+      mockPool.query
+        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 });
+
+      const handler = getHandler('PUT', '/:id');
+      const { req, res } = createReqRes({
+        params: { id: 'u_patient_1' },
+        body: {
+          fullName: 'Trần Hữu Nam Updated',
+          phoneNumber: '0961766816',
+          nationalId: '001200001234',
+          gender: 'Nam',
+          birthDate: '1980-05-15',
+          bloodType: 'O+',
+          heightCm: 170,
+          weightKg: 68,
+          password: 'newPassword123456',
+        },
+      });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('national_id'),
+        expect.any(Array)
+      );
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('family_members'),
+        expect.any(Array)
+      );
+    });
+  });
+
   describe('POST /:id/grant-role', () => {
     it('trả về 400 khi vai trò chỉ định không hợp lệ', async () => {
       const handler = getHandler('POST', '/:id/grant-role');

@@ -8,6 +8,15 @@ export interface AdminManagedUser {
   role: string;
   is_active: boolean;
   created_at: string;
+  national_id?: string;
+  address?: string;
+  is_ekyc_verified?: boolean;
+  gender?: string;
+  birth_date?: string;
+  blood_type?: string;
+  height_cm?: number;
+  weight_kg?: number;
+  user_type?: string;
 }
 
 export interface PaginationMeta {
@@ -52,7 +61,7 @@ export function useAdminUsersLogic() {
     fetchUsers(1, search);
   }, []);
 
-  const handleCreateUser = async (payload: { fullName: string; phoneNumber: string; password: string; email?: string }) => {
+  const handleCreateUser = async (payload: Record<string, any>) => {
     try {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
@@ -62,13 +71,16 @@ export function useAdminUsersLogic() {
       if (res.ok) {
         setIsAddModalOpen(false);
         await fetchUsers(1);
+        return true;
       }
+      return false;
     } catch (err) {
       console.error('Lỗi tạo người dùng:', err);
+      return false;
     }
   };
 
-  const handleUpdateUser = async (userId: string, payload: { fullName: string; phoneNumber: string; role: string; isActive: boolean }) => {
+  const handleUpdateUser = async (userId: string, payload: Record<string, any>) => {
     try {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
@@ -78,9 +90,12 @@ export function useAdminUsersLogic() {
       if (res.ok) {
         setEditingUser(null);
         await fetchUsers(meta.page);
+        return true;
       }
+      return false;
     } catch (err) {
       console.error('Lỗi cập nhật người dùng:', err);
+      return false;
     }
   };
 
@@ -92,9 +107,12 @@ export function useAdminUsersLogic() {
       if (res.ok) {
         setDeletingUser(null);
         await fetchUsers(1);
+        return true;
       }
+      return false;
     } catch (err) {
       console.error('Lỗi xóa người dùng:', err);
+      return false;
     }
   };
 
