@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, Activity, Info } from 'lucide-react';
-import { TumorTrackingData } from '../useImagingLogic';
+import { TumorTrackingData, normalizeModality } from '../useImagingLogic';
 import {
   IMAGING_TAXONOMY,
   getBodyPartsForModality,
@@ -93,8 +93,8 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
     if (!trackingData || !trackingData.history) return [];
     return trackingData.history.filter((item) => {
       if (modality !== 'ALL') {
-        const itemMod = (item.modality || '').toUpperCase();
-        if (itemMod !== modality.toUpperCase()) return false;
+        const itemNorm = normalizeModality(item.modality, item.title || item.lesion_location);
+        if (itemNorm.toUpperCase() !== modality.toUpperCase()) return false;
       }
       if (location !== 'ALL') {
         const organText = `${item.organ || ''} ${item.body_part || ''} ${item.lesion_location || ''}`.toLowerCase();
@@ -181,7 +181,7 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
 
       {enabled && (
         <div className="flex flex-col gap-2.5">
-          {/* 2. Sắp xếp thứ tự bộ lọc: Phương tiện -> Vị trí -> Loại tổn thương */}
+          {/* 2. Sắp xếp thứ tự bộ lọc: Phương tiện -> Vị trí -> Loại tổn thương (Tăng kích thước dễ bấm) */}
           <div className="grid grid-cols-3 gap-1.5">
             {/* Cột 1: Phương tiện */}
             <div className="flex flex-col gap-1">
@@ -190,16 +190,16 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
                 <select
                   value={modality}
                   onChange={(e) => handleModalityChange(e.target.value)}
-                  className="w-full h-8.5 appearance-none bg-white border border-slate-200 rounded-xl px-2.5 pr-6 text-xs font-semibold text-slate-800 focus:outline-none truncate"
+                  className="w-full h-10.5 min-h-[42px] appearance-none bg-white border border-slate-200 rounded-xl px-2.5 pr-6 text-xs font-bold text-slate-800 focus:outline-none truncate shadow-xs active:bg-slate-50"
                 >
                   <option value="ALL">Tất cả</option>
                   <option value="CT">CT (Cắt lớp)</option>
-                  <option value="MRI">MRI (Cộng hưởng từ)</option>
+                  <option value="MRI">MRI (Cộng hưởng)</option>
                   <option value="MM">MM (Nhũ ảnh)</option>
                   <option value="SA">SA (Siêu âm)</option>
                   <option value="XQ">XQ (X-quang)</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2.5 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 top-3.5 pointer-events-none" />
               </div>
             </div>
 
@@ -210,7 +210,7 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
                 <select
                   value={location}
                   onChange={(e) => handleLocationChange(e.target.value)}
-                  className="w-full h-8.5 appearance-none bg-white border border-slate-200 rounded-xl px-2.5 pr-6 text-xs font-semibold text-slate-800 focus:outline-none truncate"
+                  className="w-full h-10.5 min-h-[42px] appearance-none bg-white border border-slate-200 rounded-xl px-2.5 pr-6 text-xs font-bold text-slate-800 focus:outline-none truncate shadow-xs active:bg-slate-50"
                 >
                   <option value="ALL">Tất cả</option>
                   {availableBodyParts.map((p) => (
@@ -219,7 +219,7 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2.5 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 top-3.5 pointer-events-none" />
               </div>
             </div>
 
@@ -230,7 +230,7 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
                 <select
                   value={lesionType}
                   onChange={(e) => setLesionType(e.target.value)}
-                  className="w-full h-8.5 appearance-none bg-white border border-slate-200 rounded-xl px-2.5 pr-6 text-xs font-semibold text-slate-800 focus:outline-none truncate"
+                  className="w-full h-10.5 min-h-[42px] appearance-none bg-white border border-slate-200 rounded-xl px-2.5 pr-6 text-xs font-bold text-slate-800 focus:outline-none truncate shadow-xs active:bg-slate-50"
                 >
                   <option value="ALL">Tất cả</option>
                   {availableLesionTypes.map((t) => (
@@ -239,7 +239,7 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2.5 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 top-3.5 pointer-events-none" />
               </div>
             </div>
           </div>
@@ -256,8 +256,11 @@ export const LesionTrackingSection: React.FC<LesionTrackingSectionProps> = ({
               </p>
             </div>
           ) : !hasData ? (
-            <div className="bg-white rounded-2xl border border-slate-200/60 p-4 text-center text-xs text-slate-500 font-medium">
-              Không có số đo nào khớp với bộ lọc <span className="font-bold text-slate-800">[{modality} · {location} · {lesionType}]</span>.
+            <div className="bg-white rounded-2xl border border-slate-200/60 p-4 text-center text-xs text-slate-500 font-medium leading-relaxed shadow-xs">
+              Chưa có số đo kích thước tổn thương nào cho <span className="font-bold text-slate-800">{modality === 'ALL' ? 'bộ lọc này' : modality}</span>.
+              <span className="block text-[11px] text-slate-400 mt-1">
+                (Các phiếu CĐHA đã lưu đều có kết quả bình thường hoặc chưa ghi nhận kích thước mm dạng khối).
+              </span>
             </div>
           ) : (
             <>

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
 import { ImagingLesion } from '../camera-input.types';
-import { getBodyPartsForModality } from '../../../constants/imaging-taxonomy';
+import {
+  getBodyPartsForModality,
+  getLateralityOptionsForBodyPart,
+} from '../../../constants/imaging-taxonomy';
 
 interface ImagingManualSectionProps {
   modality: string;
@@ -35,6 +38,7 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
   const availableBodyParts = getBodyPartsForModality(modality);
   const selectedPart = availableBodyParts.find((p) => p.name === organ || p.id === organ) || availableBodyParts[0];
   const availableLesionTypes = selectedPart ? selectedPart.lesionTypes : [];
+  const lateralityOpts = getLateralityOptionsForBodyPart(modality, organ);
 
   const handleModalitySelect = (newMod: string) => {
     onModalityChange(newMod);
@@ -56,11 +60,11 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex flex-col gap-3">
+    <div className="bg-white rounded-2xl p-3 shadow-xs border border-slate-100 flex flex-col gap-2.5">
       {/* 1. Phương tiện & Bộ phận tương ứng */}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-slate-500 text-xs font-bold block mb-1">Phương tiện</label>
+          <label className="text-slate-500 text-[11px] font-bold block mb-1">Phương tiện</label>
           <select
             value={modality}
             onChange={(e) => handleModalitySelect(e.target.value)}
@@ -75,7 +79,7 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
         </div>
 
         <div>
-          <label className="text-slate-500 text-xs font-bold block mb-1">Vị trí / Bộ phận</label>
+          <label className="text-slate-500 text-[11px] font-bold block mb-1">Vị trí / Bộ phận</label>
           <select
             value={organ}
             onChange={(e) => handleOrganSelect(e.target.value)}
@@ -93,32 +97,31 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
 
       {organ === 'other' && (
         <div>
-          <label className="text-slate-500 text-xs font-bold block mb-1">Vị trí / Bộ phận khác</label>
+          <label className="text-slate-500 text-[11px] font-bold block mb-1">Vị trí / Bộ phận khác</label>
           <input
             value={organOther}
             onChange={(e) => onOrganOtherChange(e.target.value)}
             placeholder="Nhập tên vị trí / cấu trúc giải phẫu"
-            className="w-full h-10 px-3 rounded-xl border border-slate-900 text-xs font-bold text-slate-900 focus:outline-none"
+            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50 focus:outline-none"
           />
         </div>
       )}
 
-      {/* 2. Kết luận */}
+      {/* 2. Kết luận CĐHA */}
       <div>
-        <label className="text-slate-500 text-xs font-bold block mb-1">Kết luận chẩn đoán</label>
-        <textarea
-          rows={2}
+        <label className="text-slate-500 text-[11px] font-bold block mb-1">Kết luận chẩn đoán hình ảnh</label>
+        <input
           value={conclusion}
           onChange={(e) => onConclusionChange(e.target.value)}
-          placeholder="Nhập kết luận của bác sĩ CĐHA..."
-          className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 bg-slate-50 resize-none focus:outline-none"
+          placeholder="VD: Nốt mờ thùy trên phổi phải / Nang gan đơn thuần..."
+          className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50 focus:outline-none"
         />
       </div>
 
-      {/* 3. Tổn thương theo vị trí & phương tiện */}
-      <div className="flex justify-between items-baseline pt-1">
+      {/* 3. Danh sách tổn thương dạng khối */}
+      <div className="flex justify-between items-center pt-1 border-t border-slate-100">
         <span className="text-xs font-extrabold text-slate-900">Chi tiết tổn thương ({selectedPart?.name || organ})</span>
-        <span className="text-xs text-slate-500 font-semibold">{lesions.length} tổn thương</span>
+        <span className="text-[11px] text-slate-500 font-semibold">{lesions.length} tổn thương</span>
       </div>
 
       {lesions.map((lesion, index) => {
@@ -128,54 +131,90 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
         const isTiRads = typeDef?.classificationSystem === 'TI-RADS';
 
         return (
-          <div key={index} className="border border-slate-200 rounded-xl p-2.5 flex flex-col gap-2 bg-slate-50/50">
+          <div key={index} className="border border-slate-200/80 rounded-2xl p-2.5 flex flex-col gap-2 bg-slate-50/50">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-slate-800">Tổn thương {index + 1}</span>
               {lesions.length > 1 && (
                 <button
                   type="button"
                   onClick={() => onRemoveLesion(index)}
-                  className="text-xs font-bold text-slate-500 hover:text-rose-600 px-2 py-0.5 rounded-lg bg-slate-100"
+                  className="text-[11px] font-bold text-slate-500 hover:text-rose-600 px-2 py-0.5 rounded-lg bg-slate-100 active:scale-95 transition"
                 >
                   Xoá
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5">
-              <select
-                value={lesion.type}
-                onChange={(e) => onUpdateLesion(index, { type: e.target.value })}
-                className="h-9 px-1.5 rounded-lg border border-slate-200 text-[11px] font-bold bg-white"
-              >
-                {availableLesionTypes.map((t) => (
-                  <option key={t.id} value={t.name}>
-                    {t.name}
-                  </option>
-                ))}
-                <option value="Khác">Tổn thương khác…</option>
-              </select>
+            {/* Bố cục hàng nhập liệu: Có bên (3 cột) hoặc Không có bên (2 cột rộng rãi) */}
+            {lateralityOpts ? (
+              <div className="grid grid-cols-12 gap-1.5">
+                <div className="col-span-5">
+                  <select
+                    value={lesion.type}
+                    onChange={(e) => onUpdateLesion(index, { type: e.target.value })}
+                    className="h-10 w-full px-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none truncate"
+                  >
+                    {availableLesionTypes.map((t) => (
+                      <option key={t.id} value={t.name}>
+                        {t.name}
+                      </option>
+                    ))}
+                    <option value="Khác">Tổn thương khác…</option>
+                  </select>
+                </div>
 
-              <select
-                value={lesion.side}
-                onChange={(e) => onUpdateLesion(index, { side: e.target.value })}
-                className="h-9 px-1.5 rounded-lg border border-slate-200 text-[11px] font-bold bg-white"
-              >
-                <option value="Bên phải">Bên phải</option>
-                <option value="Bên trái">Bên trái</option>
-                <option value="Lan toả / Hai bên">Hai bên / Lan toả</option>
-              </select>
+                <div className="col-span-4">
+                  <select
+                    value={lesion.side || lateralityOpts[0]}
+                    onChange={(e) => onUpdateLesion(index, { side: e.target.value })}
+                    className="h-10 w-full px-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none truncate"
+                  >
+                    {lateralityOpts.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="relative">
-                <input
-                  placeholder="Kích thước"
-                  value={lesion.size}
-                  onChange={(e) => onUpdateLesion(index, { size: e.target.value })}
-                  className="h-9 w-full px-2 pr-6 rounded-lg border border-slate-200 text-xs font-bold bg-white"
-                />
-                <span className="text-[10px] text-slate-400 font-semibold absolute right-2 top-2.5 pointer-events-none">mm</span>
+                <div className="col-span-3 relative">
+                  <input
+                    placeholder="Kích thước"
+                    value={lesion.size}
+                    onChange={(e) => onUpdateLesion(index, { size: e.target.value })}
+                    className="h-10 w-full px-2 pr-6 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none"
+                  />
+                  <span className="text-[10px] text-slate-400 font-bold absolute right-1.5 top-3 pointer-events-none">mm</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-12 gap-1.5">
+                <div className="col-span-8">
+                  <select
+                    value={lesion.type}
+                    onChange={(e) => onUpdateLesion(index, { type: e.target.value })}
+                    className="h-10 w-full px-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none truncate"
+                  >
+                    {availableLesionTypes.map((t) => (
+                      <option key={t.id} value={t.name}>
+                        {t.name}
+                      </option>
+                    ))}
+                    <option value="Khác">Tổn thương khác…</option>
+                  </select>
+                </div>
+
+                <div className="col-span-4 relative">
+                  <input
+                    placeholder="Kích thước"
+                    value={lesion.size}
+                    onChange={(e) => onUpdateLesion(index, { size: e.target.value })}
+                    className="h-10 w-full px-2.5 pr-6 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none"
+                  />
+                  <span className="text-[10px] text-slate-400 font-bold absolute right-2 top-3 pointer-events-none">mm</span>
+                </div>
+              </div>
+            )}
 
             {/* Phân loại bổ trợ theo chuyên khoa */}
             {canRecist && (
@@ -196,7 +235,7 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
                 <select
                   value={lesion.birads || 'BI-RADS 3'}
                   onChange={(e) => onUpdateLesion(index, { birads: e.target.value })}
-                  className="h-7 px-2 rounded-lg border border-slate-200 text-[11px] font-bold bg-white"
+                  className="h-8 px-2 rounded-lg border border-slate-200 text-[11px] font-bold bg-white"
                 >
                   <option value="BI-RADS 1">BI-RADS 1 (Bình thường)</option>
                   <option value="BI-RADS 2">BI-RADS 2 (Lành tính)</option>
@@ -216,7 +255,7 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
                 <select
                   value={lesion.tirads || 'TI-RADS 3'}
                   onChange={(e) => onUpdateLesion(index, { tirads: e.target.value })}
-                  className="h-7 px-2 rounded-lg border border-slate-200 text-[11px] font-bold bg-white"
+                  className="h-8 px-2 rounded-lg border border-slate-200 text-[11px] font-bold bg-white"
                 >
                   <option value="TI-RADS 1">TI-RADS 1 (Lành tính)</option>
                   <option value="TI-RADS 2">TI-RADS 2 (Không nghi ngờ)</option>
@@ -233,9 +272,10 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
       <button
         type="button"
         onClick={onAddLesion}
-        className="h-10 rounded-xl border-1.5 border-dashed border-slate-300 text-[#1F5F6C] text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer hover:bg-slate-50"
+        className="h-9 min-h-[36px] rounded-xl border border-dashed border-[#1F7A8C]/50 text-[#1F7A8C] text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-teal-50/50 transition active:scale-95"
       >
-        <Plus className="w-4 h-4" /> Thêm tổn thương
+        <Plus className="w-4 h-4" />
+        <span>Thêm tổn thương</span>
       </button>
     </div>
   );

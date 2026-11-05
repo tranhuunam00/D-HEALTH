@@ -65,14 +65,14 @@ export const CameraTypeAndMethodTabs: React.FC<CameraTypeAndMethodTabsProps> = (
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => onSetMethod(m.id as InputMethod)}
-                className={`h-18 min-h-[44px] rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 text-xs font-extrabold transition p-1 ${
+                className={`h-20 min-h-[56px] rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 text-xs font-extrabold transition p-2 active:scale-95 ${
                   isSelected
                     ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
                     : 'border-transparent bg-white text-slate-700 hover:bg-slate-50 shadow-xs'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span>{m.label}</span>
+                <Icon className="w-5.5 h-5.5" />
+                <span className="leading-tight text-center">{m.label}</span>
               </button>
             );
           })}

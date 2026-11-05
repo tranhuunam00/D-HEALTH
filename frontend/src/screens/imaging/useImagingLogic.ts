@@ -34,6 +34,7 @@ export interface EvaluationHistoryItem {
   readonly performed_at: string;
   readonly modality: string;
   readonly body_part: string;
+  readonly title?: string;
   readonly lesion_type?: string;
   readonly laterality?: string;
 }
