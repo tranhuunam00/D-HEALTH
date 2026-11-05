@@ -67,7 +67,7 @@ describe('ChronicConditionsRoutes TDD', () => {
 
     it('fallback lấy dữ liệu mẫu khi thành viên mới chưa có hồ sơ bệnh mạn tính riêng', async () => {
       mockPool.query
-        .mockResolvedValueOnce({ rows: [] }) // condRes rỗng
+        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({
           rows: [
             {
@@ -76,11 +76,11 @@ describe('ChronicConditionsRoutes TDD', () => {
               status_summary: 'Nguy cơ trung bình · xu hướng ổn định',
             },
           ],
-        }) // fallback cond
-        .mockResolvedValueOnce({ rows: [] }) // taskRes rỗng
+        })
+        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({
           rows: [{ id: 't1', title: 'Theo dõi huyết áp sáng và tối' }],
-        }); // fallback tasks
+        });
 
       const handler = getHandler('GET', '/:memberId');
       const { req, res } = createReqRes({ params: { memberId: 'mem_new_123' } });
@@ -91,6 +91,73 @@ describe('ChronicConditionsRoutes TDD', () => {
       expect(output.success).toBe(true);
       expect(output.data.conditions.length).toBe(1);
       expect(output.data.tasks.length).toBe(1);
+    });
+  });
+
+  describe('POST /:memberId/conditions', () => {
+    it('thêm bệnh mạn tính mới kèm các chỉ số theo dõi thành công', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'pcc_123',
+            condition_name: 'Rối loạn lipid máu',
+            status_summary: 'Nguy cơ trung bình · xu hướng ổn định',
+          },
+        ],
+      });
+
+      const handler = getHandler('POST', '/:memberId/conditions');
+      const { req, res } = createReqRes({
+        params: { memberId: 'nam' },
+        body: {
+          conditionName: 'Rối loạn lipid máu',
+          icd10Code: 'E78.5',
+          riskLevel: 'medium',
+          trendStatus: 'stable',
+          statusSummary: 'Nguy cơ trung bình · xu hướng ổn định',
+          nextCheckupDate: '2026-12-15',
+          targetMetrics: [
+            { name: 'LDL-C', status: 'Theo dõi', type: 'warning' },
+            { name: 'Huyết áp', status: 'Tốt', type: 'good' },
+          ],
+        },
+      });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(201);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.condition_name).toBe('Rối loạn lipid máu');
+    });
+
+    it('báo lỗi khi thiếu tên bệnh mạn tính', async () => {
+      const handler = getHandler('POST', '/:memberId/conditions');
+      const { req, res } = createReqRes({
+        params: { memberId: 'nam' },
+        body: {},
+      });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(false);
+      expect(output.error.code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  describe('DELETE /:memberId/conditions/:conditionId', () => {
+    it('xóa bệnh mạn tính thành công', async () => {
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const handler = getHandler('DELETE', '/:memberId/conditions/:conditionId');
+      const { req, res } = createReqRes({
+        params: { memberId: 'nam', conditionId: 'pcc_123' },
+      });
+
+      await handler(req, res);
+      expect(res.json).toHaveBeenCalled();
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
     });
   });
 
@@ -110,6 +177,26 @@ describe('ChronicConditionsRoutes TDD', () => {
       expect(res.json).toHaveBeenCalled();
       const output = res.json.mock.calls[0][0];
       expect(output.success).toBe(true);
+    });
+  });
+
+  describe('POST /:memberId/tasks', () => {
+    it('thêm việc cần làm mới thành công', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'task_new_1', title: 'Xét nghiệm máu trước tái khám', is_completed: false }],
+      });
+
+      const handler = getHandler('POST', '/:memberId/tasks');
+      const { req, res } = createReqRes({
+        params: { memberId: 'nam' },
+        body: { title: 'Xét nghiệm máu trước tái khám' },
+      });
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(201);
+      const output = res.json.mock.calls[0][0];
+      expect(output.success).toBe(true);
+      expect(output.data.title).toBe('Xét nghiệm máu trước tái khám');
     });
   });
 });
