@@ -20,21 +20,33 @@ export interface ImagingStudyItem {
   readonly hasDicomSeries: boolean;
 }
 
-export interface LesionRow {
-  readonly name: string;
-  readonly val1: number;
-  readonly val2: number;
-  readonly val3: number;
+export interface EvaluationHistoryItem {
+  readonly id: string;
+  readonly study_id: string;
+  readonly organ: string;
+  readonly lesion_location: string;
+  readonly lesion_count: number;
+  readonly baseline_sum_diameters_mm: number;
+  readonly nadir_sum_diameters_mm: number;
+  readonly current_sum_diameters_mm: number;
+  readonly recist_response: 'CR' | 'PR' | 'SD' | 'PD' | string;
+  readonly treatment_response_note?: string;
+  readonly performed_at: string;
+  readonly modality: string;
+  readonly body_part: string;
+  readonly lesion_type?: string;
+  readonly laterality?: string;
 }
 
 export interface TumorTrackingData {
   readonly targetTitle: string;
   readonly subtitle: string;
   readonly currentSumMm: number;
-  readonly dates: readonly [string, string, string];
-  readonly lesions: readonly LesionRow[];
-  readonly totalRow: readonly [number, number, number];
+  readonly dates: readonly string[];
+  readonly totalRow: readonly number[];
   readonly caption: string;
+  readonly isBaselineOnly: boolean;
+  readonly history: readonly EvaluationHistoryItem[];
 }
 
 export interface RecistEvaluationData {
@@ -94,6 +106,7 @@ export function useImagingLogic(memberId = 'nam') {
   const [selectedModality, setSelectedModality] = useState<ModalityCode>('ALL');
   const [studies, setStudies] = useState<readonly ImagingStudyItem[]>([]);
   const [dbEval, setDbEval] = useState<any>(null);
+  const [evalHistory, setEvalHistory] = useState<readonly EvaluationHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [trackLesionsEnabled, setTrackLesionsEnabled] = useState(true);
   const [recistEnabled, setRecistEnabled] = useState(true);
@@ -123,12 +136,15 @@ export function useImagingLogic(memberId = 'nam') {
       if (evalRes?.ok) {
         const evalJson = await evalRes.json();
         setDbEval(evalJson.data || null);
+        setEvalHistory(Array.isArray(evalJson.history) ? evalJson.history : []);
       } else {
         setDbEval(null);
+        setEvalHistory([]);
       }
     } catch {
       setStudies([]);
       setDbEval(null);
+      setEvalHistory([]);
     } finally {
       setLoading(false);
     }
@@ -152,21 +168,44 @@ export function useImagingLogic(memberId = 'nam') {
   }, [studies, selectedModality]);
 
   const tumorTracking: TumorTrackingData | null = useMemo(() => {
-    if (!dbEval) return null;
+    if (!evalHistory || evalHistory.length === 0) return null;
+
+    const sorted = [...evalHistory].sort((a, b) => {
+      const ta = new Date(a.performed_at).getTime();
+      const tb = new Date(b.performed_at).getTime();
+      return ta - tb;
+    });
+
+    const dates = sorted.map((e) => formatDisplayDate(e.performed_at));
+    const totalRow = sorted.map((e) => Number(e.current_sum_diameters_mm) || 0);
+    const latest = sorted[sorted.length - 1];
+    const first = sorted[0];
+    const currentSum = Number(latest.current_sum_diameters_mm) || 0;
+    const firstSum = Number(first.current_sum_diameters_mm) || 0;
+
+    let caption = `Số đo cơ sở: ${currentSum} mm.`;
+    if (sorted.length >= 2) {
+      const diff = currentSum - firstSum;
+      if (diff < 0) {
+        caption = `Tổng đường kính giảm từ ${firstSum} mm xuống ${currentSum} mm sau điều trị (-${Math.abs(diff).toFixed(1)} mm).`;
+      } else if (diff > 0) {
+        caption = `Tổng đường kính tăng từ ${firstSum} mm lên ${currentSum} mm (+${diff.toFixed(1)} mm).`;
+      } else {
+        caption = `Tổng đường kính ổn định không đổi (${currentSum} mm).`;
+      }
+    }
+
     return {
-      targetTitle: dbEval.lesion_location || 'Khối u đặc · Gan',
-      subtitle: `${dbEval.modality || 'CT/MRI'} · ${dbEval.lesion_count || 3} tổn thương`,
-      currentSumMm: Number(dbEval.current_sum_diameters_mm) || 38,
-      dates: ['15/03/26', '20/06/26', '20/08/26'],
-      lesions: [
-        { name: 'U1 · HPT VI', val1: 15, val2: 12, val3: 10 },
-        { name: 'U2 · HPT VII', val1: 20, val2: 15, val3: 12 },
-        { name: 'U3 · HPT VIII', val1: 25, val2: 18, val3: 16 },
-      ],
-      totalRow: [Number(dbEval.baseline_sum_diameters_mm) || 60, 45, Number(dbEval.current_sum_diameters_mm) || 38],
-      caption: `Tổng đường kính giảm từ ${dbEval.baseline_sum_diameters_mm || 60} mm xuống ${dbEval.current_sum_diameters_mm || 38} mm sau điều trị.`,
+      targetTitle: latest.lesion_location || `Tổn thương · ${latest.organ || 'Gan'}`,
+      subtitle: `${latest.modality || 'CĐHA'} · ${latest.lesion_count || 1} tổn thương`,
+      currentSumMm: currentSum,
+      dates,
+      totalRow,
+      caption,
+      isBaselineOnly: sorted.length === 1,
+      history: sorted,
     };
-  }, [dbEval]);
+  }, [evalHistory]);
 
   const recistEvaluation: RecistEvaluationData | null = useMemo(() => {
     if (!dbEval) return null;
@@ -177,8 +216,8 @@ export function useImagingLogic(memberId = 'nam') {
       PD: 'Bệnh tiến triển',
     };
     return {
-      responseCode: dbEval.recist_response || 'PR',
-      responseLabel: labels[dbEval.recist_response] || 'Đáp ứng một phần',
+      responseCode: (dbEval.recist_response as any) || 'SD',
+      responseLabel: labels[dbEval.recist_response] || 'Bệnh ổn định',
       note: dbEval.treatment_response_note || '',
       baselineMm: Number(dbEval.baseline_sum_diameters_mm) || 0,
       nadirMm: Number(dbEval.nadir_sum_diameters_mm) || 0,

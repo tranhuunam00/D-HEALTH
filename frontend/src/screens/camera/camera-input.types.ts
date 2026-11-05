@@ -14,6 +14,8 @@ export interface ImagingLesion {
   side: string;
   size: string;
   target: boolean;
+  birads?: string;
+  tirads?: string;
 }
 
 export interface PathologyMarker {

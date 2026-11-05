@@ -129,6 +129,9 @@ async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: 
       return isNaN(s) ? sum : sum + s;
     }, 0);
 
+    const firstLesion = body.lesions[0];
+    const lesionTypeName = firstLesion?.type || 'Khối u đặc';
+
     await pool.query(
       `INSERT INTO tumor_tracking_evaluations 
         (study_id, organ, lesion_location, lesion_count, baseline_sum_diameters_mm, nadir_sum_diameters_mm, current_sum_diameters_mm, recist_response, treatment_response_note)
@@ -136,7 +139,7 @@ async function insertImagingStudyAndLesions(pool: Pool, reportId: string, body: 
       [
         studyId,
         body.organ || 'Gan',
-        `Khối u đặc · ${body.organ || 'Gan'}`,
+        `${lesionTypeName} · ${body.organ || 'Gan'}`,
         body.lesions.length,
         sumDiameters,
         sumDiameters,
@@ -289,10 +292,16 @@ export function createClinicalReportsRouter(pool: Pool): Router {
          JOIN imaging_studies ist ON tte.study_id = ist.id
          JOIN clinical_reports r ON ist.report_id = r.id
          WHERE r.member_id = $1
-         ORDER BY r.performed_at DESC LIMIT 1`,
+         ORDER BY r.performed_at ASC`,
         [memberId]
       );
-      return res.json({ success: true, data: result.rows[0] || null });
+      const rows = result.rows || [];
+      const latest = rows.length > 0 ? rows[rows.length - 1] : null;
+      return res.json({
+        success: true,
+        data: latest,
+        history: rows,
+      });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
     }
