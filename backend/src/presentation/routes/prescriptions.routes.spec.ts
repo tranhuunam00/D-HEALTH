@@ -84,9 +84,9 @@ describe('PrescriptionsRoutes TDD', () => {
 
   describe('GET /:memberId/adherence-summary', () => {
     it('trả về tỷ lệ tuân thủ 91%, tổng số liều và 31 ngày trong lịch', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{ count: '4' }],
-      });
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ count: '4' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'ds_1', status: 'taken' }, { id: 'ds_2', status: 'pending' }] });
 
       const handler = getHandler('GET', '/:memberId/adherence-summary');
       const { req, res } = createReqRes({ params: { memberId: 'nam' } });

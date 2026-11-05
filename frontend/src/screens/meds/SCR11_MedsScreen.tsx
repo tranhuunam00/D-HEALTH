@@ -21,6 +21,8 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
   const {
     activeTab,
     setActiveTab,
+    selectedDay,
+    setSelectedDay,
     doses,
     adherence,
     isAddOpen,
@@ -115,11 +117,13 @@ export const SCR11_MedsScreen: React.FC<SCR11Props> = ({
         {/* 5. Calendar Tháng 10/2026 */}
         <MedMonthCalendar
           days={adherence.calendarDays}
-          selectedDay={26}
+          selectedDay={selectedDay}
+          onSelectDay={setSelectedDay}
         />
 
-        {/* 6. Danh sách cữ thuốc hôm nay */}
+        {/* 6. Danh sách cữ thuốc theo ngày được chọn */}
         <TodayDoseList
+          selectedDay={selectedDay}
           doses={doses}
           onTakeDose={handleTakeDose}
           onSkipDose={handleSkipDose}

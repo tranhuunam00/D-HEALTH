@@ -6,7 +6,7 @@ export interface DoseItem {
   period: string;
   name: string;
   instruction: string;
-  status: 'taken' | 'pending' | 'skipped' | 'snoozed';
+  status: 'taken' | 'pending' | 'skipped' | 'snoozed' | 'scheduled';
   taken: boolean;
 }
 
@@ -37,25 +37,22 @@ const EMPTY_ADHERENCE: AdherenceData = {
 
 export function useMedsLogic(memberId = 'nam') {
   const [activeTab, setActiveTab] = useState<'schedule' | 'active' | 'history'>('schedule');
+  const [selectedDay, setSelectedDay] = useState<number>(26);
   const [doses, setDoses] = useState<DoseItem[]>([]);
   const [adherence, setAdherence] = useState<AdherenceData>(EMPTY_ADHERENCE);
   const [loading, setLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const fetchMedsData = useCallback(async () => {
-    setLoading(true);
+  // 1. Tải danh sách cữ thuốc theo ngày được chọn trong tháng 10/2026
+  const fetchDosesForDay = useCallback(async (day: number) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const [dosesRes, adhRes] = await Promise.all([
-        fetch(`/api/prescriptions/${memberId}/today-doses`, { headers }).catch(() => null),
-        fetch(`/api/prescriptions/${memberId}/adherence-summary`, { headers }).catch(() => null),
-      ]);
-
-      if (dosesRes?.ok) {
-        const dJson = await dosesRes.json();
+      const dateStr = `2026-10-${String(day).padStart(2, '0')}`;
+      const res = await fetch(`/api/prescriptions/${memberId}/today-doses?date=${dateStr}`, { headers });
+      if (res.ok) {
+        const dJson = await res.json();
         if (Array.isArray(dJson?.data)) {
           const mapped: DoseItem[] = dJson.data.map((d: any) => {
             const timeStr = (d.scheduled_time || '08:00').substring(0, 5);
@@ -67,14 +64,24 @@ export function useMedsLogic(memberId = 'nam') {
               period,
               name: `${d.name} ${d.dosage || ''}`.trim(),
               instruction: d.timing_instructions || `${d.dose_per_intake || '1 viên'} · ${d.meal_relation === 'after_meal' ? 'sau ăn' : 'trước ăn'}`,
-              status: d.status || 'pending',
+              status: d.status || (day > 26 ? 'scheduled' : 'pending'),
               taken: !!d.taken,
             };
           });
           setDoses(mapped);
         }
       }
+    } catch (err) {
+      console.error('Lỗi tải cữ thuốc theo ngày:', err);
+    }
+  }, [memberId]);
 
+  // 2. Tải tổng quan tuân thủ thuốc
+  const fetchAdherenceSummary = useCallback(async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const adhRes = await fetch(`/api/prescriptions/${memberId}/adherence-summary`, { headers }).catch(() => null);
       if (adhRes?.ok) {
         const aJson = await adhRes.json();
         if (aJson?.data) {
@@ -82,15 +89,24 @@ export function useMedsLogic(memberId = 'nam') {
         }
       }
     } catch (err) {
-      console.error('Lỗi tải dữ liệu đơn thuốc:', err);
-    } finally {
-      setLoading(false);
+      console.error('Lỗi tải tổng quan tuân thủ:', err);
     }
   }, [memberId]);
+
+  const fetchMedsData = useCallback(async () => {
+    setLoading(true);
+    await Promise.all([fetchDosesForDay(selectedDay), fetchAdherenceSummary()]);
+    setLoading(false);
+  }, [fetchDosesForDay, fetchAdherenceSummary, selectedDay]);
 
   useEffect(() => {
     fetchMedsData();
   }, [fetchMedsData]);
+
+  // Khi người dùng bấm chuyển ngày trên lịch tháng
+  useEffect(() => {
+    fetchDosesForDay(selectedDay);
+  }, [selectedDay, fetchDosesForDay]);
 
   const handleTakeDose = async (doseId: string) => {
     setDoses((prev) =>
@@ -107,7 +123,7 @@ export function useMedsLogic(memberId = 'nam') {
         body: JSON.stringify({ status: 'taken' }),
       });
       setSuccessMsg('Đã ghi nhận uống thuốc thành công!');
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setTimeout(() => setSuccessMsg(null), 3500);
     } catch {}
   };
 
@@ -140,24 +156,33 @@ export function useMedsLogic(memberId = 'nam') {
       });
       if (res.ok) {
         setIsAddOpen(false);
-        setSuccessMsg('Đã thêm thuốc mới vào phác đồ điều trị!');
-        setTimeout(() => setSuccessMsg(null), 3000);
-        fetchMedsData();
+        setSuccessMsg('Đã thêm thuốc vào lịch nhắc thành công!');
+        setTimeout(() => setSuccessMsg(null), 3500);
+        await fetchMedsData();
       }
-    } catch {
-      setIsAddOpen(false);
-      setSuccessMsg('Đã thêm thuốc mới vào phác đồ điều trị!');
-      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (err) {
+      console.error('Lỗi thêm thuốc:', err);
     }
   };
 
-  const handleSendHistory = () => {
-    alert('Đã gửi báo cáo lịch sử dùng thuốc cho Bác sĩ phụ trách!');
+  const handleSendHistory = async () => {
+    try {
+      const res = await fetch(`/api/prescriptions/${memberId}/send-history`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        alert('Đã gửi tiền sử dùng thuốc thành công cho Bác sĩ điều trị!');
+      }
+    } catch (err) {
+      console.error('Lỗi gửi tiền sử:', err);
+    }
   };
 
   return {
     activeTab,
     setActiveTab,
+    selectedDay,
+    setSelectedDay,
     doses,
     adherence,
     loading,

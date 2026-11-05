@@ -44,23 +44,34 @@ export function createPrescriptionsRouter(pool: Pool): Router {
     }
   });
 
-  // 2. GET /:memberId/today-doses - Lấy 4 cữ thuốc trong ngày hôm nay (SCR-02 & SCR-11)
+  // 2. GET /:memberId/today-doses - Lấy cữ thuốc theo ngày (SCR-02 & SCR-11)
   router.get('/:memberId/today-doses', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const { date } = req.query;
     try {
+      const targetDate = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+        ? date
+        : new Date().toISOString().split('T')[0];
+
       const result = await pool.query(
         `SELECT ds.id, pi.medication_name as name, pi.dosage, pi.dose_per_intake, 
                 ds.scheduled_time, ds.meal_relation, pi.timing_instructions,
+                pi.start_date, pi.end_date,
                 p.id as prescription_id,
-                COALESCE(dl.status, 'pending') as status,
+                COALESCE(
+                  dl.status, 
+                  CASE WHEN $2::date > CURRENT_DATE THEN 'scheduled' ELSE 'pending' END
+                ) as status,
                 CASE WHEN dl.status = 'taken' THEN true ELSE false END as taken
          FROM dose_schedules ds
          JOIN prescription_items pi ON ds.prescription_item_id = pi.id
          JOIN prescriptions p ON pi.prescription_id = p.id
-         LEFT JOIN dose_logs dl ON dl.schedule_id = ds.id AND DATE(dl.scheduled_at) = CURRENT_DATE
+         LEFT JOIN dose_logs dl ON dl.schedule_id = ds.id AND DATE(dl.scheduled_at) = $2::date
          WHERE p.member_id = $1 AND p.status = 'active'
+           AND (pi.start_date IS NULL OR pi.start_date <= $2::date)
+           AND (pi.end_date IS NULL OR pi.end_date >= $2::date)
          ORDER BY ds.scheduled_time ASC, pi.medication_name ASC`,
-        [memberId]
+        [memberId, targetDate]
       );
       return res.json({ success: true, data: result.rows });
     } catch (err: any) {
@@ -94,6 +105,21 @@ export function createPrescriptionsRouter(pool: Pool): Router {
         });
       }
 
+      // Lấy số cữ uống thuốc thực tế hôm nay
+      const todayDosesRes = await pool.query(
+        `SELECT ds.id, dl.status
+         FROM dose_schedules ds
+         JOIN prescription_items pi ON ds.prescription_item_id = pi.id
+         JOIN prescriptions p ON pi.prescription_id = p.id
+         LEFT JOIN dose_logs dl ON dl.schedule_id = ds.id AND DATE(dl.scheduled_at) = CURRENT_DATE
+         WHERE p.member_id = $1 AND p.status = 'active'
+           AND (pi.start_date IS NULL OR pi.start_date <= CURRENT_DATE)
+           AND (pi.end_date IS NULL OR pi.end_date >= CURRENT_DATE)`,
+        [memberId]
+      );
+      const actualTodayTotal = todayDosesRes.rows.length;
+      const actualTodayTaken = todayDosesRes.rows.filter((r) => r.status === 'taken').length;
+
       // Ma trận ngày trong tháng 10/2026 (1..31) chuẩn thiết kế SCR-11
       const calendarDays = buildOctoberCalendarDays();
 
@@ -104,8 +130,8 @@ export function createPrescriptionsRouter(pool: Pool): Router {
           takenCount: 109,
           missedCount: 7,
           skippedCount: 4,
-          todayTaken: 2,
-          todayTotal: 4,
+          todayTaken: actualTodayTaken,
+          todayTotal: actualTodayTotal,
           calendarDays,
         },
       });
