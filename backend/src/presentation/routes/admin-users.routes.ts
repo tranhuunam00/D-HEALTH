@@ -148,6 +148,7 @@ export function createAdminUsersRouter(pool: Pool): Router {
                'users' AS user_type
         FROM users u
         LEFT JOIN family_members m ON u.id = m.user_id AND m.relationship = 'owner'
+        WHERE u.is_deleted = false
         UNION ALL
         SELECT a.id, a.username AS phone_number, a.email, a.created_at,
                NULL AS national_id, NULL AS address, true AS is_ekyc_verified,
@@ -157,6 +158,7 @@ export function createAdminUsersRouter(pool: Pool): Router {
                a.is_active,
                'admin_users' AS user_type
         FROM admin_users a
+        WHERE a.is_deleted = false
       `;
 
       let filterSql = `SELECT * FROM (${query}) AS combined WHERE 1=1`;
@@ -358,16 +360,22 @@ export function createAdminUsersRouter(pool: Pool): Router {
     }
 
     try {
-      const adminDel = await pool.query(`DELETE FROM admin_users WHERE id = $1 RETURNING id`, [id]);
+      const adminDel = await pool.query(
+        `UPDATE admin_users SET is_deleted = true, is_active = false, updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id`,
+        [id]
+      );
       if (adminDel.rowCount && adminDel.rowCount > 0) {
-        return res.json({ success: true, message: 'Đã xóa tài khoản Quản trị viên thành công.' });
+        return res.json({ success: true, message: 'Đã xóa mềm tài khoản Quản trị viên thành công.' });
       }
 
-      const userDel = await pool.query(`DELETE FROM users WHERE id = $1 RETURNING id`, [id]);
+      const userDel = await pool.query(
+        `UPDATE users SET is_deleted = true, locked_until = NOW() + INTERVAL '100 years', updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id`,
+        [id]
+      );
       if (userDel.rowCount === 0) {
         return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Không tìm thấy người dùng.' } });
       }
-      return res.json({ success: true, message: 'Đã xóa người dùng thành công.' });
+      return res.json({ success: true, message: 'Đã xóa mềm người dùng thành công.' });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: { code: 'DB_ERROR', message: err.message } });
     }

@@ -9,8 +9,8 @@ export function createMasterCatalogsRouter(pool: Pool): Router {
     const { all } = req.query;
     try {
       const query = all === 'true'
-        ? 'SELECT * FROM master_facilities ORDER BY is_active DESC, name ASC'
-        : 'SELECT * FROM master_facilities WHERE is_active = true ORDER BY name ASC';
+        ? 'SELECT * FROM master_facilities WHERE is_deleted = false ORDER BY is_active DESC, name ASC'
+        : 'SELECT * FROM master_facilities WHERE is_active = true AND is_deleted = false ORDER BY name ASC';
       const result = await pool.query(query);
       res.json({ data: result.rows });
     } catch (err: any) {
@@ -82,13 +82,13 @@ export function createMasterCatalogsRouter(pool: Pool): Router {
     const { id } = req.params;
     try {
       const result = await pool.query(
-        'UPDATE master_facilities SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+        'UPDATE master_facilities SET is_active = false, is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
         [id]
       );
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Không tìm thấy cơ sở y tế' });
       }
-      res.json({ success: true, message: 'Đã ngừng kích hoạt cơ sở y tế', data: result.rows[0] });
+      res.json({ success: true, message: 'Đã ngừng kích hoạt và xóa mềm cơ sở y tế', data: result.rows[0] });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -114,7 +114,7 @@ export function createMasterCatalogsRouter(pool: Pool): Router {
         LEFT JOIN master_facilities f ON d.facility_id = f.id
         LEFT JOIN master_departments dep ON d.department_id = dep.id
       `;
-      const conditions: string[] = [];
+      const conditions: string[] = ['d.is_deleted = false'];
       const params: any[] = [];
 
       if (all !== 'true') {
@@ -203,13 +203,13 @@ export function createMasterCatalogsRouter(pool: Pool): Router {
     const { id } = req.params;
     try {
       const result = await pool.query(
-        'UPDATE master_doctors SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+        'UPDATE master_doctors SET is_active = false, is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
         [id]
       );
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Không tìm thấy bác sĩ' });
       }
-      res.json({ success: true, message: 'Đã ngừng kích hoạt bác sĩ', data: result.rows[0] });
+      res.json({ success: true, message: 'Đã ngừng kích hoạt và xóa mềm bác sĩ', data: result.rows[0] });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

@@ -12,28 +12,28 @@ export function createChronicConditionsRouter(pool: Pool): Router {
     try {
       let condRes = await pool.query(
         `SELECT * FROM patient_chronic_conditions 
-         WHERE member_id = $1 AND is_active = true 
+         WHERE member_id = $1 AND is_active = true AND is_deleted = false
          ORDER BY created_at ASC`,
         [memberId]
       );
       if (condRes.rows.length === 0 && memberId !== 'nam') {
         condRes = await pool.query(
           `SELECT * FROM patient_chronic_conditions 
-           WHERE member_id = 'nam' AND is_active = true 
+           WHERE member_id = 'nam' AND is_active = true AND is_deleted = false
            ORDER BY created_at ASC`
         );
       }
 
       let taskRes = await pool.query(
         `SELECT * FROM care_tasks 
-         WHERE member_id = $1 
+         WHERE member_id = $1 AND is_deleted = false
          ORDER BY priority ASC, created_at ASC`,
         [memberId]
       );
       if (taskRes.rows.length === 0 && memberId !== 'nam') {
         taskRes = await pool.query(
           `SELECT * FROM care_tasks 
-           WHERE member_id = 'nam' 
+           WHERE member_id = 'nam' AND is_deleted = false
            ORDER BY priority ASC, created_at ASC`
         );
       }
@@ -155,13 +155,15 @@ export function createChronicConditionsRouter(pool: Pool): Router {
     const { memberId, conditionId } = req.params;
     try {
       await pool.query(
-        `DELETE FROM patient_chronic_conditions WHERE member_id = $1 AND (id = $2 OR condition_id = $2)`,
+        `UPDATE patient_chronic_conditions 
+         SET is_active = false, is_deleted = true, updated_at = CURRENT_TIMESTAMP 
+         WHERE member_id = $1 AND (id = $2 OR condition_id = $2)`,
         [memberId, conditionId]
       );
 
       return res.json({
         success: true,
-        message: 'Đã xóa bệnh mạn tính khỏi hồ sơ.',
+        message: 'Đã xóa mềm bệnh mạn tính khỏi hồ sơ.',
       });
     } catch (err: any) {
       return res.status(500).json({
@@ -236,12 +238,12 @@ export function createChronicConditionsRouter(pool: Pool): Router {
     const { taskId } = req.params;
     try {
       await pool.query(
-        `DELETE FROM care_tasks WHERE id::text = $1 OR id = $1::uuid`,
+        `UPDATE care_tasks SET is_deleted = true WHERE id::text = $1 OR id = $1::uuid`,
         [taskId]
       );
       return res.json({
         success: true,
-        message: 'Đã xóa việc cần làm.',
+        message: 'Đã xóa mềm việc cần làm.',
       });
     } catch (err: any) {
       return res.status(500).json({
