@@ -22,7 +22,7 @@ const TILES: TileConfig[] = [
     cardBg: 'bg-white',
   },
   {
-    key: 'documents',
+    key: 'vaccinations',
     code: 'TC',
     label: 'Tiêm chủng',
     badgeBg: 'bg-[#E0E7FF]',

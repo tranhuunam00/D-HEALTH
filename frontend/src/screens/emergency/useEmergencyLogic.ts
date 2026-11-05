@@ -6,22 +6,26 @@ export interface EmergencyCardData {
   readonly gender: string;
   readonly bloodType: string;
   readonly allergies: string;
+  readonly rawAllergies: string[];
   readonly conditions: string;
   readonly emergencyContact: {
     readonly name: string;
     readonly relationship: string;
     readonly phone: string;
   };
+  readonly emergencyNotes?: string;
   readonly qrData: string;
 }
 
-function parseAllergies(card: any): string {
+function parseAllergies(card: any): { display: string; list: string[] } {
   if (Array.isArray(card.allergies) && card.allergies.length > 0) {
-    return card.allergies
-      .map((a: any) => `${a.allergen || a} (${a.reaction || 'Cần chú ý'})`)
+    const list = card.allergies.map((a: any) => (typeof a === 'string' ? a : a.allergen || String(a)));
+    const display = card.allergies
+      .map((a: any) => (typeof a === 'string' ? a : `${a.allergen || a} (${a.reaction || 'Cần chú ý'})`))
       .join(', ');
+    return { display, list };
   }
-  return card.emergency_notes || 'Không ghi nhận';
+  return { display: card.emergency_notes || 'Không ghi nhận dị ứng', list: [] };
 }
 
 function parseConditions(card: any): string {
@@ -31,7 +35,7 @@ function parseConditions(card: any): string {
   return 'Không ghi nhận bệnh nền';
 }
 
-export function useEmergencyLogic(memberId = 'nam', activeMemberName?: string) {
+export function useEmergencyLogic(memberId = 'mem_145deb71', activeMemberName?: string) {
   const [emergencyData, setEmergencyData] = useState<EmergencyCardData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -46,24 +50,28 @@ export function useEmergencyLogic(memberId = 'nam', activeMemberName?: string) {
 
         if (card) {
           const primaryContact = contacts[0] || {
-            contact_name: 'Người thân',
-            relationship: 'Liên hệ',
+            contact_name: 'Bác sĩ điều trị / 115',
+            relationship: 'Y tế khẩn cấp',
             phone_number: '115',
           };
 
+          const parsedAllergies = parseAllergies(card);
+
           setEmergencyData({
             fullName: activeMemberName || 'Trần Hữu Nam',
-            birthYear: 1980,
+            birthYear: 1999,
             gender: 'Nam',
-            bloodType: card.blood_group_snapshot || 'Chưa rõ',
-            allergies: parseAllergies(card),
+            bloodType: card.blood_group_snapshot || 'B+',
+            allergies: parsedAllergies.display,
+            rawAllergies: parsedAllergies.list,
             conditions: parseConditions(card),
             emergencyContact: {
-              name: primaryContact.contact_name || 'Người thân',
-              relationship: primaryContact.relationship || 'Liên hệ',
+              name: primaryContact.contact_name || 'Bác sĩ điều trị / 115',
+              relationship: primaryContact.relationship || 'Y tế khẩn cấp',
               phone: primaryContact.phone_number || '115',
             },
-            qrData: card.offline_qr_payload || `DHEALTH:EMERGENCY:${memberId}`,
+            emergencyNotes: card.emergency_notes || '',
+            qrData: card.offline_qr_payload || `DHEALTH:EMERGENCY:${memberId}:B+`,
           });
           return;
         }
@@ -76,6 +84,32 @@ export function useEmergencyLogic(memberId = 'nam', activeMemberName?: string) {
     }
   }, [memberId, activeMemberName]);
 
+  const saveEmergencyCard = async (payload: {
+    bloodType?: string;
+    allergies: string[];
+    chronicConditions?: string[];
+    emergencyNotes?: string;
+    contacts?: Array<{ name: string; relationship: string; phone: string }>;
+  }) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/emergency/${memberId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        await fetchEmergency();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchEmergency();
   }, [fetchEmergency]);
@@ -84,5 +118,6 @@ export function useEmergencyLogic(memberId = 'nam', activeMemberName?: string) {
     emergencyData,
     loading,
     refetch: fetchEmergency,
+    saveEmergencyCard,
   };
 }

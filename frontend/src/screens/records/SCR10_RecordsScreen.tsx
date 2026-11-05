@@ -15,6 +15,7 @@ interface SCR10Props {
 
 const TILE_SCREEN_MAP: Record<keyof PassportCounts, string> = {
   allergies: 'emergency',
+  vaccinations: 'records',
   chronic: 'chronic',
   meds: 'meds',
   labs: 'labs',

@@ -1,6 +1,7 @@
-import React from 'react';
-import { X, AlertTriangle, PhoneCall, QrCode, HeartPulse, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, AlertTriangle, PhoneCall, QrCode, HeartPulse, User, Edit3 } from 'lucide-react';
 import { useEmergencyLogic } from './useEmergencyLogic';
+import { EditEmergencySheet } from './components/EditEmergencySheet';
 
 interface SCR17Props {
   readonly onNavigate: (screen: string) => void;
@@ -10,27 +11,38 @@ interface SCR17Props {
 
 export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({
   onNavigate,
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
   activeMemberName,
 }) => {
-  const { emergencyData, loading } = useEmergencyLogic(activeMemberId, activeMemberName);
+  const { emergencyData, loading, saveEmergencyCard } = useEmergencyLogic(activeMemberId, activeMemberName);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   return (
     <div className="w-full min-h-screen relative bg-gradient-to-b from-[#3B0D12] via-[#200A0D] to-[#111827] text-white flex flex-col font-sans select-none pb-6">
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-8 flex flex-col gap-3.5">
         {/* 1. Topbar */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onNavigate('home')}
-            aria-label="Đóng"
-            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition active:scale-95"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <div className="flex flex-col">
-            <span className="text-base font-extrabold tracking-wide">EMERGENCY HEALTH CARD</span>
-            <span className="text-[11px] text-slate-300">Hiển thị khi khoá máy · Quét QR Offline</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onNavigate('home')}
+              aria-label="Đóng"
+              className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition active:scale-95"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col">
+              <span className="text-base font-extrabold tracking-wide">EMERGENCY HEALTH CARD</span>
+              <span className="text-[11px] text-slate-300">Hiển thị khi khoá máy · Quét QR Offline</span>
+            </div>
           </div>
+
+          <button
+            onClick={() => setIsEditOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition active:scale-95 border border-white/20 shadow-sm"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Sửa / Dị ứng</span>
+          </button>
         </div>
 
         {/* 2. Loading State */}
@@ -45,6 +57,12 @@ export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({
           <div className="bg-white/10 rounded-[28px] p-6 text-center text-xs text-slate-300 flex flex-col items-center gap-3">
             <AlertTriangle className="w-8 h-8 text-amber-400" />
             <span>Chưa có thông tin thẻ cấp cứu y tế trong cơ sở dữ liệu cho thành viên này.</span>
+            <button
+              onClick={() => setIsEditOpen(true)}
+              className="mt-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-md transition"
+            >
+              + Thiết lập thẻ cấp cứu & Dị ứng
+            </button>
           </div>
         )}
 
@@ -66,12 +84,20 @@ export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({
             </div>
 
             {/* Dị ứng nguy hiểm */}
-            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3 flex items-start gap-2.5">
-              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <div className="text-xs font-bold text-rose-900">DỊ ỨNG NGUY HIỂM</div>
-                <div className="text-xs font-semibold text-rose-700">{emergencyData.allergies}</div>
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3 flex items-start justify-between gap-2.5">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-xs font-bold text-rose-900">DỊ ỨNG NGUY HIỂM</div>
+                  <div className="text-xs font-semibold text-rose-700">{emergencyData.allergies}</div>
+                </div>
               </div>
+              <button
+                onClick={() => setIsEditOpen(true)}
+                className="text-[11px] font-bold text-rose-700 hover:text-rose-900 underline shrink-0"
+              >
+                Cập nhật
+              </button>
             </div>
 
             {/* Bệnh nền mạn tính */}
@@ -132,6 +158,14 @@ export const SCR17_EmergencyScreen: React.FC<SCR17Props> = ({
           <span>Gọi Cấp Cứu 115</span>
         </a>
       </div>
+
+      {/* Edit Emergency Bottom Sheet */}
+      <EditEmergencySheet
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        initialData={emergencyData}
+        onSave={saveEmergencyCard}
+      />
     </div>
   );
 };

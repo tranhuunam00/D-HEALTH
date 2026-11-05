@@ -17,6 +17,7 @@ export type PassportMemberInfo = PassportMember;
 
 export interface PassportCounts {
   readonly allergies: number;
+  readonly vaccinations: number;
   readonly chronic: number;
   readonly meds: number;
   readonly labs: number;
@@ -29,6 +30,7 @@ export interface PassportCounts {
 
 export const ZERO_COUNTS: PassportCounts = Object.freeze({
   allergies: 0,
+  vaccinations: 0,
   chronic: 0,
   meds: 0,
   labs: 0,

@@ -74,7 +74,8 @@ export function createUserProfileRouter(pool: Pool): Router {
           COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2) AND kind = 'lab'), 0)::int as labs,
           COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2) AND kind = 'imaging'), 0)::int as imaging,
           COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2) AND kind = 'pathology'), 0)::int as pathology,
-          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2)), 0)::int as documents,
+          COALESCE((SELECT COUNT(*) FROM clinical_reports WHERE (member_id = $1 OR member_id = $2) AND kind = 'document'), 0)::int as documents,
+          COALESCE((SELECT COUNT(*) FROM vaccination_records WHERE (member_id = $1 OR member_id = $2)), 0)::int as vaccinations,
           COALESCE((SELECT COUNT(*) FROM master_doctors WHERE is_active = true), 0)::int as doctors,
           COALESCE((SELECT COUNT(*) FROM master_facilities WHERE is_active = true), 0)::int as facilities`,
         [memberId, resolvedMemberId]
@@ -99,6 +100,7 @@ export function createUserProfileRouter(pool: Pool): Router {
           },
           counts: {
             allergies: parseInt(counts.allergies, 10) || 0,
+            vaccinations: parseInt(counts.vaccinations, 10) || 0,
             chronic: parseInt(counts.chronic, 10) || 0,
             meds: parseInt(counts.meds, 10) || 0,
             labs: parseInt(counts.labs, 10) || 0,
