@@ -1,9 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Check, AlertCircle, Heart, Activity } from 'lucide-react';
 import { BottomSheet } from '../../../components/organisms/BottomSheet';
 import { Input } from '../../../components/atoms/Input';
 import { Button } from '../../../components/atoms/Button';
 import type { MetricItem } from '../useChronicLogic';
+
+function toVnDate(isoDate: string): string {
+  if (!isoDate) return '';
+  const parts = isoDate.split('-');
+  if (parts.length === 3) {
+    const [yyyy, mm, dd] = parts;
+    return `${dd}/${mm}/${yyyy}`;
+  }
+  return isoDate;
+}
+
+function fromVnDate(vnDate: string): string {
+  if (!vnDate) return '';
+  const parts = vnDate.split('/');
+  if (parts.length === 3) {
+    const [dd, mm, yyyy] = parts;
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  }
+  return vnDate;
+}
+
+function getVnFullDateText(isoDate: string): string {
+  if (!isoDate) return '';
+  const parts = isoDate.split('-');
+  if (parts.length === 3) {
+    const [yyyy, mm, dd] = parts;
+    const d = new Date(parseInt(yyyy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+    if (!isNaN(d.getTime())) {
+      const weekdays = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      const weekday = weekdays[d.getDay()];
+      return `${weekday}, ngày ${dd} tháng ${mm} năm ${yyyy}`;
+    }
+  }
+  return '';
+}
 
 export interface ChronicConditionPayload {
   conditionName: string;
@@ -71,11 +106,18 @@ export const AddChronicConditionSheet: React.FC<AddChronicConditionSheetProps> =
 }) => {
   const [conditionName, setConditionName] = useState('');
   const [statusSummary, setStatusSummary] = useState('Nguy cơ trung bình · Ổn định');
+  const [selectedQuickMonth, setSelectedQuickMonth] = useState<number | null>(1);
   const [nextCheckupDate, setNextCheckupDate] = useState(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 1);
-    return d.toISOString().split('T')[0];
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   });
+  const [displayDate, setDisplayDate] = useState(() => toVnDate(nextCheckupDate));
+  const datePickerRef = useRef<HTMLInputElement>(null);
+
   const [selectedMetrics, setSelectedMetrics] = useState<MetricItem[]>([
     { name: 'Huyết áp', status: 'Theo dõi', type: 'warning' },
     { name: 'Nhịp tim', status: 'Tốt', type: 'good' },
@@ -86,14 +128,23 @@ export const AddChronicConditionSheet: React.FC<AddChronicConditionSheetProps> =
     if (isOpen && initialData) {
       setConditionName(initialData.conditionName || '');
       setStatusSummary(initialData.statusSummary || 'Nguy cơ trung bình · Ổn định');
-      setNextCheckupDate(initialData.nextCheckupDate || '');
+      const initDate = initialData.nextCheckupDate || '';
+      setNextCheckupDate(initDate);
+      setDisplayDate(toVnDate(initDate));
+      setSelectedQuickMonth(null);
       setSelectedMetrics(initialData.targetMetrics ? [...initialData.targetMetrics] : []);
     } else if (isOpen && !initialData) {
       setConditionName('');
       setStatusSummary('Nguy cơ trung bình · Ổn định');
       const d = new Date();
       d.setMonth(d.getMonth() + 1);
-      setNextCheckupDate(d.toISOString().split('T')[0]);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const defDate = `${yyyy}-${mm}-${dd}`;
+      setNextCheckupDate(defDate);
+      setDisplayDate(toVnDate(defDate));
+      setSelectedQuickMonth(1);
       setSelectedMetrics([
         { name: 'Huyết áp', status: 'Theo dõi', type: 'warning' },
         { name: 'Nhịp tim', status: 'Tốt', type: 'good' },
@@ -132,20 +183,43 @@ export const AddChronicConditionSheet: React.FC<AddChronicConditionSheetProps> =
   };
 
   const handleSetQuickRevisit = (months: number) => {
+    setSelectedQuickMonth(months);
     const d = new Date();
     d.setMonth(d.getMonth() + months);
-    setNextCheckupDate(d.toISOString().split('T')[0]);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const iso = `${yyyy}-${mm}-${dd}`;
+    setNextCheckupDate(iso);
+    setDisplayDate(toVnDate(iso));
+  };
+
+  const handleDisplayDateChange = (val: string) => {
+    setDisplayDate(val);
+    setSelectedQuickMonth(null);
+    const parts = val.split('/');
+    if (parts.length === 3 && parts[2].length === 4) {
+      const [dd, mm, yyyy] = parts;
+      const dNum = parseInt(dd, 10);
+      const mNum = parseInt(mm, 10);
+      const yNum = parseInt(yyyy, 10);
+      if (dNum >= 1 && dNum <= 31 && mNum >= 1 && mNum <= 12 && yNum >= 2020) {
+        setNextCheckupDate(`${yyyy}-${String(mNum).padStart(2, '0')}-${String(dNum).padStart(2, '0')}`);
+      }
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!conditionName.trim()) return;
 
+    const finalDate = nextCheckupDate || fromVnDate(displayDate);
+
     onSubmit(
       {
         conditionName: conditionName.trim(),
         statusSummary: statusSummary.trim(),
-        nextCheckupDate,
+        nextCheckupDate: finalDate,
         targetMetrics: selectedMetrics,
       },
       initialData?.id
@@ -246,43 +320,100 @@ export const AddChronicConditionSheet: React.FC<AddChronicConditionSheetProps> =
           </div>
         </div>
 
-        {/* 3. Ngày hẹn tái khám tiếp theo */}
+        {/* 3. Ngày hẹn tái khám tiếp theo (Chuẩn Việt Nam DD/MM/YYYY) */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-[#1F7A8C]" />
-              Ngày hẹn tái khám tiếp theo *
+              Ngày hẹn tái khám tiếp theo * (ngày/tháng/năm)
             </label>
             <span className="text-[11px] text-slate-400">Chọn nhanh:</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={nextCheckupDate}
-              onChange={(e) => setNextCheckupDate(e.target.value)}
-              className="flex-1 min-h-[44px] px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1F7A8C]/20 focus:border-[#1F7A8C] transition"
-              required
-            />
-            <div className="flex items-center gap-1">
+            {/* Input hiển thị chuẩn Việt Nam DD/MM/YYYY kèm nút bấm mở lịch */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={displayDate}
+                onChange={(e) => handleDisplayDateChange(e.target.value)}
+                placeholder="DD/MM/YYYY (VD: 05/12/2026)"
+                className="w-full min-h-[44px] pl-3.5 pr-10 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-black tracking-wide focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1F7A8C]/20 focus:border-[#1F7A8C] transition"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (datePickerRef.current) {
+                    if (typeof datePickerRef.current.showPicker === 'function') {
+                      datePickerRef.current.showPicker();
+                    } else {
+                      datePickerRef.current.focus();
+                    }
+                  }
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-[#1F7A8C] transition cursor-pointer"
+                title="Mở lịch chọn ngày"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
+              {/* Native date picker ẩn để người dùng chọn trên popup lịch khi cần */}
+              <input
+                ref={datePickerRef}
+                type="date"
+                value={nextCheckupDate}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setNextCheckupDate(e.target.value);
+                    setDisplayDate(toVnDate(e.target.value));
+                    setSelectedQuickMonth(null);
+                  }
+                }}
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+            </div>
+
+            {/* Quick Pills */}
+            <div className="flex items-center gap-1 shrink-0">
               {[
                 { label: '+1T', m: 1 },
                 { label: '+2T', m: 2 },
                 { label: '+3T', m: 3 },
                 { label: '+6T', m: 6 },
-              ].map((pill) => (
-                <button
-                  key={pill.label}
-                  type="button"
-                  onClick={() => handleSetQuickRevisit(pill.m)}
-                  className="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-teal-50 hover:text-[#1F7A8C] hover:border-teal-200 text-slate-700 text-[11px] font-bold border border-slate-200 transition cursor-pointer"
-                  title={`Tái khám sau ${pill.m} tháng`}
-                >
-                  {pill.label}
-                </button>
-              ))}
+              ].map((pill) => {
+                const isSelected = selectedQuickMonth === pill.m;
+                return (
+                  <button
+                    key={pill.label}
+                    type="button"
+                    onClick={() => handleSetQuickRevisit(pill.m)}
+                    className={`px-2.5 py-2 rounded-xl text-[11px] font-extrabold border transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-teal-50 text-[#1F7A8C] border-[#1F7A8C] shadow-2xs font-black'
+                        : 'bg-slate-100 hover:bg-teal-50 hover:text-[#1F7A8C] hover:border-teal-200 text-slate-700 border-slate-200'
+                    }`}
+                    title={`Tái khám sau ${pill.m} tháng`}
+                  >
+                    {pill.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
+
+          {/* Dòng chữ giải thích ngày hẹn tiếng Việt rõ ràng, triệt tiêu hiểu nhầm ngày/tháng */}
+          {nextCheckupDate && (
+            <div className="text-[11px] font-bold text-[#1F7A8C] px-1 flex items-center gap-1.5 pt-0.5">
+              <span>📅 Dự kiến: {getVnFullDateText(nextCheckupDate)}</span>
+              {selectedQuickMonth && (
+                <span className="text-slate-500 font-normal">
+                  (sau {selectedQuickMonth} tháng)
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 4. Các chỉ số theo dõi (Target Metrics) */}

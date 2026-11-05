@@ -100,3 +100,4 @@ export const CLINICAL_DEPARTMENTS: readonly ClinicalDepartment[] = [
     description: 'Thoái hóa khớp, loãng xương, viêm khớp dạng thấp, gout',
   },
 ];
+

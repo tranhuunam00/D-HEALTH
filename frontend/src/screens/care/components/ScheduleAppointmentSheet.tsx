@@ -111,6 +111,22 @@ export const ScheduleAppointmentSheet: React.FC<ScheduleAppointmentSheetProps> =
               required
             />
           </div>
+          {date && (
+            <p className="text-[11px] font-bold text-[#1F7A8C] mt-1">
+              📅 Ngày khám:{' '}
+              {(() => {
+                const parts = date.split('-');
+                if (parts.length === 3) {
+                  const [y, m, d] = parts;
+                  const dt = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+                  const weekdays = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+                  const wd = !isNaN(dt.getTime()) ? weekdays[dt.getDay()] : '';
+                  return `${wd ? wd + ', ' : ''}ngày ${d} tháng ${m} năm ${y}`;
+                }
+                return date;
+              })()}
+            </p>
+          )}
         </div>
 
         {/* 3. Khung Giờ Khám */}
@@ -172,3 +188,4 @@ export const ScheduleAppointmentSheet: React.FC<ScheduleAppointmentSheetProps> =
     </BottomSheet>
   );
 };
+
