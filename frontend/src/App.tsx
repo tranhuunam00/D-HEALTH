@@ -70,6 +70,7 @@ export default function App() {
 
   const [selectedLabReportId, setSelectedLabReportId] = useState<string | null>(null);
   const [selectedImagingReportId, setSelectedImagingReportId] = useState<string | null>(null);
+  const [cameraInputKind, setCameraInputKind] = useState<'lab' | 'img' | 'gpb'>('lab');
 
   useEffect(() => {
     const verifySession = async () => {
@@ -165,6 +166,7 @@ export default function App() {
             activeMemberName={activeMemberName}
             onNavigate={(s, id) => {
               if (id) setSelectedLabReportId(id);
+              if (s === 'camera-ocr') setCameraInputKind('lab');
               navigateTo(s as any);
             }}
           />
@@ -185,6 +187,7 @@ export default function App() {
             activeMemberName={activeMemberName}
             onNavigate={(s, id) => {
               if (id) setSelectedImagingReportId(id);
+              if (s === 'camera-ocr') setCameraInputKind('img');
               navigateTo(s as any);
             }}
           />
@@ -229,6 +232,7 @@ export default function App() {
             onNavigate={(s) => navigateTo(s as any)}
             activeMemberName={activeMemberName}
             activeMemberId={activeMemberId}
+            initialKind={cameraInputKind}
           />
         );
       case 'ai':

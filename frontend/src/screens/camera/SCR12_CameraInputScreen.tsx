@@ -10,17 +10,21 @@ import { CameraTypeAndMethodTabs } from './components/CameraTypeAndMethodTabs';
 import { CameraCommonManualForm } from './components/CameraCommonManualForm';
 import { CameraFloatingBottomBar } from './components/CameraFloatingBottomBar';
 
+import { ClinicalDocKind } from './camera-input.types';
+
 interface SCR12Props {
   readonly onNavigate: (screen: string) => void;
   readonly activeMemberName?: string;
   readonly activeMemberId?: string;
+  readonly initialKind?: ClinicalDocKind;
 }
 
 export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
   onNavigate,
   activeMemberId = 'nam',
+  initialKind = 'lab',
 }) => {
-  const logic = useCameraInputLogic(activeMemberId);
+  const logic = useCameraInputLogic(activeMemberId, initialKind);
 
   const handleSaveAndReturn = () => {
     logic.handleSave(() => {

@@ -157,7 +157,7 @@ export const SCR07_ImagingScreen: React.FC<SCR07Props> = ({
 
         {/* 7. Nút Nhập kết quả CĐHA / File DICOM */}
         <button
-          onClick={() => onNavigate('camera-ocr')}
+          onClick={() => onNavigate('camera-ocr', 'img')}
           className="h-11 rounded-2xl bg-gradient-to-r from-[#1F7A8C] to-[#2F6FDB] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs active:scale-95 transition"
         >
           <Camera className="w-4 h-4" />
