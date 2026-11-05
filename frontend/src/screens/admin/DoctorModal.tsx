@@ -260,3 +260,4 @@ export const DoctorModal: React.FC<DoctorModalProps> = ({
     </div>
   );
 };
+
