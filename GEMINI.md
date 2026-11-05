@@ -14,7 +14,13 @@
 
 ---
 
-## 1. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT)
+## 1. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT) - ÁP DỤNG CHO BACKEND
+
+> [!IMPORTANT]
+> **QUY CHUẨN ĐẶC BIỆT: MIỄN TRỪ HOÀN TOÀN CHO FRONTEND (FE NO-TDD & NO-DDD MANDATE)**:
+> - **Frontend KHÔNG CẦN TDD & KHÔNG VIẾT TEST FILES**: Toàn bộ test FE đã được xóa bỏ 100%. Không viết các file test (`*.spec.tsx`, `*.spec.ts`, `*.test.tsx`, `*.test.ts`) cho Frontend để tối đa hóa tốc độ phát triển, kiểm thử trực quan trên giao diện và sửa lỗi tức thì.
+> - **Frontend KHÔNG CẦN DDD**: Không áp đặt kiến trúc DDD cồng kềnh lên UI Frontend. Frontend chỉ cần chia component gọn gàng, tách biệt UI và Custom Hook, gọi API thực và quản lý state 5 pha thực tế.
+> - **TDD & DDD BẮT BUỘC CHO BACKEND**: TDD 4 chiều, Value Objects, Aggregate Roots, Repositories và Integration Tests bằng supertest áp dụng nghiêm ngặt cho tầng Backend.
 - **Quy tắc viết TDD từng hàm một (One-Function-At-A-Time TDD Workflow)**:
   - Bắt buộc phải thực hiện theo chu trình nguyên tử cho **TỪNG HÀM RIÊNG BIỆT (ONE FUNCTION AT A TIME)**:
     1. **Bước 1 (Test First)**: Viết file kiểm thử unit test cho hàm đó trước khi viết code thực thi (Red phase).

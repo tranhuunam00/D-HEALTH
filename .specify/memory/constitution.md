@@ -19,7 +19,13 @@
 2. **Không có dữ liệu giả định tùy tiện (Zero Unverified Defaults)**: Mọi trường thông tin hiển thị trên giao diện phải có nguồn gốc rõ ràng trong CSDL, phương thức nhập liệu, hoặc thuật toán tính toán cụ thể.
 3. **Sửa lỗi từ gốc (Spec-First Debugging)**: Khi phát hiện sai lệch hành vi, trước hết phải cập nhật Spec và Plan, sau đó mới tiến hành sửa code và test.
 
-### II. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT - NON-NEGOTIABLE)
+### II. NGUYÊN TẮC BẮT BUỘC VỀ TDD (TEST-DRIVEN DEVELOPMENT - ÁP DỤNG CHO BACKEND)
+
+> [!IMPORTANT]
+> **MIỄN TRỪ HOÀN TOÀN CHO FRONTEND (FE NO-TDD & NO-DDD MANDATE)**:
+> - **Frontend KHÔNG CẦN TDD & KHÔNG VIẾT TEST FILES**: Toàn bộ test FE đã được xóa bỏ 100%. Không viết các file test (`*.spec.tsx`, `*.spec.ts`, `*.test.tsx`, `*.test.ts`) cho Frontend để tối ưu tốc độ phát triển, kiểm thử trực quan trên giao diện và sửa lỗi nhanh.
+> - **Frontend KHÔNG CẦN DDD**: Không áp đặt kiến trúc DDD lên Frontend. Frontend chỉ cần module hóa component gọn gàng, tách biệt Dumb UI và Custom Hook, gọi API thực và quản lý state 5 trạng thái.
+> - **TDD & DDD BẮT BUỘC CHO BACKEND**: TDD 4 chiều, Value Objects, Aggregate Roots, Repositories và Integration Tests bằng supertest là bắt buộc đối với Backend.
 1. **Quy tắc viết TDD từng hàm một (One-Function-At-A-Time TDD Workflow)**:
    - Bắt buộc phải thực hiện theo chu trình nguyên tử cho **TỪNG HÀM RIÊNG BIỆT (ONE FUNCTION AT A TIME)**:
      - Viết Unit Test cho hàm đó trước (Red phase).
