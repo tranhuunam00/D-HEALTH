@@ -29,11 +29,9 @@ export const Input: React.FC<InputProps> = ({
         <input
           id={inputId}
           type={actualType}
-          className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-slate-50 border ${
-            error ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-[#1F7A8C]'
-          } text-slate-900 placeholder-slate-400 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 ${
-            error ? 'focus:ring-rose-200' : 'focus:ring-[#1F7A8C]/20'
-          } transition-all duration-200 ${className}`}
+          className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-slate-50 border ${error ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-[#1F7A8C]'
+            } text-slate-900 placeholder-slate-400 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 ${error ? 'focus:ring-rose-200' : 'focus:ring-[#1F7A8C]/20'
+            } transition-all duration-200 ${className}`}
           {...props}
         />
         {isPassword ? (

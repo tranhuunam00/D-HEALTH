@@ -9,31 +9,32 @@ export function createChronicConditionsRouter(pool: Pool): Router {
   // 1. GET /:memberId - Lấy danh sách bệnh mạn tính và việc cần làm
   router.get('/:memberId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       let condRes = await pool.query(
         `SELECT * FROM patient_chronic_conditions 
-         WHERE member_id = $1 AND is_active = true AND is_deleted = false
+         WHERE (member_id = $1 OR member_id = $2) AND is_active = true AND is_deleted = false
          ORDER BY created_at ASC`,
-        [memberId]
+        [memberId, resolvedMemberId]
       );
       if (condRes.rows.length === 0 && memberId !== 'nam') {
         condRes = await pool.query(
           `SELECT * FROM patient_chronic_conditions 
-           WHERE member_id = 'nam' AND is_active = true AND is_deleted = false
+           WHERE member_id = 'mem_145deb71' AND is_active = true AND is_deleted = false
            ORDER BY created_at ASC`
         );
       }
 
       let taskRes = await pool.query(
         `SELECT * FROM care_tasks 
-         WHERE member_id = $1 AND is_deleted = false
+         WHERE (member_id = $1 OR member_id = $2) AND is_deleted = false
          ORDER BY priority ASC, created_at ASC`,
-        [memberId]
+        [memberId, resolvedMemberId]
       );
       if (taskRes.rows.length === 0 && memberId !== 'nam') {
         taskRes = await pool.query(
           `SELECT * FROM care_tasks 
-           WHERE member_id = 'nam' AND is_deleted = false
+           WHERE member_id = 'mem_145deb71' AND is_deleted = false
            ORDER BY priority ASC, created_at ASC`
         );
       }
@@ -56,6 +57,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
   // 2. POST /:memberId/conditions - Thêm bệnh mạn tính mới
   router.post('/:memberId/conditions', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     const {
       conditionName,
       conditionId,
@@ -76,8 +78,19 @@ export function createChronicConditionsRouter(pool: Pool): Router {
     }
 
     try {
+      const VALID_MASTER_CONDITIONS = ['tim_mach', 'dai_thao_duong', 'ung_thu_gan', 'roi_loan_lipid'];
+      let cId: string | null = null;
+      if (conditionId && VALID_MASTER_CONDITIONS.includes(conditionId)) {
+        cId = conditionId;
+      } else if (conditionName) {
+        const norm = conditionName.toLowerCase();
+        if (norm.includes('áp') || norm.includes('tim')) cId = 'tim_mach';
+        else if (norm.includes('đường') || norm.includes('tiểu')) cId = 'dai_thao_duong';
+        else if (norm.includes('gan') || norm.includes('hcc')) cId = 'ung_thu_gan';
+        else if (norm.includes('lipid') || norm.includes('mỡ')) cId = 'roi_loan_lipid';
+      }
+
       const pccId = `pcc_${Date.now()}`;
-      const cId = conditionId || pccId;
       const metricsJson = JSON.stringify(targetMetrics);
 
       const result = await pool.query(
@@ -85,7 +98,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
            (id, member_id, condition_id, condition_name, icd10_code, diagnosed_date, risk_level, trend_status, status_summary, next_checkup_date, target_metrics, is_active)
          VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE), $7, $8, $9, $10, $11, true)
          RETURNING *`,
-        [pccId, memberId, cId, conditionName, icd10Code || null, diagnosedDate || null, riskLevel, trendStatus, statusSummary, nextCheckupDate || null, metricsJson]
+        [pccId, resolvedMemberId, cId, conditionName, icd10Code || null, diagnosedDate || null, riskLevel, trendStatus, statusSummary, nextCheckupDate || null, metricsJson]
       );
 
       return res.status(201).json({
@@ -104,6 +117,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
   // 3. PUT /:memberId/conditions/:conditionId - Cập nhật bệnh mạn tính
   router.put('/:memberId/conditions/:conditionId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId, conditionId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     const {
       conditionName,
       statusSummary,
@@ -123,7 +137,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
              next_checkup_date = COALESCE($5, next_checkup_date),
              target_metrics = CASE WHEN $6::text IS NOT NULL THEN $6::jsonb ELSE target_metrics END,
              updated_at = CURRENT_TIMESTAMP
-         WHERE member_id = $7 AND (id = $8 OR condition_id = $8)
+         WHERE (member_id = $7 OR member_id = $9) AND (id = $8 OR condition_id = $8)
          RETURNING *`,
         [
           conditionName || null,
@@ -134,6 +148,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
           targetMetrics ? JSON.stringify(targetMetrics) : null,
           memberId,
           conditionId,
+          resolvedMemberId,
         ]
       );
 
@@ -153,12 +168,13 @@ export function createChronicConditionsRouter(pool: Pool): Router {
   // 4. DELETE /:memberId/conditions/:conditionId - Xóa bệnh mạn tính
   router.delete('/:memberId/conditions/:conditionId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId, conditionId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       await pool.query(
         `UPDATE patient_chronic_conditions 
          SET is_active = false, is_deleted = true, updated_at = CURRENT_TIMESTAMP 
-         WHERE member_id = $1 AND (id = $2 OR condition_id = $2)`,
-        [memberId, conditionId]
+         WHERE (member_id = $1 OR member_id = $3) AND (id = $2 OR condition_id = $2)`,
+        [memberId, conditionId, resolvedMemberId]
       );
 
       return res.json({
@@ -176,6 +192,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
   // 5. POST /:memberId/tasks - Thêm việc cần làm mới
   router.post('/:memberId/tasks', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     const { title, conditionId, dueDate, priority = 1 } = req.body;
 
     if (!title) {
@@ -190,7 +207,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
         `INSERT INTO care_tasks (member_id, condition_id, title, due_date, priority, is_completed)
          VALUES ($1, $2, $3, $4, $5, false)
          RETURNING *`,
-        [memberId, conditionId || null, title, dueDate || null, priority]
+        [resolvedMemberId, conditionId || null, title, dueDate || null, priority]
       );
 
       return res.status(201).json({

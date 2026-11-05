@@ -18,7 +18,7 @@ interface SCR09Props {
 export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
   onNavigate,
   activeMemberName = '',
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
 }) => {
   const {
     conditions,

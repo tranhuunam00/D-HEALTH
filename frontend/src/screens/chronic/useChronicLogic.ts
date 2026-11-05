@@ -22,7 +22,7 @@ export interface CareTaskItem {
   readonly is_completed: boolean;
 }
 
-export function useChronicLogic(memberId = 'nam') {
+export function useChronicLogic(memberId = 'mem_145deb71') {
   const [conditions, setConditions] = useState<readonly ChronicConditionItem[]>([]);
   const [tasks, setTasks] = useState<readonly CareTaskItem[]>([]);
   const [loading, setLoading] = useState(false);
