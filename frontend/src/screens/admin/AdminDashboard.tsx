@@ -3,14 +3,12 @@ import {
   Building2,
   Stethoscope,
   Pill,
-  ShieldCheck,
   Database,
   RefreshCw,
   Activity,
   Search,
   Users,
   UserCheck,
-  HardDrive,
   LogOut,
   Calendar,
 } from 'lucide-react';
@@ -30,7 +28,6 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const {
     stats,
-    health,
     facilities,
     doctors,
     departments,
@@ -153,25 +150,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               </button>
             ))}
           </nav>
-        </div>
-
-        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-2">
-          <div className="flex items-center justify-between text-emerald-700 font-bold">
-            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> PostgreSQL 16</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Active</span>
-          </div>
-          <div className="flex items-center justify-between text-purple-700 font-bold pt-1.5 border-t border-slate-200">
-            <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5 text-purple-600" /> MinIO S3</span>
-            <a
-              href="http://103.90.227.173:7105"
-              target="_blank"
-              rel="noreferrer"
-              className="text-[10px] text-purple-700 hover:text-purple-900 underline font-semibold"
-            >
-              Console 7105 ↗
-            </a>
-          </div>
-          <p className="text-[9px] text-slate-400 font-mono truncate" title={health.minio}>S3: {health.minio}</p>
         </div>
       </aside>
 
