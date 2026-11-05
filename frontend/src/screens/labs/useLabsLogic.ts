@@ -2,15 +2,25 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 
 export type LabSpecialtyCode = 'all' | 'HH' | 'SH' | 'VS' | 'PT' | 'DT';
 
+export interface LabMetricRaw {
+  readonly test_name?: string;
+  readonly test_code?: string;
+  readonly value_numeric?: number | string | null;
+  readonly value_text?: string | null;
+  readonly unit?: string | null;
+}
+
 export interface LabReportItem {
   readonly id: string;
   readonly title: string;
   readonly facility: string;
   readonly testDate: string;
+  readonly rawDate: string;
   readonly categoryBadge: 'SH' | 'HH' | 'VS' | 'PT' | 'DT';
   readonly abnormalCount: number;
   readonly summary: string;
   readonly hasAttachment: boolean;
+  readonly rawResults?: readonly LabMetricRaw[];
 }
 
 export interface TrackedMetric {
@@ -22,68 +32,75 @@ export interface TrackedMetric {
   readonly levelType: 'info' | 'warning' | 'normal';
   readonly points: readonly number[];
   readonly insight: string;
+  readonly testCodes: readonly string[];
 }
 
 export const TRACKED_METRICS_CONFIG: readonly TrackedMetric[] = Object.freeze([
   {
     id: 'hba1c',
     label: 'HbA1c',
-    value: '6,6',
+    value: '--',
     unit: '%',
-    level: 'Mức 1 · Thông tin',
+    level: 'Chưa có số đo',
     levelType: 'info',
-    points: [7.8, 7.4, 7.1, 6.8, 6.6],
-    insight: 'Giảm từ 7,8% xuống 6,6% qua 5 lần xét nghiệm — xu hướng tích cực.',
+    points: [],
+    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
+    testCodes: ['HBA1C', 'A1C'],
   },
   {
     id: 'ldlc',
     label: 'LDL-C',
-    value: '3,8',
+    value: '--',
     unit: 'mmol/L',
-    level: 'Mức 2 · Chú ý',
+    level: 'Chưa có số đo',
     levelType: 'warning',
-    points: [2.8, 3.0, 3.2, 3.5, 3.8],
-    insight: 'LDL-C tăng qua 5 lần xét nghiệm gần nhất — cần chú ý chế độ ăn giảm mỡ.',
+    points: [],
+    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
+    testCodes: ['LDL-C', 'LDLC', 'LDL'],
   },
   {
     id: 'glucose',
     label: 'Glucose đói',
-    value: '6,1',
+    value: '--',
     unit: 'mmol/L',
-    level: 'Mức 1 · Tốt',
+    level: 'Chưa có số đo',
     levelType: 'normal',
-    points: [6.8, 6.5, 6.4, 6.2, 6.1],
-    insight: 'Đường huyết đói duy trì ổn định dưới ngưỡng 6,4 mmol/L.',
+    points: [],
+    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
+    testCodes: ['GLU', 'GLUCOSE', 'GLUCOSE (ĐÓI)'],
   },
   {
     id: 'cholesterol',
     label: 'Cholesterol TP',
-    value: '4,8',
+    value: '--',
     unit: 'mmol/L',
-    level: 'Mức 1 · Tốt',
+    level: 'Chưa có số đo',
     levelType: 'normal',
-    points: [5.2, 5.0, 4.9, 4.8, 4.8],
-    insight: 'Cholesterol toàn phần trong ngưỡng tham chiếu an toàn.',
+    points: [],
+    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
+    testCodes: ['CHOL', 'CHOLESTEROL', 'CHOLESTEROL TOÀN PHẦN'],
   },
   {
     id: 'triglyceride',
     label: 'Triglycerid',
-    value: '1,4',
+    value: '--',
     unit: 'mmol/L',
-    level: 'Mức 1 · Tốt',
+    level: 'Chưa có số đo',
     levelType: 'normal',
-    points: [1.8, 1.6, 1.5, 1.4, 1.4],
-    insight: 'Triglycerid duy trì tốt dưới ngưỡng 1.7 mmol/L.',
+    points: [],
+    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
+    testCodes: ['TRIG', 'TRIGLYCERID', 'TRIGLYCERIDE'],
   },
   {
     id: 'creatinine',
     label: 'Creatinin',
-    value: '82',
+    value: '--',
     unit: 'µmol/L',
-    level: 'Mức 1 · Tốt',
+    level: 'Chưa có số đo',
     levelType: 'normal',
-    points: [88, 86, 85, 83, 82],
-    insight: 'Chức năng lọc cầu thận bình thường, Creatinin ổn định.',
+    points: [],
+    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
+    testCodes: ['CREA', 'CREATININ', 'CREATININE'],
   },
 ]);
 
@@ -126,10 +143,12 @@ export function useLabsLogic(memberId = 'nam') {
           testDate: r.performed_at
             ? new Date(r.performed_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
             : '',
+          rawDate: r.performed_at ? new Date(r.performed_at).toISOString().slice(0, 10) : '',
           categoryBadge: mapCategoryBadge(r.category),
           abnormalCount: Number(r.abnormal_count || 0),
           summary: r.conclusion || 'Tất cả chỉ số trong giới hạn tham chiếu',
           hasAttachment: Boolean(r.attachment_s3_key),
+          rawResults: Array.isArray(r.lab_results) ? r.lab_results : [],
         }));
         setReports(mapped);
       } else {
@@ -159,8 +178,69 @@ export function useLabsLogic(memberId = 'nam') {
   }, [reports, selectedCategory]);
 
   const activeTrackedMetrics = useMemo(() => {
-    return TRACKED_METRICS_CONFIG.filter((m) => trackedMetricIds.includes(m.id));
-  }, [trackedMetricIds]);
+    return TRACKED_METRICS_CONFIG.filter((m) => trackedMetricIds.includes(m.id)).map((def) => {
+      const matchingValues: number[] = [];
+
+      // Sắp xếp các báo cáo theo ngày thực hiện tăng dần để phân tích xu hướng
+      const sortedReports = [...reports].sort((a, b) => (a.rawDate > b.rawDate ? 1 : -1));
+
+      for (const rep of sortedReports) {
+        if (rep.rawResults && rep.rawResults.length > 0) {
+          for (const row of rep.rawResults) {
+            const nameNorm = (row.test_name || '').toUpperCase().trim();
+            const codeNorm = (row.test_code || '').toUpperCase().trim();
+            const match = def.testCodes.some((tc) => nameNorm.includes(tc) || codeNorm.includes(tc));
+            if (match && row.value_numeric !== null && row.value_numeric !== undefined) {
+              const num = parseFloat(String(row.value_numeric));
+              if (!isNaN(num)) matchingValues.push(num);
+            }
+          }
+        }
+      }
+
+      if (matchingValues.length === 0) {
+        return {
+          id: def.id,
+          label: def.label,
+          value: '--',
+          unit: def.unit,
+          level: 'Chưa có số đo',
+          levelType: 'info' as const,
+          points: [] as number[],
+          insight: 'Chưa có phiếu xét nghiệm nào ghi nhận chỉ số này. Hãy nhấn nút nhập phiếu bên trên để theo dõi.',
+          testCodes: def.testCodes,
+        };
+      }
+
+      const latestVal = matchingValues[matchingValues.length - 1];
+      const firstVal = matchingValues[0];
+      const isMultiple = matchingValues.length >= 2;
+
+      let insight = `Đã ghi nhận 1 lần xét nghiệm: ${latestVal} ${def.unit}. Cần thêm kết quả để phân tích xu hướng.`;
+      if (isMultiple) {
+        const diff = latestVal - firstVal;
+        if (diff < 0) {
+          insight = `Giảm từ ${firstVal} xuống ${latestVal} ${def.unit} qua ${matchingValues.length} lần xét nghiệm.`;
+        } else if (diff > 0) {
+          insight = `Tăng từ ${firstVal} lên ${latestVal} ${def.unit} qua ${matchingValues.length} lần xét nghiệm.`;
+        } else {
+          insight = `Duy trì ổn định ở mức ${latestVal} ${def.unit} qua ${matchingValues.length} lần xét nghiệm.`;
+        }
+      }
+
+      return {
+        id: def.id,
+        label: def.label,
+        value: String(latestVal).replace('.', ','),
+        unit: def.unit,
+        level: 'Mức 1 · Bình thường',
+        levelType: (def.id === 'ldlc' && latestVal > 3.4) ? ('warning' as const) : ('normal' as const),
+        points: matchingValues,
+        insight,
+        testCodes: def.testCodes,
+      };
+    });
+  }, [reports, trackedMetricIds]);
 
   return {
     selectedCategory,

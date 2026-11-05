@@ -35,7 +35,7 @@ export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
         {/* Topbar với nút Back */}
         <div className="flex items-center gap-3 pt-2">
           <button
-            onClick={() => onNavigate('records')}
+            onClick={() => onNavigate(logic.kind === 'lab' ? 'labs' : logic.kind === 'img' ? 'imaging' : 'records')}
             aria-label="Quay lại"
             className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white text-slate-800 flex items-center justify-center shadow-xs active:scale-95 transition shrink-0"
           >

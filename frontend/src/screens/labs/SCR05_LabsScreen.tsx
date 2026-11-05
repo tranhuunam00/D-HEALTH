@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Plus, Check } from 'lucide-react';
+import { ChevronRight, Plus, Check, FileText } from 'lucide-react';
 import { useLabsLogic, LabSpecialtyCode, TRACKED_METRICS_CONFIG } from './useLabsLogic';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { ScreenHeaderPills } from '../../components/molecules/ScreenHeaderPills';
@@ -70,7 +70,17 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
 
         {/* Section: Kết quả xét nghiệm */}
         <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-black text-slate-900 px-1">Kết quả xét nghiệm</h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-black text-slate-900">Kết quả xét nghiệm</h2>
+            <button
+              type="button"
+              onClick={() => onNavigate('camera-ocr')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1F7A8C] text-white text-xs font-bold shadow-xs hover:bg-[#186372] active:scale-95 transition cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ Nhập phiếu mới</span>
+            </button>
+          </div>
 
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             {SPECIALTY_PILLS.map((p) => (
@@ -80,7 +90,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
                 onClick={() => setSelectedCategory(p.id)}
                 className={`px-3.5 py-1.5 rounded-full text-xs transition ${
                   selectedCategory === p.id
-                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                    ? 'bg-[#1F7A8C] text-white font-bold shadow-xs'
                     : 'bg-white text-slate-600 font-semibold border border-slate-200 hover:bg-slate-50'
                 }`}
               >
@@ -98,7 +108,25 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
               {loading ? (
                 <div className="py-8 text-center text-xs text-slate-400">Đang tải phiếu xét nghiệm...</div>
               ) : filteredReports.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">Chưa có phiếu xét nghiệm nào trong hồ sơ</div>
+                <div className="py-8 px-4 flex flex-col items-center justify-center gap-2.5 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#1F7A8C] flex items-center justify-center">
+                    <FileText className="w-6 h-6 stroke-[2]" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-bold text-slate-800">Chưa có phiếu xét nghiệm nào trong hồ sơ</span>
+                    <span className="text-xs text-slate-400 max-w-[280px]">
+                      Bạn có thể chụp ảnh phiếu khám hoặc nhập tay các chỉ số xét nghiệm để theo dõi
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('camera-ocr')}
+                    className="mt-1 px-4 py-2 rounded-xl bg-[#1F7A8C] text-white text-xs font-bold shadow-xs hover:bg-[#186372] active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>Nhập / Tải lên phiếu xét nghiệm</span>
+                  </button>
+                </div>
               ) : (
                 filteredReports.map((report) => (
                   <div
@@ -150,7 +178,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
                   onClick={() => toggleTrackedMetric(metric.id)}
                   className={`px-3 py-1.5 rounded-full text-xs transition flex items-center gap-1 shrink-0 ${
                     isTracked
-                      ? 'bg-slate-900 text-white font-bold shadow-xs'
+                      ? 'bg-[#1F7A8C] text-white font-bold shadow-xs'
                       : 'bg-white text-slate-700 font-semibold border border-slate-200 hover:bg-slate-50'
                   }`}
                 >

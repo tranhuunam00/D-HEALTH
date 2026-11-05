@@ -6,6 +6,16 @@ export interface LabTrendChartProps {
 }
 
 export const LabTrendChart: React.FC<LabTrendChartProps> = ({ points, isAmber }) => {
+  if (!points || points.length < 2) {
+    return (
+      <div className="w-full h-16 rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center gap-1 my-1">
+        <span className="text-xs font-semibold text-slate-400">
+          Chưa có dữ liệu xét nghiệm để vẽ biểu đồ
+        </span>
+      </div>
+    );
+  }
+
   const min = Math.min(...points) * 0.9;
   const max = Math.max(...points) * 1.1;
   const range = max - min || 1;

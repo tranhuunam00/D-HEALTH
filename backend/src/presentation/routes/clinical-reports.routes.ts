@@ -169,6 +169,10 @@ export function createClinicalReportsRouter(pool: Pool): Router {
           COALESCE(d_int.full_name, r.interpreting_doctor_name) AS interpreting_doctor_name,
           ist.id AS study_id, ist.modality AS study_modality, ist.body_part,
           COALESCE((
+            SELECT json_agg(lr.*) FROM lab_results lr 
+            WHERE lr.report_id = r.id
+          ), '[]'::json) AS lab_results,
+          COALESCE((
             SELECT COUNT(*) FROM lab_results lr 
             WHERE lr.report_id = r.id AND UPPER(lr.flag) IN ('HIGH', 'LOW', 'CRITICAL', 'ABNORMAL')
           ), 0)::int AS abnormal_count
