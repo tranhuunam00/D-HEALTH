@@ -119,7 +119,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   userId,
   userName,
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'biometrics' | 'prescriptions' | 'reports' | 'chronic' | 'family'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'biometrics' | 'prescriptions' | 'reports' | 'appointments' | 'family'>('overview');
   const [reportFilter, setReportFilter] = useState<'all' | 'lab' | 'imaging' | 'chronic'>('all');
   const [loading, setLoading] = useState(false);
   const [dossier, setDossier] = useState<any>(null);
@@ -230,7 +230,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
             { id: 'biometrics', label: 'Sinh Trắc Học', icon: Heart, count: dossier?.biometrics?.length },
             { id: 'prescriptions', label: 'Đơn Thuốc & Tuân Thủ', icon: Pill, count: dossier?.prescriptions?.length },
             { id: 'reports', label: 'Xét Nghiệm & CĐHA', icon: FileText, count: dossier?.reports?.length },
-            { id: 'chronic', label: 'Bệnh Mạn Tính & Lịch Hẹn', icon: Activity, count: (dossier?.conditions?.length || 0) + (dossier?.appointments?.length || 0) },
+            { id: 'appointments', label: 'Lịch Hẹn', icon: Calendar, count: dossier?.appointments?.length || 0 },
             { id: 'family', label: 'Gia Đình Liên Kết', icon: Users, count: dossier?.members?.length },
           ].map((tab) => (
             <button
@@ -888,126 +888,76 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 5: BỆNH MẠN TÍNH & LỊCH HẸN */}
-              {activeTab === 'chronic' && (
+              {/* TAB 5: LỊCH HẸN */}
+              {activeTab === 'appointments' && (
                 <div className="space-y-4">
-                  {/* Lịch Hẹn Tái Khám Đã Đặt */}
-                  <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <h4 className="font-bold text-slate-900 text-xs flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[#1F7A8C]" />
-                        <span>Lịch Hẹn Tái Khám Bệnh Nhân Đã Đặt ({dossier.appointments?.length || 0})</span>
-                      </h4>
-                      <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
-                        Đồng bộ từ App Mobile
+                  <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-[#1F7A8C]" />
+                          <span>Danh Sách Lịch Hẹn Khám ({dossier.appointments?.length || 0})</span>
+                        </h4>
+                        <p className="text-xs text-slate-500 pt-0.5">
+                          Tất cả lịch hẹn khám bệnh nhân đã đặt từ Ứng dụng Di Động D-Health
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-[#1F7A8C]" />
+                        Đồng bộ thời gian thực
                       </span>
                     </div>
+
                     {!dossier.appointments || dossier.appointments.length === 0 ? (
-                      <p className="text-slate-400 text-xs py-2">Bệnh nhân chưa có lịch hẹn khám nào được đặt.</p>
+                      <div className="p-8 text-center text-slate-400 text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                        Bệnh nhân chưa có lịch hẹn khám nào được đặt.
+                      </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                         {dossier.appointments.map((a: any) => (
-                          <div key={a.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                          <div key={a.id} className="p-4 rounded-xl bg-slate-50 hover:bg-teal-50/20 border border-slate-200 transition text-xs space-y-2.5">
                             <div className="flex items-center justify-between">
-                              <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                                <Stethoscope className="w-3.5 h-3.5 text-[#1F7A8C]" />
+                              <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-teal-100 text-[#1F7A8C] flex items-center justify-center">
+                                  <Stethoscope className="w-4 h-4" />
+                                </div>
                                 <span>{a.doctor_name || 'Bác sĩ phụ trách'}</span>
                               </div>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-[#1F7A8C] font-bold border border-teal-200">
+                              <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
+                                a.status === 'scheduled'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : a.status === 'completed'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : 'bg-rose-50 text-rose-700 border-rose-200'
+                              }`}>
                                 {a.status === 'scheduled' ? 'Đã lên lịch' : a.status === 'completed' ? 'Hoàn thành' : 'Đã hủy'}
                               </span>
                             </div>
-                            <div className="text-[11px] text-slate-600 space-y-1">
-                              <div><strong>Chuyên khoa:</strong> {a.department_name || '--'} · {a.facility_name || '--'}</div>
-                              <div className="text-teal-700 font-mono font-bold flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-teal-600" />
-                                <span>Thời gian khám: {new Date(a.appointment_date).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+
+                            <div className="text-[11px] text-slate-600 space-y-1.5 pt-1 border-t border-slate-200/60">
+                              <div className="flex items-center justify-between">
+                                <span className="text-slate-400">Chuyên khoa:</span>
+                                <strong className="text-slate-800">{a.department_name || '--'}</strong>
                               </div>
-                              <div><strong>Mục đích:</strong> {a.purpose || 'Tái khám định kỳ'}</div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-slate-400">Cơ sở khám:</span>
+                                <strong className="text-slate-800">{a.facility_name || '--'}</strong>
+                              </div>
+                              <div className="flex items-center justify-between text-teal-800 font-mono font-bold bg-teal-50/60 px-2 py-1 rounded-lg border border-teal-100">
+                                <span className="flex items-center gap-1 font-sans text-teal-700 text-[11px]">
+                                  <Clock className="w-3.5 h-3.5 text-teal-600" /> Thời gian:
+                                </span>
+                                <span>{new Date(a.appointment_date).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                              </div>
+                              <div className="pt-0.5">
+                                <span className="text-slate-400">Mục đích khám: </span>
+                                <span className="text-slate-700 font-medium">{a.purpose || 'Tái khám định kỳ'}</span>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Bệnh mạn tính */}
-                    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                      <h4 className="font-bold text-slate-900 text-xs border-b border-slate-100 pb-2">
-                        Bệnh Lý Mạn Tính Đang Quản Lý ({dossier.conditions.length})
-                      </h4>
-                      {dossier.conditions.length === 0 ? (
-                        <p className="text-slate-400 text-xs">Không có bệnh mạn tính nào.</p>
-                      ) : (
-                        dossier.conditions.map((c: any) => (
-                          <div key={c.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5 font-bold text-slate-800">
-                                <span>{c.condition_name}</span>
-                                {c.icd10_code && (
-                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                                    {c.icd10_code}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-[#1F7A8C] font-semibold border border-teal-200">
-                                {c.risk_level === 'high' ? 'Nguy cơ cao' : c.risk_level === 'medium' ? 'Nguy cơ trung bình' : 'Ổn định'}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-600">{c.status_summary}</div>
-
-                            {/* Chỉ số mục tiêu rút gọn */}
-                            {Array.isArray(c.target_metrics) && c.target_metrics.length > 0 && (
-                              <div className="flex flex-wrap gap-1 pt-1">
-                                {c.target_metrics.map((m: any, mIdx: number) => (
-                                  <span
-                                    key={mIdx}
-                                    className={`text-[10px] px-2 py-0.5 rounded-md font-medium border ${
-                                      m.type === 'good'
-                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                        : m.type === 'warning'
-                                        ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                        : 'bg-rose-50 text-rose-800 border-rose-200'
-                                    }`}
-                                  >
-                                    {m.name}: <strong>{m.status || (m.type === 'good' ? 'Tốt' : 'Theo dõi')}</strong>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {c.next_checkup_date && (
-                              <div className="text-[10px] text-teal-700 flex items-center gap-1 font-semibold pt-1 border-t border-slate-200/60">
-                                <Calendar className="w-3 h-3 text-teal-600" /> Tái khám: {new Date(c.next_checkup_date).toLocaleDateString('vi-VN')}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    {/* Việc cần làm (Care Tasks) */}
-                    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                      <h4 className="font-bold text-slate-900 text-xs border-b border-slate-100 pb-2">
-                        Việc Cần Làm Tiếp Theo ({dossier.tasks.length})
-                      </h4>
-                      {dossier.tasks.length === 0 ? (
-                        <p className="text-slate-400 text-xs">Không có việc cần làm nào.</p>
-                      ) : (
-                        dossier.tasks.map((t: any) => (
-                          <div key={t.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
-                            <div>
-                              <div className="font-bold text-slate-800">{t.title}</div>
-                              <div className="text-[10px] text-slate-500">Ưu tiên: Mức {t.priority || 1}</div>
-                            </div>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-[#1F7A8C] font-semibold border border-teal-200">
-                              Đang thực hiện
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
                   </div>
                 </div>
               )}
