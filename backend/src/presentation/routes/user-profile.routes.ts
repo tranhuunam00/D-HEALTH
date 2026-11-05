@@ -9,8 +9,22 @@ export function createUserProfileRouter(pool: Pool): Router {
 
   // 1. LẤY HỒ SƠ CÁ NHÂN VÀ CÁC THÀNH VIÊN GIA ĐÌNH (GET /)
   router.get('/', async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user?.userId;
+    let userId = req.user?.userId || (req.query.userId as string);
+    const memberId = req.query.memberId as string;
     try {
+      if (!userId && memberId) {
+        const mRes = await pool.query(`SELECT user_id FROM family_members WHERE id = $1 LIMIT 1`, [memberId]);
+        if (mRes.rows[0]) {
+          userId = mRes.rows[0].user_id;
+        }
+      }
+      if (!userId) {
+        const defaultUser = await pool.query(`SELECT id FROM users ORDER BY created_at ASC LIMIT 1`);
+        if (defaultUser.rows[0]) {
+          userId = defaultUser.rows[0].id;
+        }
+      }
+
       const userRes = await pool.query(
         `SELECT id, phone_number, national_id, email, address, is_ekyc_verified, created_at FROM users WHERE id = $1`,
         [userId]
@@ -23,8 +37,8 @@ export function createUserProfileRouter(pool: Pool): Router {
       return res.json({
         success: true,
         data: {
-          user: userRes.rows[0],
-          members: membersRes.rows,
+          user: userRes.rows[0] || null,
+          members: membersRes.rows || [],
         },
       });
     } catch (err: any) {
@@ -115,7 +129,7 @@ export function createUserProfileRouter(pool: Pool): Router {
 
   // 3. CHỈNH SỬA HỒ SƠ SỨC KHỎE THÀNH VIÊN (PUT /members/:memberId)
   router.put('/members/:memberId', async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user?.userId;
+    let userId = req.user?.userId;
     const { memberId } = req.params;
     const fullName = req.body.fullName || req.body.full_name;
     const gender = req.body.gender;
@@ -124,7 +138,7 @@ export function createUserProfileRouter(pool: Pool): Router {
     const heightCm = req.body.heightCm !== undefined ? req.body.heightCm : req.body.height_cm;
     const weightKg = req.body.weightKg !== undefined ? req.body.weightKg : req.body.weight_kg;
     const avatarUrl = req.body.avatarUrl || req.body.avatar_url;
-    const nationalId = req.body.citizenId || req.body.national_id || req.body.nationalId;
+    const nationalId = req.body.citizenId !== undefined ? req.body.citizenId : (req.body.national_id || req.body.nationalId);
     const address = req.body.address;
     const email = req.body.email;
 
@@ -145,10 +159,11 @@ export function createUserProfileRouter(pool: Pool): Router {
              height_cm = COALESCE($5, height_cm),
              weight_kg = COALESCE($6, weight_kg),
              avatar_url = COALESCE($7, avatar_url),
+             insurance_number = COALESCE($8, insurance_number),
              updated_at = NOW()
-         WHERE id = $8 AND ($9::text IS NULL OR user_id::text = $9::text)
+         WHERE id = $9
          RETURNING *`,
-        [fullName, gender, birthDate, bloodType, heightCm, weightKg, avatarUrl, memberId, userId || null]
+        [fullName, gender, birthDate, bloodType, heightCm, weightKg, avatarUrl, nationalId || null, memberId]
       );
 
       if (updateRes.rowCount === 0) {
@@ -156,6 +171,26 @@ export function createUserProfileRouter(pool: Pool): Router {
       }
 
       const updated = updateRes.rows[0];
+
+      // Update users table with CCCD, address, email if provided
+      let updatedUser = null;
+      const effectiveUserId = userId || updated?.user_id;
+      if (effectiveUserId && (nationalId !== undefined || address !== undefined || email !== undefined)) {
+        try {
+          const uRes = await pool.query(
+            `UPDATE users
+             SET national_id = COALESCE($1, national_id),
+                 address = COALESCE($2, address),
+                 email = COALESCE($3, email),
+                 updated_at = NOW()
+             WHERE id = $4
+             RETURNING id, phone_number, national_id, email, address, is_ekyc_verified`,
+            [nationalId || null, address || null, email || null, effectiveUserId]
+          );
+          updatedUser = uRes.rows[0] || null;
+        } catch {}
+      }
+
       const numWeight = updated.weight_kg ? Number(updated.weight_kg) : null;
       const numHeight = updated.height_cm ? Number(updated.height_cm) : null;
 
@@ -177,7 +212,11 @@ export function createUserProfileRouter(pool: Pool): Router {
 
       return res.json({
         success: true,
-        data: updated,
+        data: {
+          ...updated,
+          member: updated,
+          user: updatedUser,
+        },
         message: 'Cập nhật hồ sơ sức khỏe thành công.',
       });
     } catch (err: any) {

@@ -51,14 +51,22 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const formatIsoDate = (d?: string | null) => {
+    if (!d) return '';
+    return d.split('T')[0];
+  };
+
   const syncFormFromMember = (m: FamilyMember) => {
     setFullName(m.full_name || '');
     setGender(m.gender || 'Khác');
-    setBirthDate(m.birth_date || '');
+    setBirthDate(formatIsoDate(m.birth_date));
     setBloodType(m.blood_type || '');
     setHeightCm(m.height_cm ? String(m.height_cm) : '');
     setWeightKg(m.weight_kg ? String(m.weight_kg) : '');
     setAvatarUrl(m.avatar_url || '');
+    if ((m as any).insurance_number && !citizenId) {
+      setCitizenId((m as any).insurance_number);
+    }
   };
 
   const fetchProfile = async () => {
@@ -69,13 +77,18 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
-      const res = await fetch('/api/user/profile', { headers });
+      const memberQuery = initialMemberId ? `?memberId=${encodeURIComponent(initialMemberId)}` : '';
+      const res = await fetch(`/api/user/profile${memberQuery}`, { headers });
       if (res.ok) {
         const json = await res.json();
         if (json.data?.user) {
           setUser(json.data.user);
-          setCitizenId(json.data.user.national_id || '');
-          setAddress(json.data.user.address || '');
+          if (json.data.user.national_id || json.data.user.nationalId || json.data.user.citizenId) {
+            setCitizenId(json.data.user.national_id || json.data.user.nationalId || json.data.user.citizenId);
+          }
+          if (json.data.user.address) {
+            setAddress(json.data.user.address);
+          }
         }
         if (json.data?.members && json.data.members.length > 0) {
           const owner = json.data.members.find((m: any) => m.relationship === 'owner') || json.data.members[0];
@@ -89,6 +102,17 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialUser) {
+      if ((initialUser as any).national_id || (initialUser as any).nationalId || (initialUser as any).citizenId) {
+        setCitizenId((initialUser as any).national_id || (initialUser as any).nationalId || (initialUser as any).citizenId);
+      }
+      if ((initialUser as any).address) {
+        setAddress((initialUser as any).address);
+      }
+    }
+  }, [initialUser]);
 
   useEffect(() => {
     fetchProfile();
@@ -137,17 +161,40 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         throw new Error(json.error?.message || 'Không thể lưu hồ sơ.');
       }
       if (json.data) {
-        setActiveMember(json.data);
-        syncFormFromMember(json.data);
+        const updatedMember = json.data.member || json.data;
+        const updatedUser = json.data.user;
+        setActiveMember(updatedMember);
+        syncFormFromMember(updatedMember);
+        if (updatedUser) {
+          setUser(updatedUser);
+          if (updatedUser.national_id) setCitizenId(updatedUser.national_id);
+          if (updatedUser.address) setAddress(updatedUser.address);
+        } else {
+          if (payload.citizenId) setCitizenId(payload.citizenId);
+          if (payload.address) setAddress(payload.address);
+        }
         try {
           const stored = localStorage.getItem('dhealth_user');
           if (stored) {
             const u = JSON.parse(stored);
-            u.fullName = json.data.full_name;
-            u.avatarUrl = json.data.avatar_url;
-            u.bloodType = json.data.blood_type;
-            u.heightCm = json.data.height_cm;
-            u.weightKg = json.data.weight_kg;
+            u.fullName = updatedMember.full_name;
+            u.avatarUrl = updatedMember.avatar_url;
+            u.bloodType = updatedMember.blood_type;
+            u.heightCm = updatedMember.height_cm;
+            u.weightKg = updatedMember.weight_kg;
+            if (updatedUser) {
+              u.national_id = updatedUser.national_id;
+              u.nationalId = updatedUser.national_id;
+              u.citizenId = updatedUser.national_id;
+              u.address = updatedUser.address;
+            } else {
+              if (payload.citizenId) {
+                u.national_id = payload.citizenId;
+                u.nationalId = payload.citizenId;
+                u.citizenId = payload.citizenId;
+              }
+              if (payload.address) u.address = payload.address;
+            }
             localStorage.setItem('dhealth_user', JSON.stringify(u));
           }
         } catch {}

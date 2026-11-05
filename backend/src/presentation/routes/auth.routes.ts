@@ -141,6 +141,10 @@ export function createAuthRouter(pool: Pool): Router {
             phone_number: realPhone,
             phoneNumber: realPhone,
             email: user.email,
+            national_id: user.national_id || null,
+            nationalId: user.national_id || null,
+            citizenId: user.national_id || null,
+            address: user.address || null,
             fullName: user.full_name || user.email?.split('@')[0] || '',
             avatarUrl: user.avatar_url || null,
             activeMemberId: user.member_id || user.id,
@@ -239,7 +243,7 @@ export function createAuthRouter(pool: Pool): Router {
   router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const result = await pool.query(
-        `SELECT u.id, u.phone_number, u.email, u.is_ekyc_verified, u.created_at,
+        `SELECT u.id, u.phone_number, u.email, u.national_id, u.address, u.is_ekyc_verified, u.created_at,
                 fm.id as member_id, fm.full_name, fm.blood_type, fm.height_cm, fm.weight_kg, fm.avatar_url 
          FROM users u
          LEFT JOIN family_members fm ON u.id = fm.user_id AND fm.relationship = 'owner'
@@ -270,6 +274,10 @@ export function createAuthRouter(pool: Pool): Router {
           phone_number: realPhone,
           phoneNumber: realPhone,
           email: row.email,
+          national_id: row.national_id || null,
+          nationalId: row.national_id || null,
+          citizenId: row.national_id || null,
+          address: row.address || null,
           fullName: row.full_name || row.email?.split('@')[0] || '',
           avatarUrl: row.avatar_url || null,
           activeMemberId: row.member_id || row.id,
