@@ -181,5 +181,38 @@ describe('MasterCatalogsRoutes TDD', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
     });
   });
+
+  describe('Admin Appointments', () => {
+    it('GET /admin/appointments returns all appointments with patient info', async () => {
+      const mockAppointments = [
+        {
+          id: 'app_1',
+          member_id: 'mem_1',
+          patient_name: 'Trần Hữu Nam',
+          doctor_name: 'TS.BS Trần Văn A',
+          appointment_date: '2026-11-13T09:00:00.000Z',
+          purpose: 'Tái khám định kỳ theo dõi chỉ số',
+          status: 'scheduled',
+        },
+      ];
+      mockPool.query.mockResolvedValueOnce({ rows: mockAppointments });
+      const handler = getHandler('get', '/admin/appointments');
+      const { req, res } = createReqRes();
+
+      await handler(req, res);
+      expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('FROM appointments a'));
+      expect(res.json).toHaveBeenCalledWith({ data: mockAppointments });
+    });
+
+    it('GET /admin/appointments handles database errors gracefully', async () => {
+      mockPool.query.mockRejectedValueOnce(new Error('DB Query Failure'));
+      const handler = getHandler('get', '/admin/appointments');
+      const { req, res } = createReqRes();
+
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'DB Query Failure' });
+    });
+  });
 });
 

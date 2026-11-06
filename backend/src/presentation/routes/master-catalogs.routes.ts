@@ -215,6 +215,26 @@ export function createMasterCatalogsRouter(pool: Pool): Router {
     }
   });
 
+  // 10. GET /admin/appointments - Lấy toàn bộ lịch hẹn khám cho Admin Portal
+  router.get('/admin/appointments', async (_req: Request, res: Response) => {
+    try {
+      const query = `
+        SELECT a.*, 
+               COALESCE(fm.full_name, 'Bệnh nhân') AS patient_name,
+               u.phone_number AS patient_phone,
+               u.email AS patient_email
+        FROM appointments a
+        LEFT JOIN family_members fm ON a.member_id = fm.id
+        LEFT JOIN users u ON fm.user_id = u.id
+        ORDER BY a.appointment_date DESC, a.created_at DESC
+      `;
+      const result = await pool.query(query);
+      res.json({ data: result.rows });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   return router;
 }
 
