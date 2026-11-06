@@ -38,18 +38,26 @@ const getReportKind = (r: any): 'lab' | 'imaging' => {
   return 'imaging';
 };
 
+const LAB_REFERENCE_RANGES_CONFIG = Object.freeze([
+  { keywords: Object.freeze(['bạch cầu', 'wbc']), range: '4.0 - 10.0' },
+  { keywords: Object.freeze(['glucose']), range: '4.1 - 5.9' },
+  { keywords: Object.freeze(['hba1c']), range: '< 6.5' },
+  { keywords: Object.freeze(['ldl']), range: '< 2.6' },
+  { keywords: Object.freeze(['triglyceride']), range: '< 1.7' },
+  { keywords: Object.freeze(['cholesterol']), range: '< 5.2' },
+]);
+
+const LESION_EVALUATION_KEYWORDS = Object.freeze(['tổn thương', 'nốt', 'khối']);
+
 const getLabRefRange = (name: string, min?: any, max?: any) => {
   if (min != null && max != null) return `${min} - ${max}`;
   if (min != null) return `> ${min}`;
   if (max != null) return `< ${max}`;
   const lower = (name || '').toLowerCase();
-  if (lower.includes('bạch cầu') || lower.includes('wbc')) return '4.0 - 10.0';
-  if (lower.includes('glucose')) return '4.1 - 5.9';
-  if (lower.includes('hba1c')) return '< 6.5';
-  if (lower.includes('ldl')) return '< 2.6';
-  if (lower.includes('triglyceride')) return '< 1.7';
-  if (lower.includes('cholesterol')) return '< 5.2';
-  return '4.0 - 10.0';
+  const match = LAB_REFERENCE_RANGES_CONFIG.find((cfg) =>
+    cfg.keywords.some((kw) => lower.includes(kw))
+  );
+  return match ? match.range : '4.0 - 10.0';
 };
 
 const formatBiometricType = (typeRaw: string) => {
@@ -874,9 +882,16 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                                 </div>
                                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Đánh giá hình thái</span>
-                                  <strong className={r.conclusion?.toLowerCase().includes('tổn thương') ? 'text-rose-700 font-bold' : 'text-emerald-700 font-bold'}>
-                                    {r.conclusion?.toLowerCase().includes('tổn thương') ? 'Có nốt / tổn thương' : 'Bình thường'}
-                                  </strong>
+                                  {(() => {
+                                    const hasLesion = LESION_EVALUATION_KEYWORDS.some((kw) =>
+                                      r.conclusion?.toLowerCase().includes(kw)
+                                    );
+                                    return (
+                                      <strong className={hasLesion ? 'text-rose-700 font-bold' : 'text-emerald-700 font-bold'}>
+                                        {hasLesion ? 'Có nốt / tổn thương' : 'Bình thường'}
+                                      </strong>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </div>

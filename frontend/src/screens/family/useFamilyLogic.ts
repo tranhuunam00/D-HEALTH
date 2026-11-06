@@ -1,4 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import {
+  FAMILY_ADMIN_FILTER_KEYWORDS,
+  FAMILY_EXCLUDED_MEMBER_IDS,
+  FAMILY_RELATIONSHIP_TEXT_MAP,
+} from './family.constants';
 
 export interface FamilyMemberViewModel {
   readonly id: string;
@@ -25,18 +30,10 @@ function calculateAge(birthDate?: string): number {
 }
 
 function formatRelationship(rel?: string): string {
-  switch (rel) {
-    case 'owner':
-      return 'Chủ tài khoản';
-    case 'spouse':
-      return 'Vợ / Chồng';
-    case 'child':
-      return 'Con';
-    case 'parent':
-      return 'Bố / Mẹ';
-    default:
-      return rel || 'Thành viên gia đình';
+  if (rel && rel in FAMILY_RELATIONSHIP_TEXT_MAP) {
+    return (FAMILY_RELATIONSHIP_TEXT_MAP as Record<string, string>)[rel];
   }
+  return rel || 'Thành viên gia đình';
 }
 
 function mapMemberToViewModel(m: any): FamilyMemberViewModel {
@@ -82,9 +79,9 @@ export function useFamilyLogic() {
         if (Array.isArray(json?.data)) {
           // Lọc bỏ tài khoản Quản Trị Viên Hệ Thống khỏi danh sách hồ sơ gia đình
           const patientMembers = json.data.filter((m: any) => {
-            const isMemAdmin = m.id === 'mem_admin';
+            const isMemAdmin = FAMILY_EXCLUDED_MEMBER_IDS.includes(m.id);
             const nameLower = (m.full_name || '').toLowerCase();
-            const isAdminName = nameLower.includes('quản trị') || nameLower.includes('admin');
+            const isAdminName = FAMILY_ADMIN_FILTER_KEYWORDS.some((kw) => nameLower.includes(kw));
             return !isMemAdmin && !isAdminName;
           });
           setMembers(patientMembers.map(mapMemberToViewModel));

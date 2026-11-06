@@ -1,6 +1,7 @@
 import React from 'react';
 import { Heart, Calendar } from 'lucide-react';
 import { ChronicConditionItem } from '../useChronicLogic';
+import { CHRONIC_RISK_KEYWORDS, CHRONIC_STATUS_KEYWORDS } from '../chronic.constants';
 
 interface CardioConditionCardProps {
   readonly condition?: ChronicConditionItem;
@@ -25,8 +26,8 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
   }
 
   const summaryLower = (condition.status_summary || '').toLowerCase();
-  const isHighRisk = summaryLower.includes('nguy cơ cao') || summaryLower.includes('cần khám');
-  const isLowRisk = summaryLower.includes('nguy cơ thấp') || summaryLower.includes('tốt');
+  const isHighRisk = CHRONIC_RISK_KEYWORDS.high.some((kw) => summaryLower.includes(kw));
+  const isLowRisk = CHRONIC_RISK_KEYWORDS.low.some((kw) => summaryLower.includes(kw));
 
   const theme = isHighRisk
     ? {
@@ -94,9 +95,9 @@ export const CardioConditionCard: React.FC<CardioConditionCardProps> = ({ condit
       <div className="grid grid-cols-3 gap-2">
         {metrics.map((m, idx) => {
           const statusLower = (m.status || '').toLowerCase();
-          const isDanger = m.type === 'danger' || statusLower.includes('khám');
-          const isWarning = m.type === 'warning' || statusLower.includes('dõi');
-          const isGood = m.type === 'good' || statusLower.includes('tốt');
+          const isDanger = m.type === 'danger' || CHRONIC_STATUS_KEYWORDS.danger.some((kw) => statusLower.includes(kw));
+          const isWarning = m.type === 'warning' || CHRONIC_STATUS_KEYWORDS.warning.some((kw) => statusLower.includes(kw));
+          const isGood = m.type === 'good' || CHRONIC_STATUS_KEYWORDS.good.some((kw) => statusLower.includes(kw));
 
           const colorClass = isDanger ? 'text-rose-700' : isWarning ? 'text-amber-700' : 'text-emerald-700';
           const bgDotClass = isDanger ? 'bg-rose-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500';

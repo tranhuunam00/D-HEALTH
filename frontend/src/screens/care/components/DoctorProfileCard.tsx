@@ -1,6 +1,7 @@
 import React from 'react';
 import { Phone, Mail, Edit3 } from 'lucide-react';
 import type { CareTeamMember } from '../useCareLogic';
+import { EMAIL_AT_SIGN } from '../care.constants';
 
 interface DoctorProfileCardProps {
   member: CareTeamMember;
@@ -66,7 +67,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({
           <span className="truncate">{member.email}</span>
         </div>
         <a
-          href={member.email.includes('@') ? `mailto:${member.email}` : '#'}
+          href={member.email.includes(EMAIL_AT_SIGN) ? `mailto:${member.email}` : '#'}
           className="px-4 py-1.5 rounded-full bg-[#E0F2FE] text-[#0284C7] text-xs font-bold shrink-0 hover:bg-sky-200 active:scale-95 transition"
         >
           Email

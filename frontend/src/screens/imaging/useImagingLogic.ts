@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { MODALITY_TAXONOMY_KEYWORDS } from './imaging.constants';
 
 export type ModalityCode = 'ALL' | 'SA' | 'XQ' | 'MM' | 'CT' | 'MRI' | 'all' | 'mri' | 'ct' | 'xray' | 'ultrasound';
 
@@ -61,11 +62,11 @@ export interface RecistEvaluationData {
 
 export function normalizeModality(cat?: string, title?: string): 'SA' | 'XQ' | 'MM' | 'CT' | 'MRI' {
   const text = `${cat || ''} ${title || ''}`.toUpperCase();
-  if (text.includes('MRI') || text.includes('CỘNG HƯỞNG TỪ')) return 'MRI';
-  if (text.includes('CT') || text.includes('CẮT LỚP') || text.includes('SCAN')) return 'CT';
-  if (text.includes('SA') || text.includes('SIÊU ÂM') || text.includes('US')) return 'SA';
-  if (text.includes('MM') || text.includes('NHŨ ẢNH') || text.includes('MAMMO')) return 'MM';
-  if (text.includes('XQ') || text.includes('X-QUANG') || text.includes('XR')) return 'XQ';
+  if (MODALITY_TAXONOMY_KEYWORDS.MRI.some((kw) => text.includes(kw))) return 'MRI';
+  if (MODALITY_TAXONOMY_KEYWORDS.CT.some((kw) => text.includes(kw))) return 'CT';
+  if (MODALITY_TAXONOMY_KEYWORDS.SA.some((kw) => text.includes(kw))) return 'SA';
+  if (MODALITY_TAXONOMY_KEYWORDS.MM.some((kw) => text.includes(kw))) return 'MM';
+  if (MODALITY_TAXONOMY_KEYWORDS.XQ.some((kw) => text.includes(kw))) return 'XQ';
   return 'CT';
 }
 

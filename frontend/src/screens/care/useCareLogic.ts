@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { SPECIALTY_COLOR_KEYWORDS, CARE_DEFAULT_CONFIG } from './care.constants';
 
 export interface UpcomingAppointment {
   readonly id: string;
@@ -28,7 +29,7 @@ export interface SharingStats {
 }
 
 function getInitials(name: string): string {
-  if (!name) return 'BS';
+  if (!name) return CARE_DEFAULT_CONFIG.fallbackDoctorCode;
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -36,9 +37,9 @@ function getInitials(name: string): string {
 
 function getColorByRole(role: string): 'mint' | 'pink' | 'purple' | 'slate' {
   const r = (role || '').toLowerCase();
-  if (r.includes('tim mạch') || r.includes('nội tiết')) return 'pink';
-  if (r.includes('ung bướu') || r.includes('ngoại')) return 'purple';
-  if (r.includes('cđha') || r.includes('xét nghiệm')) return 'mint';
+  if (SPECIALTY_COLOR_KEYWORDS.pink.some((kw) => r.includes(kw))) return 'pink';
+  if (SPECIALTY_COLOR_KEYWORDS.purple.some((kw) => r.includes(kw))) return 'purple';
+  if (SPECIALTY_COLOR_KEYWORDS.mint.some((kw) => r.includes(kw))) return 'mint';
   return 'slate';
 }
 
@@ -90,17 +91,17 @@ export function useCareLogic(memberId = 'mem_145deb71') {
         if (Array.isArray(docJson?.data)) {
           const mappedDocs: CareTeamMember[] = docJson.data.map((d: any) => {
             const title = d.academic_title ? `${d.academic_title} ` : '';
-            const fullName = `${title}${d.full_name || 'Bác sĩ'}`.trim();
-            const role = d.department_name || d.specialty || 'Khám chuyên khoa';
+            const fullName = `${title}${d.full_name || CARE_DEFAULT_CONFIG.defaultDoctorTitle}`.trim();
+            const role = d.department_name || d.specialty || CARE_DEFAULT_CONFIG.defaultRole;
             return {
               id: d.id,
               granteeId: d.id,
-              code: getInitials(d.full_name || 'BS'),
+              code: getInitials(d.full_name || CARE_DEFAULT_CONFIG.fallbackDoctorCode),
               name: fullName,
               role,
-              org: d.facility_name || 'Bệnh viện đối tác',
-              phone: d.phone_number || '1900 1115',
-              email: d.email || 'bacsi@dhealth.vn',
+              org: d.facility_name || CARE_DEFAULT_CONFIG.defaultOrg,
+              phone: d.phone_number || CARE_DEFAULT_CONFIG.defaultPhone,
+              email: d.email || CARE_DEFAULT_CONFIG.defaultEmail,
               color: getColorByRole(role),
             };
           });

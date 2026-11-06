@@ -1,6 +1,7 @@
 import React from 'react';
 import { Heart, Droplet, Activity, Edit3, Trash2, TriangleAlert, Calendar } from 'lucide-react';
 import type { ChronicConditionItem } from '../useChronicLogic';
+import { CHRONIC_RISK_KEYWORDS, CHRONIC_STATUS_KEYWORDS, CHRONIC_TYPE_KEYWORDS } from '../chronic.constants';
 
 interface DynamicConditionCardProps {
   readonly condition: ChronicConditionItem;
@@ -41,15 +42,11 @@ function getConditionTheme(condition: ChronicConditionItem): ConditionTheme {
 
   const isHighRisk =
     risk === 'high' ||
-    summaryLower.includes('nguy cơ cao') ||
-    summaryLower.includes('cần khám') ||
-    summaryLower.includes('nguy hiểm');
+    CHRONIC_RISK_KEYWORDS.high.some((kw) => summaryLower.includes(kw));
 
   const isLowRisk =
     risk === 'low' ||
-    summaryLower.includes('nguy cơ thấp') ||
-    summaryLower.includes('tốt') ||
-    summaryLower.includes('an toàn');
+    CHRONIC_RISK_KEYWORDS.low.some((kw) => summaryLower.includes(kw));
 
   if (isHighRisk) {
     return {
@@ -105,8 +102,8 @@ export const DynamicConditionCard: React.FC<DynamicConditionCardProps> = ({
   onDelete,
 }) => {
   const nameLower = condition.condition_name.toLowerCase();
-  const isCardio = nameLower.includes('tim') || nameLower.includes('huyết áp');
-  const isDiabetes = nameLower.includes('đái') || nameLower.includes('đường') || nameLower.includes('tiểu');
+  const isCardio = CHRONIC_TYPE_KEYWORDS.cardio.some((kw) => nameLower.includes(kw));
+  const isDiabetes = CHRONIC_TYPE_KEYWORDS.diabetes.some((kw) => nameLower.includes(kw));
 
   const theme = getConditionTheme(condition);
   const metrics = condition.target_metrics || [];
@@ -181,9 +178,9 @@ export const DynamicConditionCard: React.FC<DynamicConditionCardProps> = ({
       <div className="grid grid-cols-3 gap-2 pt-1 text-xs font-bold text-slate-800">
         {metrics.map((m, idx) => {
           const statusLower = (m.status || '').toLowerCase();
-          const isDanger = m.type === 'danger' || statusLower.includes('khám');
-          const isWarning = m.type === 'warning' || statusLower.includes('dõi');
-          const isGood = m.type === 'good' || statusLower.includes('tốt');
+          const isDanger = m.type === 'danger' || CHRONIC_STATUS_KEYWORDS.danger.some((kw) => statusLower.includes(kw));
+          const isWarning = m.type === 'warning' || CHRONIC_STATUS_KEYWORDS.warning.some((kw) => statusLower.includes(kw));
+          const isGood = m.type === 'good' || CHRONIC_STATUS_KEYWORDS.good.some((kw) => statusLower.includes(kw));
 
           const dotBg = isDanger ? 'bg-rose-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500';
           const textColor = isDanger ? 'text-rose-700' : isWarning ? 'text-amber-700' : 'text-emerald-700';

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Clock, Stethoscope, Building2, Search, CheckCircle2, User } from 'lucide-react';
 import { BottomSheet } from '../../../components/organisms/BottomSheet';
 import { CareTeamMember } from '../useCareLogic';
+import { APPOINTMENT_TIME_SLOTS, CARE_DEFAULT_CONFIG } from '../care.constants';
 
 export interface DoctorOption {
   id: string;
@@ -27,10 +28,8 @@ interface ScheduleAppointmentSheetProps {
   }) => Promise<boolean>;
 }
 
-const TIME_SLOTS = ['08:30', '09:00', '09:30', '10:00', '14:00', '14:30', '15:00', '15:30'];
-
 function getInitials(name: string): string {
-  if (!name) return 'BS';
+  if (!name) return CARE_DEFAULT_CONFIG.fallbackDoctorCode;
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -294,7 +293,7 @@ export const ScheduleAppointmentSheet: React.FC<ScheduleAppointmentSheetProps> =
             <span>Khung giờ khám (Giờ Việt Nam)</span>
           </label>
           <div className="grid grid-cols-4 gap-2">
-            {TIME_SLOTS.map((slot) => (
+            {APPOINTMENT_TIME_SLOTS.map((slot) => (
               <button
                 key={slot}
                 type="button"
