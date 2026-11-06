@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, AuthResponse } from '../../types/auth.types';
 
 export function useLoginLogic(onSuccess?: (user: User) => void) {
@@ -104,6 +104,42 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
     }
   };
 
+  // 1. Tự động lắng nghe OAuth callback token từ URL hash khi Google hoàn tất chuyển hướng
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        setLoading(true);
+        // Xóa sạch token khỏi thanh địa chỉ để bảo mật
+        window.history.replaceState(null, '', window.location.pathname);
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+          .then((res) => res.json())
+          .then(async (gProfile) => {
+            const googleFullName = (
+              gProfile.name ||
+              [gProfile.given_name, gProfile.family_name].filter(Boolean).join(' ') ||
+              (gProfile.email ? gProfile.email.split('@')[0].replace(/[._-]/g, ' ') : '')
+            ).trim();
+            await sendGoogleProfileToBackend({
+              sub: gProfile.sub || `gg_${Date.now()}`,
+              email: gProfile.email,
+              name: googleFullName,
+              picture: gProfile.picture,
+            });
+          })
+          .catch(() => {
+            setErrorMsg('Lỗi lấy thông tin hồ sơ từ Google.');
+            setLoading(false);
+          });
+      }
+    }
+  }, []);
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     setErrorMsg(null);
@@ -112,59 +148,22 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ||
         '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com';
 
-      // Kích hoạt Google Identity Services OAuth Popup
-      if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
-        const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
-          client_id: clientId,
-          scope: 'email profile openid',
-          callback: async (tokenResp: any) => {
-            if (tokenResp.error) {
-              setErrorMsg('Không thể đăng nhập tài khoản Google.');
-              setLoading(false);
-              return;
-            }
-            try {
-              const uRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${tokenResp.access_token}` },
-              });
-              const gProfile = await uRes.json();
-              const googleFullName = (
-                gProfile.name ||
-                [gProfile.given_name, gProfile.family_name].filter(Boolean).join(' ') ||
-                (gProfile.email ? gProfile.email.split('@')[0].replace(/[._-]/g, ' ') : '')
-              ).trim();
-              await sendGoogleProfileToBackend({
-                sub: gProfile.sub || `gg_${Date.now()}`,
-                email: gProfile.email,
-                name: googleFullName,
-                picture: gProfile.picture,
-              });
-            } catch {
-              setErrorMsg('Lỗi lấy thông tin hồ sơ từ Google.');
-              setLoading(false);
-            }
-          },
-        });
-        tokenClient.requestAccessToken({ prompt: 'select_account' });
-        return;
-      }
+      // Chuyển sang chuẩn Google OAuth 2.0 Redirect Flow
+      // Triệt tiêu hoàn toàn lỗi màn hình trắng accounts.google.com/gsi/transform trên Mobile WebView
+      const origin =
+        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+          ? window.location.origin
+          : 'https://localhost';
 
-      // Khi chưa cấu hình OAuth Web Client ID trên Google Console, cho phép đăng nhập tức thì qua địa chỉ Gmail
-      const promptEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', email || 'itdaogroup@gmail.com');
-      if (!promptEmail) {
-        setLoading(false);
-        return;
-      }
-      const promptName = prompt('Nhập Họ và Tên trên tài khoản Google:', fullName || promptEmail.split('@')[0]) || promptEmail.split('@')[0];
-      await sendGoogleProfileToBackend({
-        sub: `gg_${Date.now()}`,
-        email: promptEmail.trim(),
-        name: promptName.trim(),
-        picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(promptName)}`,
-      });
+      const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+        clientId
+      )}&redirect_uri=${encodeURIComponent(origin)}&response_type=token&scope=${encodeURIComponent(
+        'email profile openid'
+      )}&prompt=select_account`;
+
+      window.location.href = oauthUrl;
     } catch {
       setErrorMsg('Lỗi kết nối xác thực Google.');
-    } finally {
       setLoading(false);
     }
   };
