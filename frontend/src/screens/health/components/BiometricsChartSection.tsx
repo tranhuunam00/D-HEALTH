@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
 import { MetricType } from '../useBiometricsLogic';
+import { classifyBmi } from '../../../utils/bmi.utils';
 
 export interface BiometricsChartSectionProps {
   activeMetricObj: {
@@ -36,13 +37,22 @@ export const BiometricsChartSection: React.FC<BiometricsChartSectionProps> = ({
       {/* Top row */}
       <div className="flex items-center justify-between">
         <span className="text-sm font-extrabold text-slate-800">{activeMetricObj.name} · 7 ngày</span>
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-extrabold ${
-            isNoData ? 'bg-slate-100 text-slate-600' : 'bg-[#EAF8F0] text-[#166534]'
-          }`}
-        >
-          {isNoData ? 'Chưa có số đo' : 'Mức 1 · Tốt'}
-        </span>
+        {isNoData ? (
+          <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600">
+            Chưa có số đo
+          </span>
+        ) : activeMetricObj.id === 'bmi' ? (() => {
+          const cat = classifyBmi(activeMetricObj.value);
+          return (
+            <span className={`px-3 py-1 rounded-full text-xs font-extrabold border ${cat.badgeClass}`}>
+              {cat.label}
+            </span>
+          );
+        })() : (
+          <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-[#EAF8F0] text-[#166534]">
+            Mức 1 · Tốt
+          </span>
+        )}
       </div>
 
       {/* Value row */}

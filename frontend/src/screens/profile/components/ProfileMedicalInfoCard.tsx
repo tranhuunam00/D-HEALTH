@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
+import { classifyBmi } from '../../../utils/bmi.utils';
 
 export interface ProfileMedicalInfoCardProps {
   bloodType: string;
@@ -20,16 +21,7 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
   setWeightKg,
   bmi,
 }) => {
-  const getBmiCategory = (val: string) => {
-    const n = parseFloat(val);
-    if (isNaN(n) || n <= 0) return { label: 'Chưa đủ dữ liệu', color: 'text-slate-500' };
-    if (n < 18.5) return { label: 'Thiếu cân', color: 'text-amber-500' };
-    if (n < 23) return { label: 'Bình thường (chuẩn Châu Á)', color: 'text-emerald-600' };
-    if (n < 25) return { label: 'Tiền béo phì', color: 'text-amber-600' };
-    return { label: 'Béo phì', color: 'text-rose-600' };
-  };
-
-  const bmiCat = getBmiCategory(bmi);
+  const bmiCat = classifyBmi(bmi);
 
   return (
     <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-2xs space-y-3">

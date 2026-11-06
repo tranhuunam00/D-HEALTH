@@ -149,11 +149,13 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com';
 
       // Chuyển sang chuẩn Google OAuth 2.0 Redirect Flow
-      // Triệt tiêu hoàn toàn lỗi màn hình trắng accounts.google.com/gsi/transform trên Mobile WebView
-      const origin =
+      // Chuẩn hóa origin để khớp chính xác với Google Cloud Console Authorized URIs
+      let origin =
         typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
           ? window.location.origin
           : 'https://localhost';
+
+      origin = origin.replace(/\/+$/, '');
 
       const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
         clientId

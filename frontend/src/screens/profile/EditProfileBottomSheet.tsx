@@ -4,6 +4,7 @@ import { BottomSheet } from '../../components/organisms/BottomSheet';
 import { Input } from '../../components/atoms/Input';
 import { Button } from '../../components/atoms/Button';
 import { FamilyMember } from '../../types/member.types';
+import { classifyBmi } from '../../utils/bmi.utils';
 
 export interface EditProfileBottomSheetProps {
   isOpen: boolean;
@@ -172,20 +173,17 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
             <Activity className="w-4 h-4 text-teal-400 shrink-0" />
             <span className="font-semibold">Chỉ số khối (BMI) tự động:</span>
           </div>
-          {liveBmi ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-black text-white">{liveBmi}</span>
-              <span className="text-[10px] text-teal-300 font-bold px-2 py-0.5 rounded-full bg-teal-500/20">
-                {Number(liveBmi) < 18.5
-                  ? 'Thiếu cân'
-                  : Number(liveBmi) < 23
-                  ? 'Bình thường'
-                  : Number(liveBmi) < 25
-                  ? 'Tiền béo phì'
-                  : 'Béo phì'}
-              </span>
-            </div>
-          ) : (
+          {liveBmi ? (() => {
+            const bmiCat = classifyBmi(liveBmi);
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-black text-white">{liveBmi}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${bmiCat.badgeClass}`}>
+                  {bmiCat.label}
+                </span>
+              </div>
+            );
+          })() : (
             <span className="text-slate-400 italic">Nhập chiều cao & cân nặng</span>
           )}
         </div>

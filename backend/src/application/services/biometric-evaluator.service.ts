@@ -61,3 +61,17 @@ export function calculateAdherenceRate(totalDoses: number, takenDoses: number): 
   const rate = Math.round((takenDoses / totalDoses) * 100);
   return Math.min(100, Math.max(0, rate));
 }
+
+export function classifyBmi(bmi: number): BiometricEvaluationResult {
+  if (isNaN(bmi) || bmi <= 0 || bmi > 100) {
+    throw new Error('Giá trị BMI không hợp lệ');
+  }
+  if (bmi < 16) return { category: 'severe_thinness', severity: 'danger', label: 'Gầy độ III' };
+  if (bmi < 17) return { category: 'moderate_thinness', severity: 'warning', label: 'Gầy độ II' };
+  if (bmi < 18.5) return { category: 'mild_thinness', severity: 'warning', label: 'Gầy độ I' };
+  if (bmi < 25) return { category: 'normal', severity: 'normal', label: 'Bình thường' };
+  if (bmi < 30) return { category: 'overweight', severity: 'warning', label: 'Thừa cân' };
+  if (bmi < 35) return { category: 'obese_1', severity: 'danger', label: 'Béo phì độ 1' };
+  if (bmi < 40) return { category: 'obese_2', severity: 'danger', label: 'Béo phì độ II' };
+  return { category: 'obese_3', severity: 'danger', label: 'Béo phì độ III' };
+}

@@ -4,6 +4,7 @@ import {
   classifySpO2,
   classifyHeartRate,
   calculateAdherenceRate,
+  classifyBmi,
 } from './biometric-evaluator.service';
 
 describe('BiometricEvaluatorService - classifyBloodPressure (TDD)', () => {
@@ -156,5 +157,35 @@ describe('BiometricEvaluatorService - calculateAdherenceRate (TDD)', () => {
     expect(() => calculateAdherenceRate(-5, 2)).toThrow('Tham số số liều thuốc không hợp lệ');
     expect(() => calculateAdherenceRate(10, -1)).toThrow('Tham số số liều thuốc không hợp lệ');
     expect(() => calculateAdherenceRate(NaN, 5)).toThrow('Tham số số liều thuốc không hợp lệ');
+  });
+});
+
+describe('BiometricEvaluatorService - classifyBmi (TDD 8-Tier Clinical Standard)', () => {
+  it('phân loại đúng 8 mức BMI theo chuẩn lâm sàng', () => {
+    expect(classifyBmi(15.2)).toEqual({ category: 'severe_thinness', severity: 'danger', label: 'Gầy độ III' });
+    expect(classifyBmi(16.5)).toEqual({ category: 'moderate_thinness', severity: 'warning', label: 'Gầy độ II' });
+    expect(classifyBmi(17.8)).toEqual({ category: 'mild_thinness', severity: 'warning', label: 'Gầy độ I' });
+    expect(classifyBmi(22.0)).toEqual({ category: 'normal', severity: 'normal', label: 'Bình thường' });
+    expect(classifyBmi(27.5)).toEqual({ category: 'overweight', severity: 'warning', label: 'Thừa cân' });
+    expect(classifyBmi(32.1)).toEqual({ category: 'obese_1', severity: 'danger', label: 'Béo phì độ 1' });
+    expect(classifyBmi(37.4)).toEqual({ category: 'obese_2', severity: 'danger', label: 'Béo phì độ II' });
+    expect(classifyBmi(42.5)).toEqual({ category: 'obese_3', severity: 'danger', label: 'Béo phì độ III' });
+  });
+
+  it('xử lý chính xác các mốc giá trị biên chuyển giao', () => {
+    expect(classifyBmi(16).category).toBe('moderate_thinness');
+    expect(classifyBmi(17).category).toBe('mild_thinness');
+    expect(classifyBmi(18.5).category).toBe('normal');
+    expect(classifyBmi(25).category).toBe('overweight');
+    expect(classifyBmi(30).category).toBe('obese_1');
+    expect(classifyBmi(35).category).toBe('obese_2');
+    expect(classifyBmi(40).category).toBe('obese_3');
+  });
+
+  it('ném ngoại lệ khi BMI âm, bằng 0, vượt ngưỡng sinh lý (>100) hoặc NaN', () => {
+    expect(() => classifyBmi(0)).toThrow('Giá trị BMI không hợp lệ');
+    expect(() => classifyBmi(-3)).toThrow('Giá trị BMI không hợp lệ');
+    expect(() => classifyBmi(105)).toThrow('Giá trị BMI không hợp lệ');
+    expect(() => classifyBmi(NaN)).toThrow('Giá trị BMI không hợp lệ');
   });
 });
