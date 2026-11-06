@@ -39,10 +39,10 @@ export const CareTeamRow: React.FC<CareTeamRowProps> = ({
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-sm font-extrabold text-slate-900">
-          My Care Team
+          Bác Sĩ Chuyên Khoa (Tham Khảo)
         </h3>
         <span className="text-xs text-slate-400 font-medium">
-          Chạm để xem, sửa liên hệ
+          Chạm để xem thông tin bác sĩ
         </span>
       </div>
 

@@ -6,12 +6,14 @@ interface DoctorProfileCardProps {
   member: CareTeamMember;
   onSendPreExamDossier: () => void;
   onEdit?: () => void;
+  onBookAppointment?: () => void;
 }
 
 export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({
   member,
   onSendPreExamDossier,
   onEdit,
+  onBookAppointment,
 }) => {
   const isDoctor = member.code !== 'HD';
 
@@ -70,6 +72,17 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({
           Email
         </a>
       </div>
+
+      {/* Book Appointment CTA */}
+      {onBookAppointment && (
+        <button
+          type="button"
+          onClick={onBookAppointment}
+          className="w-full py-2.5 rounded-2xl bg-teal-50 border border-teal-200/80 hover:bg-teal-100 text-[#1F7A8C] text-xs font-extrabold flex items-center justify-center gap-1.5 transition active:scale-98"
+        >
+          <span>📅 Đặt lịch khám với {member.name}</span>
+        </button>
+      )}
 
       {/* Action Buttons Row */}
       <div className="flex items-center gap-2.5 pt-1 border-t border-slate-50">

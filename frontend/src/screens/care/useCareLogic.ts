@@ -27,9 +27,25 @@ export interface SharingStats {
   readonly expiringDays: number;
 }
 
+function getInitials(name: string): string {
+  if (!name) return 'BS';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getColorByRole(role: string): 'mint' | 'pink' | 'purple' | 'slate' {
+  const r = (role || '').toLowerCase();
+  if (r.includes('tim mạch') || r.includes('nội tiết')) return 'pink';
+  if (r.includes('ung bướu') || r.includes('ngoại')) return 'purple';
+  if (r.includes('cđha') || r.includes('xét nghiệm')) return 'mint';
+  return 'slate';
+}
+
 export function useCareLogic(memberId = 'mem_145deb71') {
   const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointment | null>(null);
   const [careTeam, setCareTeam] = useState<CareTeamMember[]>([]);
+  const [referenceDoctors, setReferenceDoctors] = useState<CareTeamMember[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [sharingStats, setSharingStats] = useState<SharingStats>({
@@ -45,29 +61,50 @@ export function useCareLogic(memberId = 'mem_145deb71') {
   const fetchCareSummary = useCallback(async () => {
     setLoading(true);
     try {
-      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-        ? window.location.origin
-        : 'http://localhost';
+      const baseUrl =
+        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+          ? window.location.origin
+          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const res = await fetch(`${baseUrl}/api/care/${memberId}/care-summary`, { headers });
-      if (res.ok) {
-        const json = await res.json();
+      const [summaryRes, doctorsRes] = await Promise.all([
+        fetch(`${baseUrl}/api/care/${memberId}/care-summary`, { headers }),
+        fetch(`${baseUrl}/api/doctors`),
+      ]);
+
+      if (summaryRes.ok) {
+        const json = await summaryRes.json();
         if (json?.data) {
           setUpcomingAppointment(json.data.upcomingAppointment || null);
           const team = Array.isArray(json.data.careTeam) ? json.data.careTeam : [];
           setCareTeam(team);
-          if (team.length > 0 && !selectedMemberId) {
-            const defaultDoc =
-              team.find((m: CareTeamMember) =>
-                m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')
-              ) || team[0];
-            setSelectedMemberId(defaultDoc.id);
-          }
           if (json.data.sharingStats) {
             setSharingStats(json.data.sharingStats);
           }
+        }
+      }
+
+      if (doctorsRes.ok) {
+        const docJson = await doctorsRes.json();
+        if (Array.isArray(docJson?.data)) {
+          const mappedDocs: CareTeamMember[] = docJson.data.map((d: any) => {
+            const title = d.academic_title ? `${d.academic_title} ` : '';
+            const fullName = `${title}${d.full_name || 'Bác sĩ'}`.trim();
+            const role = d.department_name || d.specialty || 'Khám chuyên khoa';
+            return {
+              id: d.id,
+              granteeId: d.id,
+              code: getInitials(d.full_name || 'BS'),
+              name: fullName,
+              role,
+              org: d.facility_name || 'Bệnh viện đối tác',
+              phone: d.phone_number || '1900 1115',
+              email: d.email || 'bacsi@dhealth.vn',
+              color: getColorByRole(role),
+            };
+          });
+          setReferenceDoctors(mappedDocs);
         }
       }
     } catch (err) {
@@ -75,28 +112,47 @@ export function useCareLogic(memberId = 'mem_145deb71') {
     } finally {
       setLoading(false);
     }
-  }, [memberId, selectedMemberId]);
+  }, [memberId]);
 
   useEffect(() => {
     fetchCareSummary();
   }, [fetchCareSummary]);
 
+  // Hợp nhất danh sách bác sĩ: Ưu tiên careTeam của bệnh nhân, bổ sung danh sách bác sĩ hệ thống để tham khảo
+  const displayDoctors = useMemo(() => {
+    if (careTeam.length > 0) {
+      // Bổ sung các bác sĩ hệ thống chưa có trong careTeam để người dùng tham khảo thêm
+      const existingIds = new Set(careTeam.map((c) => c.granteeId || c.id));
+      const additional = referenceDoctors.filter((r) => !existingIds.has(r.id));
+      return [...careTeam, ...additional];
+    }
+    return referenceDoctors;
+  }, [careTeam, referenceDoctors]);
+
+  // Tự động chọn bác sĩ đầu tiên nếu chưa có selectedMemberId
+  useEffect(() => {
+    if (displayDoctors.length > 0) {
+      const exists = displayDoctors.some((m) => m.id === selectedMemberId);
+      if (!exists) {
+        setSelectedMemberId(displayDoctors[0].id);
+      }
+    }
+  }, [displayDoctors, selectedMemberId]);
+
   const selectedMember = useMemo(
     () =>
-      careTeam.find((m) => m.id === selectedMemberId) ||
-      careTeam.find((m) =>
-        m.role.toLowerCase().includes('tim mạch') || m.role.toLowerCase().includes('bác sĩ')
-      ) ||
-      careTeam[0] ||
+      displayDoctors.find((m) => m.id === selectedMemberId) ||
+      displayDoctors[0] ||
       null,
-    [careTeam, selectedMemberId]
+    [displayDoctors, selectedMemberId]
   );
 
   const handleSendPreExamDossier = async () => {
     try {
-      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-        ? window.location.origin
-        : 'http://localhost';
+      const baseUrl =
+        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+          ? window.location.origin
+          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const res = await fetch(`${baseUrl}/api/care/${memberId}/send-pre-exam-dossier`, {
         method: 'POST',
@@ -125,9 +181,10 @@ export function useCareLogic(memberId = 'mem_145deb71') {
     email: string;
   }) => {
     try {
-      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-        ? window.location.origin
-        : 'http://localhost';
+      const baseUrl =
+        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+          ? window.location.origin
+          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const res = await fetch(`${baseUrl}/api/care/${memberId}/add-doctor`, {
         method: 'POST',
@@ -165,9 +222,10 @@ export function useCareLogic(memberId = 'mem_145deb71') {
     purpose: string;
   }): Promise<boolean> => {
     try {
-      const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-        ? window.location.origin
-        : 'http://localhost';
+      const baseUrl =
+        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
+          ? window.location.origin
+          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const res = await fetch(`${baseUrl}/api/care/${memberId}/appointments`, {
         method: 'POST',
@@ -193,7 +251,7 @@ export function useCareLogic(memberId = 'mem_145deb71') {
 
   return {
     upcomingAppointment,
-    careTeam,
+    careTeam: displayDoctors,
     selectedMember,
     selectedMemberId,
     setSelectedMemberId,
