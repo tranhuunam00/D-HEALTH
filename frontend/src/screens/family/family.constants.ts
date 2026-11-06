@@ -13,3 +13,4 @@ export const FAMILY_RELATIONSHIP_TEXT_MAP = Object.freeze({
   child: 'Con',
   parent: 'Bố / Mẹ',
 });
+

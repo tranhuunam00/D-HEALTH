@@ -10,3 +10,4 @@ export const MODALITY_TAXONOMY_KEYWORDS = Object.freeze({
   MM: Object.freeze(['MM', 'NHŨ ẢNH', 'MAMMO']),
   XQ: Object.freeze(['XQ', 'X-QUANG', 'XR', 'XRAY']),
 });
+

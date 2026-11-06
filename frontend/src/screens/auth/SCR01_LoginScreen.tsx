@@ -43,12 +43,12 @@ export const SCR01_LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }
         <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="flex flex-col gap-3.5">
           {mode === 'register' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-700">Họ và tên bệnh nhân</label>
+              <label className="text-xs font-bold text-slate-700">Họ và tên</label>
               <div className="flex items-center gap-2.5 h-12 px-3.5 rounded-2xl border border-slate-200 bg-white focus-within:border-[#1F7A8C] focus-within:ring-2 focus-within:ring-[#1F7A8C]/20 transition">
                 <User className="w-4 h-4 text-slate-400 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Nhập họ và tên bệnh nhân..."
+                  placeholder="Nhập họ và tên..."
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full text-xs font-semibold text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"

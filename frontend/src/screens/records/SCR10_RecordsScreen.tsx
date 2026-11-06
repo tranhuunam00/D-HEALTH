@@ -96,7 +96,7 @@ export const SCR10_RecordsScreen: React.FC<SCR10Props> = ({
           className="bg-[#111827] text-white font-extrabold text-xs px-4 py-3 rounded-full shadow-lg flex items-center gap-1.5 active:scale-95 transition hover:bg-slate-850"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Nhập kết quả</span>
+          <span>Nhập kết quả</span>
         </button>
       </div>
 

@@ -78,7 +78,7 @@ export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1F7A8C] text-white text-xs font-bold shadow-xs hover:bg-[#186372] active:scale-95 transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Nhập phiếu mới</span>
+              <span>Nhập phiếu mới</span>
             </button>
           </div>
 

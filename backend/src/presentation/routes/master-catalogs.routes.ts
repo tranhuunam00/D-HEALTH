@@ -220,7 +220,7 @@ export function createMasterCatalogsRouter(pool: Pool): Router {
     try {
       const query = `
         SELECT a.*, 
-               COALESCE(fm.full_name, 'Bệnh nhân') AS patient_name,
+               COALESCE(fm.full_name, 'Người dùng') AS patient_name,
                u.phone_number AS patient_phone,
                u.email AS patient_email
         FROM appointments a

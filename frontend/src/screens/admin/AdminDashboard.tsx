@@ -221,7 +221,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 </div>
                 <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
                   <span className="text-xs text-slate-500 flex items-center gap-1.5 mb-1">
-                    <Users className="w-4 h-4 text-purple-600" /> Bệnh Nhân & Gia Đình
+                    <Users className="w-4 h-4 text-purple-600" /> Người Dùng & Gia Đình
                   </span>
                   <div className="text-2xl font-black text-slate-900">
                     {stats.totalMembers} <span className="text-xs font-normal text-slate-400">hồ sơ</span>

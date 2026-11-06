@@ -139,7 +139,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
     setError(null);
     fetch(`/api/admin/users/${userId}/dossier`)
       .then((res) => {
-        if (!res.ok) throw new Error('Không thể tải bệnh án bệnh nhân');
+        if (!res.ok) throw new Error('Không thể tải bệnh án người dùng');
         return res.json();
       })
       .then((json) => {
@@ -150,7 +150,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         }
       })
       .catch((err) => {
-        console.error('Lỗi tải hồ sơ bệnh nhân:', err);
+        console.error('Lỗi tải hồ sơ người dùng:', err);
         setError(err.message || 'Lỗi kết nối máy chủ');
       })
       .finally(() => setLoading(false));
@@ -168,7 +168,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
   const user = dossier?.user;
   const ownerMember = dossier?.members?.find((m: any) => m.relationship === 'owner') || dossier?.members?.[0];
-  const displayName = ownerMember?.full_name || user?.full_name || userName || 'Bệnh Nhân';
+  const displayName = ownerMember?.full_name || user?.full_name || userName || 'Người Dùng';
 
   const allReports = (dossier?.reports || []).filter((r: any) => r.kind !== 'pathology' && r.category !== 'GPB');
   const labReports = allReports.filter((r: any) => getReportKind(r) === 'lab');
@@ -268,7 +268,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
           {loading && (
             <div className="py-16 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-[#1F7A8C]" />
-              <span className="text-xs">Đang nạp toàn bộ hồ sơ y tế bệnh nhân...</span>
+              <span className="text-xs">Đang nạp toàn bộ hồ sơ y tế người dùng...</span>
             </div>
           )}
 
@@ -358,7 +358,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 <div className="space-y-4">
                   {dossier.biometrics.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">
-                      Bệnh nhân chưa có bản ghi sinh trắc học nào.
+                      Người dùng chưa có bản ghi sinh trắc học nào.
                     </div>
                   ) : (
                     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
@@ -612,7 +612,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                   {reportFilter === 'chronic' ? (
                     chronicConditions.length === 0 ? (
                       <div className="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">
-                        Chưa ghi nhận bệnh lý mạn tính nào từ hồ sơ bệnh nhân.
+                        Chưa ghi nhận bệnh lý mạn tính nào từ hồ sơ người dùng.
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -914,7 +914,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                           <span>Danh Sách Lịch Hẹn Khám ({dossier.appointments?.length || 0})</span>
                         </h4>
                         <p className="text-xs text-slate-500 pt-0.5">
-                          Tất cả lịch hẹn khám bệnh nhân đã đặt từ Ứng dụng Di Động D-Health
+                          Tất cả lịch hẹn khám người dùng đã đặt từ Ứng dụng Di Động D-Health
                         </p>
                       </div>
                       <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200 flex items-center gap-1">
@@ -925,7 +925,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
                     {!dossier.appointments || dossier.appointments.length === 0 ? (
                       <div className="p-8 text-center text-slate-400 text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                        Bệnh nhân chưa có lịch hẹn khám nào được đặt.
+                        Người dùng chưa có lịch hẹn khám nào được đặt.
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

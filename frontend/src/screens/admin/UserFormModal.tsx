@@ -244,7 +244,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full min-h-[46px] bg-white border border-slate-300 rounded-2xl px-4 py-2 text-slate-900 focus:outline-none focus:border-[#1F7A8C] text-sm"
                 >
-                  <option value="patient">Bệnh Nhân (Patient)</option>
+                  <option value="patient">Người Dùng (User)</option>
                   <option value="doctor">Bác Sĩ Điều Trị (Doctor)</option>
                   <option value="clinical_admin">Quản Trị Lâm Sàng (Clinical Admin)</option>
                   <option value="super_admin">Super Admin (Toàn quyền hệ thống)</option>

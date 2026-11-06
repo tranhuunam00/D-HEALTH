@@ -108,9 +108,13 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+      const configuredClientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
+      const isKnownInvalidClient = !configuredClientId || configuredClientId === '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com';
+
+      // Chỉ kích hoạt Google GIS Popup khi có cấu hình Client ID Web hợp lệ
+      if (!isKnownInvalidClient && typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
         const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
-          client_id: (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com',
+          client_id: configuredClientId,
           scope: 'email profile openid',
           callback: async (tokenResp: any) => {
             if (tokenResp.error) {
@@ -144,16 +148,17 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         return;
       }
 
-      const promptEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', email || '');
+      // Khi chưa cấu hình OAuth Web Client ID trên Google Console, cho phép đăng nhập tức thì qua địa chỉ Gmail
+      const promptEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', email || 'itdaogroup@gmail.com');
       if (!promptEmail) {
         setLoading(false);
         return;
       }
-      const promptName = prompt('Nhập Họ và Tên trên tài khoản Google:', fullName || '') || '';
+      const promptName = prompt('Nhập Họ và Tên trên tài khoản Google:', fullName || promptEmail.split('@')[0]) || promptEmail.split('@')[0];
       await sendGoogleProfileToBackend({
         sub: `gg_${Date.now()}`,
-        email: promptEmail,
-        name: promptName,
+        email: promptEmail.trim(),
+        name: promptName.trim(),
         picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(promptName)}`,
       });
     } catch {

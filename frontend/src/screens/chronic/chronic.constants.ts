@@ -18,3 +18,4 @@ export const CHRONIC_TYPE_KEYWORDS = Object.freeze({
   cardio: Object.freeze(['tim', 'huyết áp']),
   diabetes: Object.freeze(['đái', 'đường', 'tiểu']),
 });
+

@@ -82,7 +82,7 @@ export const AppointmentsGrid: React.FC<AppointmentsGridProps> = ({ appointments
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3">Bệnh Nhân</th>
+                <th className="px-4 py-3">Người Dùng</th>
                 <th className="px-4 py-3">Bác Sĩ Phụ Trách</th>
                 <th className="px-4 py-3">Thời Gian Khám</th>
                 <th className="px-4 py-3">Cơ Sở Y Tế</th>

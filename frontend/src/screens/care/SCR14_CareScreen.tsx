@@ -58,7 +58,7 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             className="h-8 px-3.5 rounded-full bg-[#1F7A8C] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[#186473] active:scale-95 transition cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>+ Đặt lịch khám</span>
+            <span>Đặt lịch khám</span>
           </button>
         </div>
 
@@ -115,7 +115,7 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
               className="text-xs font-bold text-[#1F7A8C] hover:text-[#186473] flex items-center gap-1 transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ Thêm lịch khám</span>
+              <span>Thêm lịch khám</span>
             </button>
           </div>
 
@@ -134,7 +134,7 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
                 className="w-full py-2.5 rounded-2xl border border-dashed border-slate-300 bg-white/70 hover:bg-white text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-98 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 text-[#1F7A8C]" />
-                <span>+ Đặt thêm lịch khám định kỳ mới</span>
+                <span>Đặt thêm lịch khám định kỳ mới</span>
               </button>
             </div>
           ) : (
@@ -152,7 +152,7 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
                 </div>
               </div>
               <span className="px-3 py-1.5 rounded-xl bg-[#1F7A8C] text-white font-bold text-xs shadow-xs group-hover:bg-[#186473] transition">
-                + Đặt lịch ngay
+                Đặt lịch ngay
               </span>
             </div>
           )}

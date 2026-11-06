@@ -106,7 +106,7 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
         </div>
 
         <Input
-          label="Họ và tên bệnh nhân"
+          label="Họ và tên"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required

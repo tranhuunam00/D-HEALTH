@@ -19,7 +19,7 @@ export function parseGooglePayload(payload: any): GoogleUserProfile {
   const rawName = (payload.name || payload.fullName || payload.displayName || '').trim();
   const emailUser = email && typeof email === 'string' && email.includes('@')
     ? email.split('@')[0].replace(/[._-]/g, ' ')
-    : 'Bệnh nhân';
+    : 'Người dùng';
   const fullName = rawName && rawName !== 'Người dùng Google' && rawName !== 'Bệnh Nhân Google'
     ? rawName
     : emailUser;

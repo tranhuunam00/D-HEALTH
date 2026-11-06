@@ -39,7 +39,7 @@ export const AdminUserManagement: React.FC = () => {
     if (role === 'doctor') {
       return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">Bác Sĩ</span>;
     }
-    return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-teal-50 text-[#1F7A8C] font-bold border border-teal-200">Bệnh Nhân</span>;
+    return <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-teal-50 text-[#1F7A8C] font-bold border border-teal-200">Người Dùng</span>;
   };
 
   return (
@@ -133,7 +133,7 @@ export const AdminUserManagement: React.FC = () => {
                           setDossierUserName(u.full_name);
                         }}
                         className="px-2.5 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#1F7A8C] text-[11px] font-bold inline-flex items-center gap-1 border border-teal-200 transition cursor-pointer"
-                        title="Xem toàn bộ hồ sơ y tế bệnh nhân"
+                        title="Xem toàn bộ hồ sơ y tế người dùng"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>Xem Hồ Sơ</span>

@@ -140,7 +140,7 @@ export const BiometricsChartSection: React.FC<BiometricsChartSectionProps> = ({
         className="w-full h-12 rounded-full bg-white border-2 border-[#1F7A8C] hover:bg-teal-50/40 text-[#1F7A8C] text-sm font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition shadow-2xs mt-1 min-h-[44px]"
       >
         <Plus className="w-4 h-4" />
-        <span>+ Nhập số đo {activeMetricObj.name.toLowerCase()} thủ công</span>
+        <span>Nhập số đo {activeMetricObj.name.toLowerCase()} thủ công</span>
       </button>
     </div>
   );

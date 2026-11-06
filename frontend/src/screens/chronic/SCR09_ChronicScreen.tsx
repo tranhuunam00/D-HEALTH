@@ -101,7 +101,7 @@ export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
               onClick={handleOpenAddCondition}
               className="mt-1 px-4 py-2 rounded-full bg-[#1F7A8C] text-white text-xs font-bold shadow-xs active:scale-95 transition"
             >
-              + Thêm bệnh mạn tính đầu tiên
+              Thêm bệnh mạn tính đầu tiên
             </button>
           </div>
         ) : (
@@ -141,7 +141,7 @@ export const SCR09_ChronicScreen: React.FC<SCR09Props> = ({
               className="w-full py-4 rounded-3xl border-2 border-dashed border-slate-300 bg-white/60 hover:bg-white text-slate-600 font-bold text-xs flex items-center justify-center gap-2 transition active:scale-98"
             >
               <Plus className="w-4 h-4 text-[#1F7A8C]" />
-              <span>+ Thêm bệnh mạn tính cần theo dõi</span>
+              <span>Thêm bệnh mạn tính cần theo dõi</span>
             </button>
           </>
         )}

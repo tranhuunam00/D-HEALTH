@@ -58,7 +58,7 @@ export function useEmergencyLogic(memberId = 'mem_145deb71', activeMemberName?: 
           const parsedAllergies = parseAllergies(card);
 
           setEmergencyData({
-            fullName: card.member_name || activeMemberName || 'Bệnh nhân',
+            fullName: card.member_name || activeMemberName || 'Người dùng',
             birthYear: card.member_birth_date ? new Date(card.member_birth_date).getFullYear() : 1990,
             gender: card.member_gender || 'Khác',
             bloodType: card.blood_group_snapshot || card.member_blood_type || 'Chưa cập nhật',
