@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">D-Health</string>
     <string name="title_activity_main">D-Health</string>
-    <string name="package_name">vn.dhealth.app</string>
-    <string name="custom_url_scheme">vn.dhealth.app</string>
+    <string name="package_name">com.dhealth.homecare</string>
+    <string name="custom_url_scheme">com.dhealth.homecare</string>
 </resources>

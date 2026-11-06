@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'vn.dhealth.app',
+  appId: 'com.dhealth.homecare',
   appName: 'D-Health',
   webDir: 'dist',
   server: {
