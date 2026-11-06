@@ -108,13 +108,14 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const configuredClientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
-      const isKnownInvalidClient = !configuredClientId || configuredClientId === '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com';
+      const clientId =
+        (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ||
+        '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com';
 
-      // Chỉ kích hoạt Google GIS Popup khi có cấu hình Client ID Web hợp lệ
-      if (!isKnownInvalidClient && typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+      // Kích hoạt Google Identity Services OAuth Popup
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
         const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
-          client_id: configuredClientId,
+          client_id: clientId,
           scope: 'email profile openid',
           callback: async (tokenResp: any) => {
             if (tokenResp.error) {

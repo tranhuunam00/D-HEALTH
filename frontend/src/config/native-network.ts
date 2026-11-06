@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 
-// Địa chỉ máy chủ Backend D-HEALTH mặc định cho ứng dụng Mobile Native
-export const DEFAULT_REMOTE_API = 'http://103.90.227.173:7102';
+// Địa chỉ máy chủ Backend D-HEALTH mặc định cho ứng dụng Mobile Native (HTTPS)
+export const DEFAULT_REMOTE_API = 'https://dhealth.home-care.vn';
 
 /**
  * Trả về địa chỉ Base URL phù hợp cho môi trường hiện tại:
