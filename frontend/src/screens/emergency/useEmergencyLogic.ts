@@ -58,10 +58,10 @@ export function useEmergencyLogic(memberId = 'mem_145deb71', activeMemberName?: 
           const parsedAllergies = parseAllergies(card);
 
           setEmergencyData({
-            fullName: activeMemberName || 'Trần Hữu Nam',
-            birthYear: 1999,
-            gender: 'Nam',
-            bloodType: card.blood_group_snapshot || 'B+',
+            fullName: card.member_name || activeMemberName || 'Bệnh nhân',
+            birthYear: card.member_birth_date ? new Date(card.member_birth_date).getFullYear() : 1990,
+            gender: card.member_gender || 'Khác',
+            bloodType: card.blood_group_snapshot || card.member_blood_type || 'Chưa cập nhật',
             allergies: parsedAllergies.display,
             rawAllergies: parsedAllergies.list,
             conditions: parseConditions(card),
@@ -71,7 +71,7 @@ export function useEmergencyLogic(memberId = 'mem_145deb71', activeMemberName?: 
               phone: primaryContact.phone_number || '115',
             },
             emergencyNotes: card.emergency_notes || '',
-            qrData: card.offline_qr_payload || `DHEALTH:EMERGENCY:${memberId}:B+`,
+            qrData: card.offline_qr_payload || `DHEALTH:EMERGENCY:${memberId}:${card.blood_group_snapshot || card.member_blood_type || 'UNKNOWN'}`,
           });
           return;
         }

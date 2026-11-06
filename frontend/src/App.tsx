@@ -146,7 +146,7 @@ export default function App() {
     }
   };
 
-  const activeMemberId = selectedMember?.id || currentUser?.activeMemberId || 'mem_145deb71';
+  const activeMemberId = selectedMember?.id || currentUser?.activeMemberId || currentUser?.id || '';
   const activeMemberName = selectedMember?.name || currentUser?.fullName || '';
 
   const renderMobileScreen = () => {

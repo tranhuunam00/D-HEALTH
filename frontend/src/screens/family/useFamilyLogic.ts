@@ -49,7 +49,7 @@ function mapMemberToViewModel(m: any): FamilyMemberViewModel {
     bloodType: m.blood_type || '--',
     isAbove18: Boolean(m.is_above_18),
     consentApproved: Boolean(m.consent_approved),
-    condition: m.relationship === 'owner' ? 'Tăng huyết áp · ĐTĐ type 2' : 'Sức khoẻ ổn định',
+    condition: m.chronic_conditions || 'Sức khoẻ ổn định',
     avatarUrl: m.avatar_url || m.avatarUrl || '',
   };
 }

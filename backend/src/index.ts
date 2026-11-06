@@ -126,8 +126,24 @@ app.get('/api/members', async (req: Request, res: Response) => {
   const { userId } = req.query;
   try {
     const query = userId
-      ? 'SELECT * FROM family_members WHERE user_id = $1 ORDER BY created_at ASC'
-      : "SELECT * FROM family_members WHERE id != 'mem_admin' AND full_name NOT ILIKE '%quản trị%' AND full_name NOT ILIKE '%admin%' ORDER BY created_at ASC";
+      ? `SELECT fm.*, 
+                COALESCE((
+                  SELECT string_agg(condition_name, ' · ') 
+                  FROM patient_chronic_conditions 
+                  WHERE member_id = fm.id AND is_active = true AND is_deleted = false
+                ), '') AS chronic_conditions
+         FROM family_members fm 
+         WHERE fm.user_id = $1 
+         ORDER BY fm.created_at ASC`
+      : `SELECT fm.*, 
+                COALESCE((
+                  SELECT string_agg(condition_name, ' · ') 
+                  FROM patient_chronic_conditions 
+                  WHERE member_id = fm.id AND is_active = true AND is_deleted = false
+                ), '') AS chronic_conditions
+         FROM family_members fm 
+         WHERE fm.id != 'mem_admin' AND fm.full_name NOT ILIKE '%quản trị%' AND fm.full_name NOT ILIKE '%admin%' 
+         ORDER BY fm.created_at ASC`;
     const params = userId ? [userId] : [];
     const result = await pool.query(query, params);
     res.json({ data: result.rows });
@@ -210,7 +226,18 @@ app.get('/api/emergency/:memberId', async (req: Request, res: Response) => {
   const { memberId } = req.params;
   const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
   try {
-    const cardRes = await pool.query('SELECT * FROM emergency_cards WHERE (member_id = $1 OR member_id = $2)', [memberId, resolvedMemberId]);
+    const cardRes = await pool.query(
+      `SELECT c.*, 
+              fm.full_name AS member_name, 
+              fm.birth_date AS member_birth_date, 
+              fm.gender AS member_gender, 
+              fm.blood_type AS member_blood_type
+       FROM family_members fm
+       LEFT JOIN emergency_cards c ON c.member_id = fm.id
+       WHERE (fm.id = $1 OR fm.id = $2)
+       LIMIT 1`,
+      [memberId, resolvedMemberId]
+    );
     const contactsRes = await pool.query('SELECT * FROM emergency_contacts WHERE (member_id = $1 OR member_id = $2) ORDER BY priority_order ASC', [memberId, resolvedMemberId]);
     res.json({ 
       data: {
