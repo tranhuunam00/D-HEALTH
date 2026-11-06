@@ -46,10 +46,30 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
     handleTakeDose,
   } = useHomeLogic(propMemberId || user?.activeMemberId || 'mem_145deb71', user);
 
+  const storedUser = typeof window !== 'undefined' ? (() => {
+    try {
+      const s = localStorage.getItem('dhealth_user');
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  })() : null;
+
+  const effectiveUser = user || storedUser;
+
   const activeMember = members.find((m) => m.id === activeMemberId) || {
     id: activeMemberId,
-    full_name: propMemberName || user?.fullName || '',
+    full_name: propMemberName || effectiveUser?.fullName || '',
+    avatar_url: effectiveUser?.avatarUrl || effectiveUser?.avatar_url || '',
   };
+
+  const currentAvatarUrl =
+    (activeMember as any).avatar_url ||
+    (activeMember as any).avatarUrl ||
+    effectiveUser?.avatarUrl ||
+    effectiveUser?.avatar_url ||
+    effectiveUser?.picture ||
+    '';
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-[#111827] pb-24 relative flex flex-col font-sans select-none">
@@ -57,6 +77,7 @@ export const SCR02_HomeScreen: React.FC<SCR02Props> = ({
         {/* 1. Header with Avatar & Greeting */}
         <HomeHeader
           fullName={activeMember.full_name}
+          avatarUrl={currentAvatarUrl}
           onOpenProfile={() => onNavigate?.('profile')}
           onOpenEmergency={onOpenEmergency}
         />

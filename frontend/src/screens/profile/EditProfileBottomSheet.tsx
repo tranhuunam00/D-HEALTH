@@ -5,6 +5,7 @@ import { Input } from '../../components/atoms/Input';
 import { Button } from '../../components/atoms/Button';
 import { FamilyMember } from '../../types/member.types';
 import { classifyBmi } from '../../utils/bmi.utils';
+import { formatAvatarUrl } from '../../config/native-network';
 
 export interface EditProfileBottomSheetProps {
   isOpen: boolean;
@@ -76,7 +77,7 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-teal-400 overflow-hidden flex items-center justify-center text-xl font-bold text-white shadow">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={formatAvatarUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <span>{(fullName || 'B').charAt(0)}</span>
               )}

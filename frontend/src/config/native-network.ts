@@ -19,7 +19,21 @@ export const getApiBaseUrl = (): string => {
 };
 
 /**
- * Tự động chuyển tiếp các cuộc gọi fetch('/api/...') sang remote backend
+ * Chuẩn hóa URL ảnh đại diện hoặc tệp tin media:
+ * - Nếu là ảnh data base64 hoặc URL tuyệt đối (http/https): giữ nguyên.
+ * - Nếu là đường dẫn tương đối (/s3/... hoặc /api/...): tự động gắn base URL máy chủ remote khi chạy native.
+ */
+export const formatAvatarUrl = (url?: string | null): string => {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  const base = getApiBaseUrl();
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
+/**
+ * Tự động chuyển tiếp các cuộc gọi fetch('/api/...') hoặc fetch('/s3/...') sang remote backend
  * khi ứng dụng được khởi chạy dưới dạng Mobile Native App.
  */
 export const initNativeFetchInterceptor = (): void => {
@@ -33,7 +47,7 @@ export const initNativeFetchInterceptor = (): void => {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     let url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 
-    if (url.startsWith('/api/')) {
+    if (url.startsWith('/api/') || url.startsWith('/s3/')) {
       url = `${baseUrl}${url}`;
       if (typeof input === 'string' || input instanceof URL) {
         return originalFetch(url, init);

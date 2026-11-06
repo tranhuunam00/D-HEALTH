@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, UserPlus, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { useFamilyLogic } from './useFamilyLogic';
+import { formatAvatarUrl } from '../../config/native-network';
 
 export interface SCR16Props {
   readonly onNavigate: (screen: string) => void;
@@ -76,7 +77,7 @@ export const SCR16_FamilyProfilesScreen: React.FC<SCR16Props> = ({
                     <div className="flex items-center gap-3">
                       {mem.avatarUrl ? (
                         <img
-                          src={mem.avatarUrl}
+                          src={formatAvatarUrl(mem.avatarUrl)}
                           alt={mem.fullName}
                           className="w-12 h-12 rounded-2xl object-cover shadow border border-slate-200"
                         />

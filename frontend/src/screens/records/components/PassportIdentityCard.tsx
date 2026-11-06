@@ -1,5 +1,6 @@
 import React from 'react';
 import type { PassportMemberInfo } from '../useRecordsLogic';
+import { formatAvatarUrl } from '../../../config/native-network';
 
 interface PassportIdentityCardProps {
   member: PassportMemberInfo;
@@ -22,7 +23,7 @@ export const PassportIdentityCard: React.FC<PassportIdentityCardProps> = ({
       <div className="flex items-center gap-3 min-w-0">
         {member.avatarUrl ? (
           <img
-            src={member.avatarUrl}
+            src={formatAvatarUrl(member.avatarUrl)}
             alt={member.fullName}
             className="w-12 h-12 rounded-full object-cover border-2 border-sky-200 shadow-2xs shrink-0"
           />

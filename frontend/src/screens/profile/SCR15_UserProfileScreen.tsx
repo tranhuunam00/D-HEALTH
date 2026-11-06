@@ -13,6 +13,7 @@ export interface UserProfileScreenProps {
   onLogout?: () => void;
   user?: UserType | null;
   activeMemberId?: string;
+  onProfileUpdated?: (updatedUser: any) => void;
 }
 
 export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
@@ -21,6 +22,7 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   onLogout,
   user: propUser,
   activeMemberId,
+  onProfileUpdated,
 }) => {
   const {
     user,
@@ -50,7 +52,7 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     bmi,
     handleUpdateProfile,
     handleSaveDirect,
-  } = useProfileLogic(propUser, activeMemberId);
+  } = useProfileLogic(propUser, activeMemberId, onProfileUpdated);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,9 +60,23 @@ export const SCR15_UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         if (typeof reader.result === 'string') {
-          setAvatarUrl(reader.result);
+          const newAvt = reader.result;
+          setAvatarUrl(newAvt);
+          // Tự động lưu ngay ảnh đại diện mới lên hệ thống và MinIO
+          await handleUpdateProfile({
+            full_name: fullName,
+            gender,
+            birth_date: birthDate || null,
+            blood_type: bloodType || null,
+            height_cm: heightCm ? parseFloat(heightCm) : undefined,
+            weight_kg: weightKg ? parseFloat(weightKg) : undefined,
+            avatar_url: newAvt,
+            citizenId: citizenId || null,
+            address: address || null,
+            email: user?.email || null,
+          });
         }
       };
       reader.readAsDataURL(file);

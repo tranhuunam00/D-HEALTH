@@ -1,5 +1,6 @@
-import React, { RefObject } from 'react';
+import React, { useState, useEffect, RefObject } from 'react';
 import { Camera, Check } from 'lucide-react';
+import { formatAvatarUrl } from '../../../config/native-network';
 
 export interface ProfileIdentityCardProps {
   fullName: string;
@@ -14,12 +15,25 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
   fileInputRef,
   onAvatarFileChange,
 }) => {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
+  const cleanAvatarUrl = formatAvatarUrl(avatarUrl);
+
   return (
     <div className="bg-gradient-to-b from-[#E0F2FE]/80 via-[#F0FDFA]/40 to-white rounded-3xl p-5 border border-slate-100 shadow-2xs flex flex-col items-center text-center">
       <div className="relative">
         <div className="w-20 h-20 rounded-full bg-blue-50 border-2 border-white shadow-md overflow-hidden flex items-center justify-center text-2xl font-black text-[#1F7A8C]">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+          {cleanAvatarUrl && !imgError ? (
+            <img
+              src={cleanAvatarUrl}
+              alt={fullName}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             <span>{(fullName || 'N').charAt(0)}</span>
           )}

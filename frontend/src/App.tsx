@@ -281,7 +281,16 @@ export default function App() {
           <SCR15_UserProfileScreen
             user={currentUser}
             activeMemberId={activeMemberId}
-            onBack={() => navigateTo('home')}
+            onProfileUpdated={(updatedUser) => {
+              if (updatedUser) setCurrentUser(updatedUser);
+            }}
+            onBack={() => {
+              try {
+                const stored = localStorage.getItem('dhealth_user');
+                if (stored) setCurrentUser(JSON.parse(stored));
+              } catch {}
+              navigateTo('home');
+            }}
             onNavigateToAdmin={() => setViewMode('pc_admin')}
             onLogout={handleLogout}
           />

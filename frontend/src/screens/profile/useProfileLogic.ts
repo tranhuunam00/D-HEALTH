@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { FamilyMember } from '../../types/member.types';
 import { User } from '../../types/auth.types';
 
-export function useProfileLogic(initialUser?: User | null, initialMemberId?: string) {
+export function useProfileLogic(
+  initialUser?: User | null,
+  initialMemberId?: string,
+  onProfileUpdated?: (updatedUser: any) => void
+) {
   const [user, setUser] = useState<User | null>(initialUser || null);
   const [activeMember, setActiveMember] = useState<FamilyMember>(() => {
     if (initialUser) {
@@ -151,7 +155,8 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         }
       }
 
-      const res = await fetch(`/api/user/profile/members/${activeMember.id}`, {
+      const targetMemberId = activeMember.id || initialMemberId || 'mem_145deb71';
+      const res = await fetch(`/api/user/profile/members/${targetMemberId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(payload),
@@ -175,27 +180,28 @@ export function useProfileLogic(initialUser?: User | null, initialMemberId?: str
         }
         try {
           const stored = localStorage.getItem('dhealth_user');
-          if (stored) {
-            const u = JSON.parse(stored);
-            u.fullName = updatedMember.full_name;
-            u.avatarUrl = updatedMember.avatar_url;
-            u.bloodType = updatedMember.blood_type;
-            u.heightCm = updatedMember.height_cm;
-            u.weightKg = updatedMember.weight_kg;
-            if (updatedUser) {
-              u.national_id = updatedUser.national_id;
-              u.nationalId = updatedUser.national_id;
-              u.citizenId = updatedUser.national_id;
-              u.address = updatedUser.address;
-            } else {
-              if (payload.citizenId) {
-                u.national_id = payload.citizenId;
-                u.nationalId = payload.citizenId;
-                u.citizenId = payload.citizenId;
-              }
-              if (payload.address) u.address = payload.address;
+          let finalUserObj: any = stored ? JSON.parse(stored) : {};
+          finalUserObj.fullName = updatedMember.full_name;
+          finalUserObj.avatarUrl = updatedMember.avatar_url;
+          finalUserObj.bloodType = updatedMember.blood_type;
+          finalUserObj.heightCm = updatedMember.height_cm;
+          finalUserObj.weightKg = updatedMember.weight_kg;
+          if (updatedUser) {
+            finalUserObj.national_id = updatedUser.national_id;
+            finalUserObj.nationalId = updatedUser.national_id;
+            finalUserObj.citizenId = updatedUser.national_id;
+            finalUserObj.address = updatedUser.address;
+          } else {
+            if (payload.citizenId) {
+              finalUserObj.national_id = payload.citizenId;
+              finalUserObj.nationalId = payload.citizenId;
+              finalUserObj.citizenId = payload.citizenId;
             }
-            localStorage.setItem('dhealth_user', JSON.stringify(u));
+            if (payload.address) finalUserObj.address = payload.address;
+          }
+          localStorage.setItem('dhealth_user', JSON.stringify(finalUserObj));
+          if (onProfileUpdated) {
+            onProfileUpdated(finalUserObj);
           }
         } catch {}
       }

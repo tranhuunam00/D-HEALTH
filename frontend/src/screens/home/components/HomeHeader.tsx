@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
+import { formatAvatarUrl } from '../../../config/native-network';
 
 export interface HomeHeaderProps {
   fullName: string;
@@ -14,12 +15,19 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   onOpenProfile,
   onOpenEmergency,
 }) => {
+  const [imgError, setImgError] = useState(false);
   const initial = (fullName || 'N').charAt(0);
   const formattedToday = new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   }).format(new Date());
+
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
+  const cleanAvatarUrl = formatAvatarUrl(avatarUrl);
 
   return (
     <div className="flex flex-col gap-3">
@@ -31,8 +39,13 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1F7A8C] to-[#2F6FDB] text-white flex items-center justify-center font-black text-base shadow-sm hover:opacity-90 active:scale-95 transition-all shrink-0 overflow-hidden border border-slate-200"
           aria-label="Xem thông tin cá nhân"
         >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+          {cleanAvatarUrl && !imgError ? (
+            <img
+              src={cleanAvatarUrl}
+              alt={fullName}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             initial
           )}

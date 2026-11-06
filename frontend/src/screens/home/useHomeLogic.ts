@@ -46,7 +46,12 @@ export function useHomeLogic(initialMemberId = 'mem_145deb71', user?: any) {
       if (memRes?.ok) {
         const mData = await memRes.json();
         if (Array.isArray(mData.data) && mData.data.length > 0) {
-          setMembers(mData.data);
+          const list = mData.data.map((m: any) => ({
+            ...m,
+            avatar_url: m.avatar_url || m.avatarUrl || '',
+            avatarUrl: m.avatar_url || m.avatarUrl || '',
+          }));
+          setMembers(list);
         }
       }
 
