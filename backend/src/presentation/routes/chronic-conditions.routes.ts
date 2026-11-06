@@ -11,33 +11,19 @@ export function createChronicConditionsRouter(pool: Pool): Router {
     const { memberId } = req.params;
     const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
-      let condRes = await pool.query(
+      const condRes = await pool.query(
         `SELECT * FROM patient_chronic_conditions 
          WHERE (member_id = $1 OR member_id = $2) AND is_active = true AND is_deleted = false
          ORDER BY created_at ASC`,
         [memberId, resolvedMemberId]
       );
-      if (condRes.rows.length === 0 && memberId !== 'nam') {
-        condRes = await pool.query(
-          `SELECT * FROM patient_chronic_conditions 
-           WHERE member_id = 'mem_145deb71' AND is_active = true AND is_deleted = false
-           ORDER BY created_at ASC`
-        );
-      }
 
-      let taskRes = await pool.query(
+      const taskRes = await pool.query(
         `SELECT * FROM care_tasks 
          WHERE (member_id = $1 OR member_id = $2) AND is_deleted = false
          ORDER BY priority ASC, created_at ASC`,
         [memberId, resolvedMemberId]
       );
-      if (taskRes.rows.length === 0 && memberId !== 'nam') {
-        taskRes = await pool.query(
-          `SELECT * FROM care_tasks 
-           WHERE member_id = 'mem_145deb71' AND is_deleted = false
-           ORDER BY priority ASC, created_at ASC`
-        );
-      }
 
       return res.json({
         success: true,

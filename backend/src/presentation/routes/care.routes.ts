@@ -29,7 +29,7 @@ export function createCareRouter(pool: Pool): Router {
     const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       const upcomingAppointment = await getUpcomingAppointment(pool, resolvedMemberId);
-      let grantsRes = await pool.query(
+      const grantsRes = await pool.query(
         `SELECT g.id, g.grantee_id, g.grantee_name, g.grantee_role, g.grantee_org, g.grantee_phone, g.grantee_email, g.expires_at,
                 dep.id AS department_id, dep.code AS department_code, dep.short_name AS department_short_name, dep.color AS department_color
          FROM share_grants g
@@ -39,18 +39,6 @@ export function createCareRouter(pool: Pool): Router {
          ORDER BY g.created_at ASC`,
         [memberId, resolvedMemberId]
       );
-
-      if (grantsRes.rows.length === 0 && memberId !== 'nam') {
-        grantsRes = await pool.query(
-          `SELECT g.id, g.grantee_id, g.grantee_name, g.grantee_role, g.grantee_org, g.grantee_phone, g.grantee_email, g.expires_at,
-                  dep.id AS department_id, dep.code AS department_code, dep.short_name AS department_short_name, dep.color AS department_color
-           FROM share_grants g
-           LEFT JOIN master_doctors d ON g.grantee_id = d.id
-           LEFT JOIN master_departments dep ON d.department_id = dep.id
-           WHERE g.member_id = 'nam' AND g.status = 'active'
-           ORDER BY g.created_at ASC`
-        );
-      }
 
       const careTeam = grantsRes.rows.map(mapGrantToCareMember);
       const expiringSoon = grantsRes.rows.filter((r: any) => isExpiringSoon(r.expires_at)).length;
