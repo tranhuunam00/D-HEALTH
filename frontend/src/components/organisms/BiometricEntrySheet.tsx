@@ -17,7 +17,6 @@ export const BiometricEntrySheet: React.FC<BiometricEntrySheetProps> = ({ isOpen
   const [spo2, setSpo2] = useState('');
   const [glucose, setGlucose] = useState('');
   const [temperature, setTemperature] = useState('');
-  const [weightKg, setWeightKg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +27,6 @@ export const BiometricEntrySheet: React.FC<BiometricEntrySheetProps> = ({ isOpen
       spo2: spo2 ? parseInt(spo2, 10) : undefined,
       glucose: glucose ? parseFloat(glucose) : undefined,
       temperature: temperature ? parseFloat(temperature) : undefined,
-      weightKg: weightKg ? parseFloat(weightKg) : undefined,
     });
   };
 
@@ -79,23 +77,14 @@ export const BiometricEntrySheet: React.FC<BiometricEntrySheetProps> = ({ isOpen
             onChange={(e) => setTemperature(e.target.value)}
           />
           <Input
-            label="Cân nặng (kg)"
-            placeholder="72.5"
+            label="Đường huyết mao mạch (mmol/L)"
+            placeholder="5.6"
             type="number"
             step="0.1"
-            value={weightKg}
-            onChange={(e) => setWeightKg(e.target.value)}
+            value={glucose}
+            onChange={(e) => setGlucose(e.target.value)}
           />
         </div>
-
-        <Input
-          label="Đường huyết mao mạch (mmol/L)"
-          placeholder="5.6"
-          type="number"
-          step="0.1"
-          value={glucose}
-          onChange={(e) => setGlucose(e.target.value)}
-        />
 
         <div className="flex gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
