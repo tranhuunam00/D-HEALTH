@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { SCR01_LoginScreen } from './screens/auth/SCR01_LoginScreen';
 import { SCR02_HomeScreen } from './screens/home/SCR02_HomeScreen';
 import { SCR03_BiometricsScreen } from './screens/health/SCR03_BiometricsScreen';
@@ -125,13 +126,25 @@ export default function App() {
     verifySession();
   }, []);
 
+  const queryClient = useQueryClient();
+
   const handleLogout = async () => {
     try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
     if (typeof window !== 'undefined') {
       localStorage.removeItem('dhealth_user');
       localStorage.removeItem('dhealth_token');
       localStorage.removeItem('dhealth_screen');
+      localStorage.removeItem('dhealth_member');
+      // Xoá triệt để mọi key cache dhealth_* trong localStorage
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('dhealth_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      sessionStorage.clear();
     }
+    // Xóa sạch toàn bộ in-memory query cache của React Query
+    queryClient.clear();
     setCurrentUser(null);
     setSelectedMember(null);
     setCurrentScreen('login');

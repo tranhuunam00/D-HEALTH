@@ -148,8 +148,52 @@ export function useLoginLogic(onSuccess?: (user: User) => void) {
         (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ||
         '506643667310-r9u7425ui324en7kh17sskspj5e55kte.apps.googleusercontent.com';
 
-      // Chuyển sang chuẩn Google OAuth 2.0 Redirect Flow
-      // Chuẩn hóa origin để khớp chính xác với Google Cloud Console Authorized URIs
+      // Ưu tiên 1: Sử dụng Google Identity Services (GSI) Token Client qua Popup
+      // Cơ chế này chỉ cần Authorized JavaScript origins (không lo lỗi redirect_uri_mismatch)
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+        const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse?.error) {
+              setErrorMsg(tokenResponse.error_description || 'Đăng nhập Google bị hủy hoặc gặp sự cố.');
+              setLoading(false);
+              return;
+            }
+            if (tokenResponse?.access_token) {
+              try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                });
+                const gProfile = await res.json();
+                const googleFullName = (
+                  gProfile.name ||
+                  [gProfile.given_name, gProfile.family_name].filter(Boolean).join(' ') ||
+                  (gProfile.email ? gProfile.email.split('@')[0].replace(/[._-]/g, ' ') : '')
+                ).trim();
+                await sendGoogleProfileToBackend({
+                  sub: gProfile.sub || `gg_${Date.now()}`,
+                  email: gProfile.email,
+                  name: googleFullName,
+                  picture: gProfile.picture,
+                });
+              } catch {
+                setErrorMsg('Không thể lấy thông tin tài khoản Google.');
+              } finally {
+                setLoading(false);
+              }
+            }
+          },
+          error_callback: (err: any) => {
+            setErrorMsg(err?.message || 'Không thể mở cửa sổ xác thực Google.');
+            setLoading(false);
+          },
+        });
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
+      }
+
+      // Ưu tiên 2: Fallback qua chuẩn OAuth 2.0 Redirect Flow
       let origin =
         typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
           ? window.location.origin
