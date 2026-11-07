@@ -71,6 +71,7 @@ export function createCareRouter(pool: Pool): Router {
   // 3. POST /:memberId/add-doctor - Thêm / Cập nhật bác sĩ vào Care Team
   router.post('/:memberId/add-doctor', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = (memberId === 'nam' || !memberId) ? 'mem_145deb71' : memberId;
     try {
       const resolved = await resolveDoctorInfo(pool, req.body);
       if (!resolved.name) {
@@ -80,7 +81,7 @@ export function createCareRouter(pool: Pool): Router {
         });
       }
 
-      await upsertShareGrant(pool, memberId, req.body.doctorId, resolved);
+      await upsertShareGrant(pool, resolvedMemberId, req.body.doctorId, resolved);
 
       return res.status(201).json({
         success: true,

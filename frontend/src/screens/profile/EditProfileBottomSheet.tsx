@@ -189,6 +189,21 @@ export const EditProfileBottomSheet: React.FC<EditProfileBottomSheetProps> = ({
           )}
         </div>
 
+        {/* Chuẩn phân loại 8 mức BMI */}
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-2.5 text-[10px] text-slate-400 space-y-1">
+          <div className="font-bold text-slate-300 uppercase tracking-wider">Thang đo BMI chuẩn:</div>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+            <div>• BMI &lt; 16: Gầy độ III</div>
+            <div>• 25 ≤ BMI &lt; 30: Thừa cân</div>
+            <div>• 16 ≤ BMI &lt; 17: Gầy độ II</div>
+            <div>• 30 ≤ BMI &lt; 35: Béo phì độ 1</div>
+            <div>• 17 ≤ BMI &lt; 18.5: Gầy độ I</div>
+            <div>• 35 ≤ BMI &lt; 40: Béo phì độ II</div>
+            <div className="text-teal-400 font-semibold">• 18.5 ≤ BMI &lt; 25: Bình thường</div>
+            <div>• BMI ≥ 40: Béo phì độ III</div>
+          </div>
+        </div>
+
         <div className="flex gap-2 pt-3">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Hủy

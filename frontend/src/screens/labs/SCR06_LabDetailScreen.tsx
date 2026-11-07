@@ -14,7 +14,7 @@ interface SCR06Props {
 export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
   onNavigate,
   activeMemberName = '',
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
   reportId,
 }) => {
   const [report, setReport] = useState<any>(null);

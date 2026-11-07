@@ -250,6 +250,70 @@ app.get('/api/emergency/:memberId', async (req: Request, res: Response) => {
   }
 });
 
+
+// 5b. Cập nhật Thẻ cấp cứu & Liên hệ khẩn cấp (POST & PUT)
+const handleUpdateEmergency = async (req: Request, res: Response) => {
+  const { memberId } = req.params;
+  const resolvedMemberId = (memberId === 'nam' || !memberId) ? 'mem_145deb71' : memberId;
+  const { bloodGroup, allergies, chronicConditions, criticalMeds, emergencyNotes, contacts } = req.body;
+
+  try {
+    const allergiesJson = allergies ? JSON.stringify(allergies) : '[]';
+    const chronicJson = chronicConditions ? JSON.stringify(chronicConditions) : '[]';
+    const medsJson = criticalMeds ? JSON.stringify(criticalMeds) : '[]';
+    const offlineQr = 'DHEALTH:EMERGENCY:' + (bloodGroup || 'O+') + ':CONTACTS=' + (contacts?.length || 0);
+
+    await pool.query(
+      'INSERT INTO emergency_cards (member_id, blood_group_snapshot, allergies, chronic_conditions, current_critical_meds, emergency_notes, offline_qr_payload) VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb, $6, $7) ON CONFLICT (member_id) DO UPDATE SET blood_group_snapshot = COALESCE(EXCLUDED.blood_group_snapshot, emergency_cards.blood_group_snapshot), allergies = EXCLUDED.allergies, chronic_conditions = EXCLUDED.chronic_conditions, current_critical_meds = EXCLUDED.current_critical_meds, emergency_notes = EXCLUDED.emergency_notes, offline_qr_payload = EXCLUDED.offline_qr_payload, updated_at = NOW()',
+      [resolvedMemberId, bloodGroup || null, allergiesJson, chronicJson, medsJson, emergencyNotes || null, offlineQr]
+    );
+
+    if (bloodGroup) {
+      await pool.query(
+        'UPDATE family_members SET blood_type = $1, updated_at = NOW() WHERE id = $2',
+        [bloodGroup, resolvedMemberId]
+      );
+    }
+
+    if (Array.isArray(contacts)) {
+      await pool.query('DELETE FROM emergency_contacts WHERE member_id = $1', [resolvedMemberId]);
+      for (let i = 0; i < contacts.length; i++) {
+        const cnt = contacts[i];
+        if (cnt.name && cnt.phone) {
+          const contactId = 'ec_' + Date.now() + '_' + i;
+          await pool.query(
+            'INSERT INTO emergency_contacts (id, member_id, contact_name, relationship, phone_number, priority_order) VALUES ($1, $2, $3, $4, $5, $6)',
+            [contactId, resolvedMemberId, cnt.name, cnt.relationship || 'Người thân', cnt.phone, i + 1]
+          );
+        }
+      }
+    }
+
+    const cardRes = await pool.query(
+      'SELECT c.*, fm.full_name AS member_name, fm.birth_date AS member_birth_date, fm.gender AS member_gender, fm.blood_type AS member_blood_type FROM family_members fm LEFT JOIN emergency_cards c ON c.member_id = fm.id WHERE fm.id = $1 LIMIT 1',
+      [resolvedMemberId]
+    );
+    const contactsRes = await pool.query(
+      'SELECT * FROM emergency_contacts WHERE member_id = $1 ORDER BY priority_order ASC',
+      [resolvedMemberId]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Cập nhật thẻ cấp cứu thành công.',
+      data: {
+        card: cardRes.rows[0] || null,
+        contacts: contactsRes.rows,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+app.post('/api/emergency/:memberId', handleUpdateEmergency);
+app.put('/api/emergency/:memberId', handleUpdateEmergency);
+
 // 6. Thống kê toàn cảnh cho Admin Tổng (Super Admin Dashboard Stats)
 app.get('/api/admin/overview', async (req: Request, res: Response) => {
   try {

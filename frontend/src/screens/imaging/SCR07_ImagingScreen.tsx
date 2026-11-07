@@ -41,7 +41,7 @@ const getModalityBadgeStyle = (modality: string) => {
 export const SCR07_ImagingScreen: React.FC<SCR07Props> = ({
   onNavigate,
   activeMemberName = '',
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
 }) => {
   const {
     selectedModality,

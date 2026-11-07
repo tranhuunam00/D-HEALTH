@@ -24,7 +24,7 @@ const SPECIALTY_PILLS: readonly { id: LabSpecialtyCode; label: string }[] = Obje
 export const SCR05_LabsScreen: React.FC<SCR05Props> = ({
   onNavigate,
   activeMemberName = '',
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
 }) => {
   const {
     selectedCategory,

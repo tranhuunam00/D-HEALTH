@@ -74,9 +74,10 @@ function buildReportInsertPayload(params: InsertReportParams): Record<string, an
     defaultConclusion = body.kind === 'lab' ? 'Kết quả xét nghiệm hoàn tất' : 'Không ghi nhận tổn thương bất thường';
   }
 
+  const targetMemberId = (body.memberId === 'nam' || !body.memberId) ? 'mem_145deb71' : body.memberId;
   const insertData: Record<string, any> = {
     id: reportId,
-    member_id: body.memberId,
+    member_id: targetMemberId,
     kind: body.kind,
     category: body.category || 'SH',
     title: body.title,
@@ -307,15 +308,16 @@ export function createClinicalReportsRouter(pool: Pool): Router {
   // 4. GET /evaluations/:memberId - Lấy đánh giá đáp ứng khối u theo RECIST 1.1 từ CSDL
   router.get('/evaluations/:memberId', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
       const result = await pool.query(
         `SELECT tte.*, r.title, r.performed_at, ist.modality, ist.body_part
          FROM tumor_tracking_evaluations tte
          JOIN imaging_studies ist ON tte.study_id = ist.id
          JOIN clinical_reports r ON ist.report_id = r.id
-         WHERE r.member_id = $1
+         WHERE (r.member_id = $1 OR r.member_id = $2)
          ORDER BY r.performed_at ASC, tte.created_at ASC`,
-        [memberId]
+        [memberId, resolvedMemberId]
       );
       const rows = result.rows || [];
       const latest = rows.length > 0 ? rows[rows.length - 1] : null;

@@ -24,7 +24,8 @@ export function createBiometricsRouter(pool: Pool): Router {
 
   // 2. POST / - Nhập mới số đo sinh trắc học
   router.post('/', async (req: AuthenticatedRequest, res: Response) => {
-    const { memberId, biometricType, systolic, diastolic, valueNumeric, unit, deviceId } = req.body;
+    const { memberId, systolic, diastolic, valueNumeric, unit, deviceId } = req.body;
+    const biometricType = req.body.biometricType || req.body.type;
 
     if (!memberId || !biometricType) {
       return res.status(400).json({

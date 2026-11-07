@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
 import { MetricType } from '../useBiometricsLogic';
-import { classifyBmi } from '../../../utils/bmi.utils';
+import { classifyBmi, BMI_REFERENCE_RANGES } from '../../../utils/bmi.utils';
 
 export interface BiometricsChartSectionProps {
   activeMetricObj: {
@@ -142,6 +142,70 @@ export const BiometricsChartSection: React.FC<BiometricsChartSectionProps> = ({
             : 'Chưa có đủ số đo để phân tích xu hướng. Nhấn nút bên dưới để nhập số đo mới.'}
         </span>
       </div>
+
+      {/* 8-Tier Clinical Standard BMI Reference Table (Chuẩn lâm sàng 8 mức) */}
+      {activeMetricObj.id === 'bmi' && (() => {
+        const curCat = classifyBmi(activeMetricObj.value);
+        const leftItems = BMI_REFERENCE_RANGES.filter((r) => r.column === 'left');
+        const rightItems = BMI_REFERENCE_RANGES.filter((r) => r.column === 'right');
+        return (
+          <div className="bg-slate-50/90 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+                Thang đo chuẩn chỉ số BMI
+              </span>
+              <span className="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200/60 px-2 py-0.5 rounded-full">
+                8 mức lâm sàng
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] pt-1">
+              {/* Cột trái */}
+              <div className="space-y-1.5">
+                {leftItems.map((item) => {
+                  const isActive = curCat.tier === item.tier;
+                  return (
+                    <div
+                      key={item.tier}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-xl transition ${
+                        isActive
+                          ? 'bg-[#1F7A8C] text-white font-black shadow-xs'
+                          : 'text-slate-700 font-medium'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-white' : 'bg-[#1F7A8C]'}`} />
+                      <span className="truncate">
+                        <strong className="font-bold">{item.range}:</strong> {item.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Cột phải */}
+              <div className="space-y-1.5">
+                {rightItems.map((item) => {
+                  const isActive = curCat.tier === item.tier;
+                  return (
+                    <div
+                      key={item.tier}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-xl transition ${
+                        isActive
+                          ? 'bg-[#1F7A8C] text-white font-black shadow-xs'
+                          : 'text-slate-700 font-medium'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-white' : 'bg-[#1F7A8C]'}`} />
+                      <span className="truncate">
+                        <strong className="font-bold">{item.range}:</strong> {item.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Large Manual Input Button */}
       <button

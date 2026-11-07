@@ -213,6 +213,7 @@ export function createPrescriptionsRouter(pool: Pool): Router {
   // 5. POST /:memberId/items - Thêm thuốc thủ công
   router.post('/:memberId/items', async (req: AuthenticatedRequest, res: Response) => {
     const { memberId } = req.params;
+    const resolvedMemberId = (memberId === 'nam' || !memberId) ? 'mem_145deb71' : memberId;
     const {
       medicationName,
       dosage = '1 viên',
@@ -232,7 +233,7 @@ export function createPrescriptionsRouter(pool: Pool): Router {
     }
 
     try {
-      const rxId = await getOrCreateActivePrescription(pool, memberId);
+      const rxId = await getOrCreateActivePrescription(pool, resolvedMemberId);
       const { effectiveStartDate, effectiveEndDate, computedQuantity } = computeEffectiveDates(
         durationMode,
         endDate,
@@ -393,18 +394,19 @@ export function createPrescriptionsRouter(pool: Pool): Router {
 }
 
 async function getOrCreateActivePrescription(pool: Pool, memberId: string): Promise<string> {
+  const targetMemberId = (memberId === 'nam' || !memberId) ? 'mem_145deb71' : memberId;
   const rxRes = await pool.query(
-    `SELECT id FROM prescriptions WHERE member_id = $1 AND status = 'active' LIMIT 1`,
-    [memberId]
+    `SELECT id FROM prescriptions WHERE (member_id = $1 OR member_id = $2) AND status = 'active' LIMIT 1`,
+    [memberId, targetMemberId]
   );
   if (rxRes.rows[0]?.id) {
     return rxRes.rows[0].id;
   }
-  const rxId = `rx_${memberId}_${Date.now()}`;
+  const rxId = `rx_${targetMemberId}_${Date.now()}`;
   await pool.query(
     `INSERT INTO prescriptions (id, member_id, diagnosis, prescribed_date, status)
      VALUES ($1, $2, 'Đơn thuốc cá nhân', CURRENT_DATE, 'active')`,
-    [rxId, memberId]
+    [rxId, targetMemberId]
   );
   return rxId;
 }

@@ -30,7 +30,7 @@ export const SCR10_RecordsScreen: React.FC<SCR10Props> = ({
   onNavigate,
   onSelectMember,
   activeMemberName = '',
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
 }) => {
   const { member, counts } = useRecordsLogic(activeMemberId);
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
-import { classifyBmi } from '../../../utils/bmi.utils';
+import { ChevronDown, Info } from 'lucide-react';
+import { classifyBmi, BMI_REFERENCE_RANGES } from '../../../utils/bmi.utils';
 
 export interface ProfileMedicalInfoCardProps {
   bloodType: string;
@@ -99,6 +99,24 @@ export const ProfileMedicalInfoCard: React.FC<ProfileMedicalInfoCardProps> = ({
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-black text-slate-900">{bmi}</span>
           <span className={`text-[11px] font-bold ${bmiCat.color}`}>• {bmiCat.label}</span>
+        </div>
+      </div>
+
+      {/* Chuẩn phân loại 8 mức BMI */}
+      <div className="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100 text-[10px] space-y-1.5">
+        <div className="flex items-center gap-1 text-slate-500 font-bold uppercase tracking-wider">
+          <Info className="w-3 h-3 text-[#1F7A8C]" />
+          <span>Thang đo phân loại BMI chuẩn lâm sàng:</span>
+        </div>
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-slate-600 font-medium pt-0.5">
+          <div>• BMI &lt; 16: Gầy độ III</div>
+          <div>• 25 ≤ BMI &lt; 30: Thừa cân</div>
+          <div>• 16 ≤ BMI &lt; 17: Gầy độ II</div>
+          <div>• 30 ≤ BMI &lt; 35: Béo phì độ 1</div>
+          <div>• 17 ≤ BMI &lt; 18.5: Gầy độ I</div>
+          <div>• 35 ≤ BMI &lt; 40: Béo phì độ II</div>
+          <div className="text-emerald-700 font-semibold">• 18.5 ≤ BMI &lt; 25: Bình thường</div>
+          <div>• BMI ≥ 40: Béo phì độ III</div>
         </div>
       </div>
     </div>

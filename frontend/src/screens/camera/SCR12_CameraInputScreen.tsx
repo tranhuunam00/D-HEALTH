@@ -21,7 +21,7 @@ interface SCR12Props {
 
 export const SCR12_CameraInputScreen: React.FC<SCR12Props> = ({
   onNavigate,
-  activeMemberId = 'nam',
+  activeMemberId = 'mem_145deb71',
   initialKind = 'lab',
 }) => {
   const logic = useCameraInputLogic(activeMemberId, initialKind);

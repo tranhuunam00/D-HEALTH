@@ -6,6 +6,24 @@ export interface BmiClassification {
   readonly badgeClass: string;
 }
 
+export interface BmiRangeInfo {
+  readonly range: string;
+  readonly label: string;
+  readonly tier: string;
+  readonly column: 'left' | 'right';
+}
+
+export const BMI_REFERENCE_RANGES: readonly BmiRangeInfo[] = Object.freeze([
+  { range: 'BMI < 16', label: 'Gầy độ III', tier: 'severe_thinness', column: 'left' },
+  { range: '16 ≤ BMI < 17', label: 'Gầy độ II', tier: 'moderate_thinness', column: 'left' },
+  { range: '17 ≤ BMI < 18.5', label: 'Gầy độ I', tier: 'mild_thinness', column: 'left' },
+  { range: '18.5 ≤ BMI < 25', label: 'Bình thường', tier: 'normal', column: 'left' },
+  { range: '25 ≤ BMI < 30', label: 'Thừa cân', tier: 'overweight', column: 'right' },
+  { range: '30 ≤ BMI < 35', label: 'Béo phì độ 1', tier: 'obese_1', column: 'right' },
+  { range: '35 ≤ BMI < 40', label: 'Béo phì độ II', tier: 'obese_2', column: 'right' },
+  { range: 'BMI ≥ 40', label: 'Béo phì độ III', tier: 'obese_3', column: 'right' },
+]);
+
 /**
  * Phân loại chỉ số BMI theo thang đo lâm sàng 8 mức chuẩn y tế:
  * - BMI < 16: Gầy độ III

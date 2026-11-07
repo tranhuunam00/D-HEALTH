@@ -9,7 +9,7 @@ import {
   LAB_METRICS_INFO,
 } from './camera-input.types';
 
-export function useCameraInputLogic(initialMemberId = 'nam', initialKind: ClinicalDocKind = 'lab') {
+export function useCameraInputLogic(initialMemberId = 'mem_145deb71', initialKind: ClinicalDocKind = 'lab') {
   const [kind, setKind] = useState<ClinicalDocKind>(initialKind);
 
   useEffect(() => {
@@ -211,9 +211,14 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
 
       if (res.ok) {
         onSuccess();
+      } else {
+        const errData = await res.json().catch(() => null);
+        const errMsg = errData?.error?.message || `Lỗi lưu kết quả cận lâm sàng (Mã ${res.status})`;
+        alert(errMsg);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi lưu kết quả cận lâm sàng:', err);
+      alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
     } finally {
       setIsSaving(false);
     }

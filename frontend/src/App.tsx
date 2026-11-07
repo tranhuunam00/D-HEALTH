@@ -67,7 +67,10 @@ export default function App() {
     return 'login';
   });
 
-  const navigateTo = (screen: MobileScreenId) => {
+  const navigateTo = (screen: MobileScreenId, param?: string) => {
+    if (screen === 'camera-ocr' && param) {
+      setCameraInputKind(param as 'lab' | 'img' | 'gpb');
+    }
     setCurrentScreen(screen);
     if (typeof window !== 'undefined' && screen !== 'login') {
       localStorage.setItem('dhealth_screen', screen);
@@ -146,7 +149,7 @@ export default function App() {
     }
   };
 
-  const activeMemberId = selectedMember?.id || currentUser?.activeMemberId || currentUser?.id || '';
+  const activeMemberId = selectedMember?.id || currentUser?.activeMemberId || currentUser?.id || 'mem_145deb71';
   const activeMemberName = selectedMember?.name || currentUser?.fullName || '';
 
   const renderMobileScreen = () => {
