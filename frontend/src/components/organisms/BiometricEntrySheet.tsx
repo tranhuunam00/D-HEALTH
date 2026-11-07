@@ -20,6 +20,10 @@ export const BiometricEntrySheet: React.FC<BiometricEntrySheetProps> = ({ isOpen
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!systolic && !diastolic && !heartRate && !spo2 && !glucose && !temperature) {
+      alert('Vui lòng nhập ít nhất một chỉ số để lưu.');
+      return;
+    }
     onSubmit({
       systolic: systolic ? parseInt(systolic, 10) : undefined,
       diastolic: diastolic ? parseInt(diastolic, 10) : undefined,

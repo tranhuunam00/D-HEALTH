@@ -81,6 +81,8 @@ export const EditEmergencySheet: React.FC<EditEmergencySheetProps> = ({
     setSaving(false);
     if (success) {
       onClose();
+    } else {
+      alert('Không thể lưu thẻ cấp cứu. Vui lòng thử lại.');
     }
   };
 

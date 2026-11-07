@@ -84,7 +84,7 @@ export const NextTasksCard: React.FC<NextTasksCardProps> = ({
                 <button
                   type="button"
                   onClick={() => onDeleteTask(task.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-rose-500 transition"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 active:scale-90 transition shrink-0"
                   title="Xoá việc này"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

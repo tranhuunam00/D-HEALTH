@@ -18,19 +18,31 @@ export interface EmergencyCardData {
 }
 
 function parseAllergies(card: any): { display: string; list: string[] } {
-  if (Array.isArray(card.allergies) && card.allergies.length > 0) {
-    const list = card.allergies.map((a: any) => (typeof a === 'string' ? a : a.allergen || String(a)));
-    const display = card.allergies
+  let allergies = card.allergies;
+  if (typeof allergies === 'string') {
+    try {
+      allergies = JSON.parse(allergies);
+    } catch {}
+  }
+  if (Array.isArray(allergies) && allergies.length > 0) {
+    const list = allergies.map((a: any) => (typeof a === 'string' ? a : a.allergen || String(a)));
+    const display = allergies
       .map((a: any) => (typeof a === 'string' ? a : `${a.allergen || a} (${a.reaction || 'Cần chú ý'})`))
       .join(', ');
     return { display, list };
   }
-  return { display: card.emergency_notes || 'Không ghi nhận dị ứng', list: [] };
+  return { display: 'Không ghi nhận dị ứng', list: [] };
 }
 
 function parseConditions(card: any): string {
-  if (Array.isArray(card.chronic_conditions) && card.chronic_conditions.length > 0) {
-    return card.chronic_conditions.join(', ');
+  let conds = card.chronic_conditions;
+  if (typeof conds === 'string') {
+    try {
+      conds = JSON.parse(conds);
+    } catch {}
+  }
+  if (Array.isArray(conds) && conds.length > 0) {
+    return conds.join(', ');
   }
   return 'Không ghi nhận bệnh nền';
 }

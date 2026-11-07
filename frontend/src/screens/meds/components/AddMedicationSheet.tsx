@@ -83,7 +83,7 @@ export const AddMedicationSheet: React.FC<AddMedicationSheetProps> = ({
       setMedicationName(initialData.medicationName || '');
       setDosage(initialData.dosage || '500 mg');
       setTimingInstructions(initialData.timingInstructions || '1 viên · sau ăn');
-      setScheduledTime(initialData.scheduledTime || '08:00');
+      setScheduledTime((initialData.scheduledTime || '08:00').slice(0, 5));
       setDurationMode(initialData.durationMode || 'daily');
       if (initialData.endDate) {
         setCustomEndDate(initialData.endDate);
@@ -174,7 +174,7 @@ export const AddMedicationSheet: React.FC<AddMedicationSheetProps> = ({
       medicationName: medicationName.trim(),
       dosage,
       timingInstructions,
-      scheduledTime: `${scheduledTime}:00`,
+      scheduledTime: `${scheduledTime.slice(0, 5)}:00`,
       durationMode,
       startDate: durationInfo.startDate,
       endDate: durationInfo.endDate,

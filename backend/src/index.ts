@@ -255,7 +255,8 @@ app.get('/api/emergency/:memberId', async (req: Request, res: Response) => {
 const handleUpdateEmergency = async (req: Request, res: Response) => {
   const { memberId } = req.params;
   const resolvedMemberId = (memberId === 'nam' || !memberId) ? 'mem_145deb71' : memberId;
-  const { bloodGroup, allergies, chronicConditions, criticalMeds, emergencyNotes, contacts } = req.body;
+  const { allergies, chronicConditions, criticalMeds, emergencyNotes, contacts } = req.body;
+  const bloodGroup = req.body.bloodGroup || req.body.bloodType;
 
   try {
     const allergiesJson = allergies ? JSON.stringify(allergies) : '[]';

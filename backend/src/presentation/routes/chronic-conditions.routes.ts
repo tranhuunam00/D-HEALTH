@@ -218,7 +218,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
       const result = await pool.query(
         `UPDATE care_tasks 
          SET is_completed = $1, completed_at = CASE WHEN $1 = true THEN CURRENT_TIMESTAMP ELSE NULL END
-         WHERE id::text = $2 OR id = $2::uuid
+         WHERE id::text = $2
          RETURNING *`,
         [isCompleted, taskId]
       );
@@ -241,7 +241,7 @@ export function createChronicConditionsRouter(pool: Pool): Router {
     const { taskId } = req.params;
     try {
       await pool.query(
-        `UPDATE care_tasks SET is_deleted = true WHERE id::text = $1 OR id = $1::uuid`,
+        `UPDATE care_tasks SET is_deleted = true WHERE id::text = $1`,
         [taskId]
       );
       return res.json({
