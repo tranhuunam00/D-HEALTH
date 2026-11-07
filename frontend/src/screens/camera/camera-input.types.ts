@@ -31,18 +31,9 @@ export const CLASSIFICATION_LABELS: Record<ClassificationCategory, string> = {
   DT: 'Di truyền',
 };
 
-export const LAB_METRICS_INFO: Record<string, [ClassificationCategory, string]> = {
-  'LDL-C': ['SH', 'mmol/L'],
-  'HbA1c': ['SH', '%'],
-  'Glucose đói': ['SH', 'mmol/L'],
-  'Creatinin': ['SH', 'µmol/L'],
-  'Hemoglobin (Hb)': ['HH', 'g/L'],
-  'Bạch cầu (WBC)': ['HH', 'G/L'],
-  'Tiểu cầu (PLT)': ['HH', 'G/L'],
-  'Cấy nước tiểu': ['VS', ''],
-  'HBV DNA (PCR)': ['PT', 'IU/mL'],
-  'Gen CYP2C19': ['DT', ''],
-};
+import { LAB_METRICS_INFO as SHARED_LAB_METRICS_INFO } from '../../constants/lab-catalog.constants';
+
+export const LAB_METRICS_INFO: Record<string, [ClassificationCategory, string]> = SHARED_LAB_METRICS_INFO as Record<string, [ClassificationCategory, string]>;
 
 export const ORGAN_OPTIONS = [
   'Gan', 'Phổi', 'Tuyến giáp', 'Hạch', 'Tuyến vú', 'Tim', 'Túi mật',

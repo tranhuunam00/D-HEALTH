@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react';
 import { LabMetricRow, ClassificationCategory, CLASSIFICATION_LABELS } from '../camera-input.types';
+import { LAB_CATALOG_GROUPS, LAB_TEST_CATALOG } from '../../../constants/lab-catalog.constants';
 
 interface LabManualSectionProps {
   rows: LabMetricRow[];
@@ -49,16 +50,22 @@ export const LabManualSection: React.FC<LabManualSectionProps> = ({
                 onChange={(e) => onUpdateRow(index, { name: e.target.value })}
                 className="w-full h-11 px-3 pr-7 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-white focus:outline-none appearance-none"
               >
-                <option value="LDL-C">LDL-C</option>
-                <option value="HbA1c">HbA1c</option>
-                <option value="Glucose đói">Glucose đói</option>
-                <option value="Creatinin">Creatinin</option>
-                <option value="Hemoglobin (Hb)">Hemoglobin (Hb)</option>
-                <option value="Bạch cầu (WBC)">Bạch cầu (WBC)</option>
-                <option value="Tiểu cầu (PLT)">Tiểu cầu (PLT)</option>
-                <option value="Cấy nước tiểu">Cấy nước tiểu</option>
-                <option value="HBV DNA (PCR)">HBV DNA (PCR)</option>
-                <option value="Gen CYP2C19">Gen CYP2C19</option>
+                {row.name && !LAB_TEST_CATALOG.some((item) => item.name === row.name) && (
+                  <option value={row.name}>{row.name}</option>
+                )}
+                {LAB_CATALOG_GROUPS.map((group) => {
+                  const groupItems = LAB_TEST_CATALOG.filter((item) => item.category === group.category);
+                  if (groupItems.length === 0) return null;
+                  return (
+                    <optgroup key={group.category} label={group.label}>
+                      {groupItems.map((item) => (
+                        <option key={item.id} value={item.name}>
+                          {item.name} {item.unit ? `(${item.unit})` : ''}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
               </select>
               <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-3.5 pointer-events-none" />
             </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { LAB_TEST_CATALOG } from '../../constants/lab-catalog.constants';
 
 export type LabSpecialtyCode = 'all' | 'HH' | 'SH' | 'VS' | 'PT' | 'DT';
 
@@ -35,78 +36,25 @@ export interface TrackedMetric {
   readonly testCodes: readonly string[];
 }
 
-export const TRACKED_METRICS_CONFIG: readonly TrackedMetric[] = Object.freeze([
-  {
-    id: 'hba1c',
-    label: 'HbA1c',
+export const TRACKED_METRICS_CONFIG: readonly TrackedMetric[] = Object.freeze(
+  LAB_TEST_CATALOG.map((item) => ({
+    id: item.id,
+    label: item.name,
     value: '--',
-    unit: '%',
+    unit: item.unit,
     level: 'Chưa có số đo',
-    levelType: 'info',
-    points: [],
+    levelType: 'info' as const,
+    points: [] as number[],
     insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
-    testCodes: ['HBA1C', 'A1C'],
-  },
-  {
-    id: 'ldlc',
-    label: 'LDL-C',
-    value: '--',
-    unit: 'mmol/L',
-    level: 'Chưa có số đo',
-    levelType: 'warning',
-    points: [],
-    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
-    testCodes: ['LDL-C', 'LDLC', 'LDL'],
-  },
-  {
-    id: 'glucose',
-    label: 'Glucose đói',
-    value: '--',
-    unit: 'mmol/L',
-    level: 'Chưa có số đo',
-    levelType: 'normal',
-    points: [],
-    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
-    testCodes: ['GLU', 'GLUCOSE', 'GLUCOSE (ĐÓI)'],
-  },
-  {
-    id: 'cholesterol',
-    label: 'Cholesterol TP',
-    value: '--',
-    unit: 'mmol/L',
-    level: 'Chưa có số đo',
-    levelType: 'normal',
-    points: [],
-    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
-    testCodes: ['CHOL', 'CHOLESTEROL', 'CHOLESTEROL TOÀN PHẦN'],
-  },
-  {
-    id: 'triglyceride',
-    label: 'Triglycerid',
-    value: '--',
-    unit: 'mmol/L',
-    level: 'Chưa có số đo',
-    levelType: 'normal',
-    points: [],
-    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
-    testCodes: ['TRIG', 'TRIGLYCERID', 'TRIGLYCERIDE'],
-  },
-  {
-    id: 'creatinine',
-    label: 'Creatinin',
-    value: '--',
-    unit: 'µmol/L',
-    level: 'Chưa có số đo',
-    levelType: 'normal',
-    points: [],
-    insight: 'Chưa có kết quả xét nghiệm để phân tích xu hướng.',
-    testCodes: ['CREA', 'CREATININ', 'CREATININE'],
-  },
-]);
+    testCodes: item.testCodes,
+  }))
+);
+
+const DEFAULT_TRACKED_IDS = LAB_TEST_CATALOG.filter((i) => i.defaultTracked).map((i) => i.id);
 
 export function useLabsLogic(memberId = 'mem_145deb71') {
   const [selectedCategory, setSelectedCategory] = useState<LabSpecialtyCode>('all');
-  const [trackedMetricIds, setTrackedMetricIds] = useState<string[]>(['hba1c', 'ldlc']);
+  const [trackedMetricIds, setTrackedMetricIds] = useState<string[]>(DEFAULT_TRACKED_IDS);
   const [reports, setReports] = useState<readonly LabReportItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -222,13 +170,25 @@ export function useLabsLogic(memberId = 'mem_145deb71') {
         }
       }
 
+      const catItem = LAB_TEST_CATALOG.find((c) => c.id === def.id);
+      let level = 'Mức 1 · Bình thường';
+      let levelType: 'info' | 'warning' | 'normal' = 'normal';
+
+      if (catItem?.normalMax !== undefined && latestVal > catItem.normalMax) {
+        level = `Cao hơn tham chiếu (>${catItem.normalMax})`;
+        levelType = 'warning';
+      } else if (catItem?.normalMin !== undefined && latestVal < catItem.normalMin) {
+        level = `Thấp hơn tham chiếu (<${catItem.normalMin})`;
+        levelType = 'warning';
+      }
+
       return {
         id: def.id,
         label: def.label,
         value: String(latestVal).replace('.', ','),
         unit: def.unit,
-        level: 'Mức 1 · Bình thường',
-        levelType: (def.id === 'ldlc' && latestVal > 3.4) ? ('warning' as const) : ('normal' as const),
+        level,
+        levelType,
         points: matchingValues,
         insight,
         testCodes: def.testCodes,
