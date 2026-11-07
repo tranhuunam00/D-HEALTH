@@ -18,6 +18,7 @@ interface ScheduleAppointmentSheetProps {
   isOpen: boolean;
   onClose: () => void;
   doctors: CareTeamMember[];
+  initialDoctorId?: string;
   onSchedule: (data: {
     doctorId: string;
     doctorName: string;
@@ -39,6 +40,7 @@ export const ScheduleAppointmentSheet: React.FC<ScheduleAppointmentSheetProps> =
   isOpen,
   onClose,
   doctors: propDoctors,
+  initialDoctorId,
   onSchedule,
 }) => {
   const [adminDoctors, setAdminDoctors] = useState<DoctorOption[]>([]);
@@ -114,15 +116,25 @@ export const ScheduleAppointmentSheet: React.FC<ScheduleAppointmentSheetProps> =
       }));
   }, [adminDoctors, propDoctors]);
 
-  // Tự động chọn bác sĩ đầu tiên khi có danh sách
+  // Tự động chọn bác sĩ: ưu tiên initialDoctorId hoặc đã chọn
   useEffect(() => {
     if (availableDoctors.length > 0) {
+      if (initialDoctorId && availableDoctors.some((d) => d.id === initialDoctorId)) {
+        setSelectedDoctorId(initialDoctorId);
+        return;
+      }
       const exists = availableDoctors.some((d) => d.id === selectedDoctorId);
       if (!exists) {
         setSelectedDoctorId(availableDoctors[0].id);
       }
     }
-  }, [availableDoctors, selectedDoctorId]);
+  }, [availableDoctors, initialDoctorId, selectedDoctorId]);
+
+  useEffect(() => {
+    if (isOpen && initialDoctorId) {
+      setSelectedDoctorId(initialDoctorId);
+    }
+  }, [isOpen, initialDoctorId]);
 
   // Lọc theo từ khóa tìm kiếm
   const filteredDoctors = useMemo(() => {

@@ -28,7 +28,8 @@ export function createCareRouter(pool: Pool): Router {
     const { memberId } = req.params;
     const resolvedMemberId = memberId === 'nam' ? 'mem_145deb71' : memberId;
     try {
-      const upcomingAppointment = await getUpcomingAppointment(pool, resolvedMemberId);
+      const appointments = await getAppointmentsList(pool, memberId, resolvedMemberId);
+      const upcomingAppointment = appointments.length > 0 ? appointments[0] : null;
       const grantsRes = await pool.query(
         `SELECT g.id, g.grantee_id, g.grantee_name, g.grantee_role, g.grantee_org, g.grantee_phone, g.grantee_email, g.expires_at,
                 dep.id AS department_id, dep.code AS department_code, dep.short_name AS department_short_name, dep.color AS department_color
@@ -47,6 +48,7 @@ export function createCareRouter(pool: Pool): Router {
         success: true,
         data: {
           upcomingAppointment,
+          appointments,
           careTeam,
           sharingStats: {
             activeCount: grantsRes.rows.length,
@@ -117,41 +119,41 @@ export function createCareRouter(pool: Pool): Router {
   return router;
 }
 
-async function getUpcomingAppointment(pool: Pool, memberId: string) {
+async function getAppointmentsList(pool: Pool, memberId: string, resolvedMemberId: string) {
   const appRes = await pool.query(
-    `SELECT id, appointment_date, purpose, doctor_name, facility_name
+    `SELECT id, appointment_date, purpose, doctor_name, facility_name, department_name
      FROM appointments
-     WHERE member_id = $1 AND status = 'scheduled'
-     ORDER BY appointment_date ASC LIMIT 1`,
-    [memberId]
+     WHERE (member_id = $1 OR member_id = $2) AND status = 'scheduled'
+     ORDER BY appointment_date ASC`,
+    [memberId, resolvedMemberId]
   );
 
-  const app = appRes.rows[0];
-  if (!app) return null;
+  return appRes.rows.map((app) => {
+    const d = new Date(app.appointment_date);
+    const formatter = new Intl.DateTimeFormat('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      month: 'numeric',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(d);
+    const m = parts.find((p) => p.type === 'month')?.value || String(d.getMonth() + 1);
+    const dateStr = parts.find((p) => p.type === 'day')?.value || String(d.getDate()).padStart(2, '0');
+    const hours = parts.find((p) => p.type === 'hour')?.value || '09';
+    const minutes = parts.find((p) => p.type === 'minute')?.value || '00';
 
-  const d = new Date(app.appointment_date);
-  const formatter = new Intl.DateTimeFormat('vi-VN', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    month: 'numeric',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
+    return {
+      id: app.id,
+      month: `TH ${m}`,
+      date: dateStr,
+      title: app.purpose || 'Tái khám định kỳ',
+      timeDoctor: `${hours}:${minutes} · ${app.doctor_name || 'Bác sĩ phụ trách'}`,
+      facility: app.facility_name || 'Cơ sở y tế',
+      department: app.department_name || 'Khám chuyên khoa',
+    };
   });
-  const parts = formatter.formatToParts(d);
-  const m = parts.find((p) => p.type === 'month')?.value || String(d.getMonth() + 1);
-  const dateStr = parts.find((p) => p.type === 'day')?.value || String(d.getDate()).padStart(2, '0');
-  const hours = parts.find((p) => p.type === 'hour')?.value || '09';
-  const minutes = parts.find((p) => p.type === 'minute')?.value || '00';
-
-  return {
-    id: app.id,
-    month: `TH ${m}`,
-    date: dateStr,
-    title: app.purpose || 'Tái khám',
-    timeDoctor: `${hours}:${minutes} · ${app.doctor_name || 'Bác sĩ phụ trách'}`,
-    facility: app.facility_name || 'Cơ sở y tế',
-  };
 }
 
 function isExpiringSoon(expiresAt: string | null): boolean {

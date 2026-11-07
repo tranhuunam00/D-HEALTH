@@ -45,6 +45,7 @@ function getColorByRole(role: string): 'mint' | 'pink' | 'purple' | 'slate' {
 
 export function useCareLogic(memberId = 'mem_145deb71') {
   const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointment | null>(null);
+  const [appointments, setAppointments] = useState<UpcomingAppointment[]>([]);
   const [careTeam, setCareTeam] = useState<CareTeamMember[]>([]);
   const [referenceDoctors, setReferenceDoctors] = useState<CareTeamMember[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
@@ -74,6 +75,10 @@ export function useCareLogic(memberId = 'mem_145deb71') {
         const json = await summaryRes.json();
         if (json?.data) {
           setUpcomingAppointment(json.data.upcomingAppointment || null);
+          const allApps = Array.isArray(json.data.appointments)
+            ? json.data.appointments
+            : (json.data.upcomingAppointment ? [json.data.upcomingAppointment] : []);
+          setAppointments(allApps);
           const team = Array.isArray(json.data.careTeam) ? json.data.careTeam : [];
           setCareTeam(team);
           if (json.data.sharingStats) {
@@ -223,19 +228,27 @@ export function useCareLogic(memberId = 'mem_145deb71') {
 
       if (res.ok) {
         setIsScheduleOpen(false);
-        setSuccessMsg(`Đã đặt lịch hẹn khám thành công với ${data.doctorName}!`);
+        const msg = `Đặt lịch hẹn khám thành công với ${data.doctorName}!`;
+        setSuccessMsg(msg);
+        alert(msg);
         setTimeout(() => setSuccessMsg(null), 4000);
         await fetchCareSummary();
         return true;
+      } else {
+        const errJson = await res.json().catch(() => null);
+        const errMsg = errJson?.error?.message || 'Không thể đặt lịch hẹn khám. Vui lòng thử lại.';
+        alert(errMsg);
+        return false;
       }
-      return false;
     } catch {
+      alert('Lỗi kết nối máy chủ khi đặt lịch khám.');
       return false;
     }
   };
 
   return {
     upcomingAppointment,
+    appointments,
     careTeam: displayDoctors,
     selectedMember,
     selectedMemberId,

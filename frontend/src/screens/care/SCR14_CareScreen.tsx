@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CheckCircle2, Calendar, Plus } from 'lucide-react';
 import { HomeBottomNav } from '../home/HomeBottomNav';
 import { useCareLogic } from './useCareLogic';
@@ -22,6 +22,7 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
 }) => {
   const {
     upcomingAppointment,
+    appointments,
     careTeam,
     selectedMember,
     selectedMemberId,
@@ -37,6 +38,8 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
     handleAddDoctor,
     handleScheduleAppointment,
   } = useCareLogic(activeMemberId);
+
+  const [scheduleDoctorId, setScheduleDoctorId] = useState<string | undefined>(undefined);
 
   return (
     <div className="w-full min-h-screen relative bg-[#F1F5F9] text-[#111827] flex flex-col font-sans select-none pb-20">
@@ -54,7 +57,10 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
           </h1>
           <button
             type="button"
-            onClick={() => setIsScheduleOpen(true)}
+            onClick={() => {
+              setScheduleDoctorId(undefined);
+              setIsScheduleOpen(true);
+            }}
             className="h-8 px-3.5 rounded-full bg-[#1F7A8C] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[#186473] active:scale-95 transition cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -96,7 +102,10 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             member={selectedMember}
             onSendPreExamDossier={handleSendPreExamDossier}
             onEdit={() => openAddDoctorModal(selectedMember.role)}
-            onBookAppointment={() => setIsScheduleOpen(true)}
+            onBookAppointment={() => {
+              setScheduleDoctorId(selectedMember.granteeId || selectedMember.id);
+              setIsScheduleOpen(true);
+            }}
           />
         )}
 
@@ -106,12 +115,15 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             <div className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-[#1F7A8C]" />
               <h3 className="text-sm font-extrabold text-slate-900">
-                Lịch Khám Định Kỳ
+                Lịch Khám Định Kỳ {appointments.length > 0 && `(${appointments.length})`}
               </h3>
             </div>
             <button
               type="button"
-              onClick={() => setIsScheduleOpen(true)}
+              onClick={() => {
+                setScheduleDoctorId(undefined);
+                setIsScheduleOpen(true);
+              }}
               className="text-xs font-bold text-[#1F7A8C] hover:text-[#186473] flex items-center gap-1 transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -119,19 +131,60 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             </button>
           </div>
 
-          {upcomingAppointment ? (
-            <div className="flex flex-col gap-2">
+          {appointments.length > 0 ? (
+            <div className="flex flex-col gap-2.5">
+              {/* Lịch khám gần nhất hiển thị dạng thẻ Gradient nổi bật */}
               <AppointmentCard
-                month={upcomingAppointment.month}
-                date={upcomingAppointment.date}
-                title={upcomingAppointment.title}
-                timeDoctor={upcomingAppointment.timeDoctor}
-                onClick={() => setIsScheduleOpen(true)}
+                month={appointments[0].month}
+                date={appointments[0].date}
+                title={appointments[0].title}
+                timeDoctor={appointments[0].timeDoctor}
+                onClick={() => {
+                  setScheduleDoctorId(undefined);
+                  setIsScheduleOpen(true);
+                }}
               />
+
+              {/* Danh sách các lịch khám tiếp theo nếu có từ 2 lịch trở lên */}
+              {appointments.length > 1 && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-slate-500 px-1 uppercase tracking-wider">
+                    Các lịch hẹn tiếp theo:
+                  </span>
+                  {appointments.slice(1).map((appt) => (
+                    <div
+                      key={appt.id}
+                      onClick={() => {
+                        setScheduleDoctorId(undefined);
+                        setIsScheduleOpen(true);
+                      }}
+                      className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-800 flex flex-col items-center justify-center shrink-0 border border-slate-200/60">
+                          <span className="text-[9px] font-black text-slate-500 uppercase leading-none">{appt.month}</span>
+                          <span className="text-base font-black text-slate-900 leading-none mt-0.5">{appt.date}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold text-slate-900 truncate">{appt.title}</div>
+                          <div className="text-[11px] text-slate-500 truncate mt-0.5">{appt.timeDoctor}</div>
+                        </div>
+                      </div>
+                      <span className="text-[10.5px] font-bold px-2.5 py-1 rounded-lg bg-teal-50 text-[#1F7A8C] border border-teal-100 shrink-0">
+                        {appt.facility}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <button
                 type="button"
-                onClick={() => setIsScheduleOpen(true)}
-                className="w-full py-2.5 rounded-2xl border border-dashed border-slate-300 bg-white/70 hover:bg-white text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-98 cursor-pointer"
+                onClick={() => {
+                  setScheduleDoctorId(undefined);
+                  setIsScheduleOpen(true);
+                }}
+                className="w-full py-2.5 rounded-2xl border border-dashed border-slate-300 bg-white/70 hover:bg-white text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-98 cursor-pointer mt-0.5"
               >
                 <Plus className="w-3.5 h-3.5 text-[#1F7A8C]" />
                 <span>Đặt thêm lịch khám định kỳ mới</span>
@@ -139,7 +192,10 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
             </div>
           ) : (
             <div
-              onClick={() => setIsScheduleOpen(true)}
+              onClick={() => {
+                setScheduleDoctorId(undefined);
+                setIsScheduleOpen(true);
+              }}
               className="bg-white rounded-3xl p-4.5 border border-dashed border-slate-300 text-xs text-slate-600 cursor-pointer hover:bg-slate-50/80 transition flex items-center justify-between shadow-2xs group"
             >
               <div className="flex items-center gap-3">
@@ -170,7 +226,11 @@ export const SCR14_CareScreen: React.FC<SCR14Props> = ({
       {/* Schedule / Reschedule Appointment Bottom Sheet */}
       <ScheduleAppointmentSheet
         isOpen={isScheduleOpen}
-        onClose={() => setIsScheduleOpen(false)}
+        onClose={() => {
+          setIsScheduleOpen(false);
+          setScheduleDoctorId(undefined);
+        }}
+        initialDoctorId={scheduleDoctorId}
         doctors={careTeam}
         onSchedule={handleScheduleAppointment}
       />
