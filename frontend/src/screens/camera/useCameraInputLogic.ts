@@ -33,7 +33,10 @@ export function useCameraInputLogic(initialMemberId = 'mem_145deb71', initialKin
   const [modality, setModality] = useState('XQ');
   const [organ, setOrgan] = useState('Phổi · Lồng ngực');
   const [organOther, setOrganOther] = useState('');
+  const [techniqueDescription, setTechniqueDescription] = useState('');
+  const [clinicalFindings, setClinicalFindings] = useState('');
   const [conclusion, setConclusion] = useState('');
+  const [recommendations, setRecommendations] = useState('');
   const [isNormal, setIsNormal] = useState(false);
   const [lesions, setLesions] = useState<ImagingLesion[]>([
     { type: 'Nốt mờ / Khối mờ phổi', side: 'Phổi phải', size: '', target: false },
@@ -201,6 +204,9 @@ export function useCameraInputLogic(initialMemberId = 'mem_145deb71', initialKin
         pTNM,
         resectionMargin,
         organ: organ === 'other' ? organOther : organ,
+        techniqueDescription: (techniqueDescription || '').trim() || (kind === 'img' ? `Chụp ${modality} ${organ === 'other' ? organOther : organ}` : undefined),
+        clinicalFindings: (clinicalFindings || '').trim() || (kind === 'img' ? (isNormal ? 'Không ghi nhận hình ảnh tổn thương bất thường' : finalConclusion) : undefined),
+        recommendations: (recommendations || '').trim() || (kind === 'img' ? (isNormal ? 'Theo dõi sức khoẻ định kỳ' : 'Khám chuyên khoa và theo dõi theo chỉ định') : undefined),
       };
 
       const res = await fetch('/api/clinical-reports', {
@@ -253,8 +259,14 @@ export function useCameraInputLogic(initialMemberId = 'mem_145deb71', initialKin
     setOrgan,
     organOther,
     setOrganOther,
+    techniqueDescription,
+    setTechniqueDescription,
+    clinicalFindings,
+    setClinicalFindings,
     conclusion,
     setConclusion,
+    recommendations,
+    setRecommendations,
     isNormal,
     setIsNormal,
     lesions,

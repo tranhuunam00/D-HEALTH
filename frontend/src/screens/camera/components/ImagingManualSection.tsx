@@ -13,8 +13,14 @@ interface ImagingManualSectionProps {
   onOrganChange: (o: string) => void;
   organOther: string;
   onOrganOtherChange: (val: string) => void;
+  techniqueDescription: string;
+  onTechniqueDescriptionChange: (val: string) => void;
+  clinicalFindings: string;
+  onClinicalFindingsChange: (val: string) => void;
   conclusion: string;
   onConclusionChange: (c: string) => void;
+  recommendations: string;
+  onRecommendationsChange: (val: string) => void;
   isNormal: boolean;
   onIsNormalChange: (val: boolean) => void;
   lesions: ImagingLesion[];
@@ -30,8 +36,14 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
   onOrganChange,
   organOther,
   onOrganOtherChange,
+  techniqueDescription,
+  onTechniqueDescriptionChange,
+  clinicalFindings,
+  onClinicalFindingsChange,
   conclusion,
   onConclusionChange,
+  recommendations,
+  onRecommendationsChange,
   isNormal,
   onIsNormalChange,
   lesions,
@@ -111,6 +123,29 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
         </div>
       )}
 
+      {/* 2. Kỹ thuật chụp */}
+      <div>
+        <label className="text-slate-500 text-[11px] font-bold block mb-1">Kỹ thuật chụp</label>
+        <input
+          value={techniqueDescription}
+          onChange={(e) => onTechniqueDescriptionChange(e.target.value)}
+          placeholder={`VD: Chụp ${modality} ${organ} tiêu chuẩn / có cản quang...`}
+          className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50 focus:outline-none"
+        />
+      </div>
+
+      {/* 3. Mô tả hình ảnh */}
+      <div>
+        <label className="text-slate-500 text-[11px] font-bold block mb-1">Mô tả hình ảnh</label>
+        <textarea
+          value={clinicalFindings}
+          onChange={(e) => onClinicalFindingsChange(e.target.value)}
+          rows={2}
+          placeholder={isNormal ? 'Không ghi nhận hình ảnh tổn thương bất thường trên các chuỗi xung.' : 'Mô tả đặc điểm nhu mô, ranh giới, tín hiệu / đậm độ tổn thương...'}
+          className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-900 bg-slate-50 focus:outline-none resize-none"
+        />
+      </div>
+
       {/* 2. Đánh giá chung: Nút Bình thường vs Có tổn thương */}
       <div className="flex flex-col gap-1 pt-0.5">
         <label className="text-slate-500 text-[11px] font-bold block">Đánh giá chung kết quả</label>
@@ -160,13 +195,24 @@ export const ImagingManualSection: React.FC<ImagingManualSectionProps> = ({
         </div>
       )}
 
-      {/* 3. Kết luận CĐHA */}
+      {/* 5. Kết luận CĐHA */}
       <div>
         <label className="text-slate-500 text-[11px] font-bold block mb-1">Kết luận chẩn đoán hình ảnh</label>
         <input
           value={conclusion}
           onChange={(e) => onConclusionChange(e.target.value)}
           placeholder={isNormal ? 'Không ghi nhận tổn thương bất thường' : 'VD: Nốt mờ thùy trên phổi phải / Nang gan đơn thuần...'}
+          className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50 focus:outline-none"
+        />
+      </div>
+
+      {/* 6. Đề nghị của bác sĩ */}
+      <div>
+        <label className="text-slate-500 text-[11px] font-bold block mb-1">Đề nghị / Hướng xử trí</label>
+        <input
+          value={recommendations}
+          onChange={(e) => onRecommendationsChange(e.target.value)}
+          placeholder={isNormal ? 'Theo dõi sức khoẻ định kỳ' : 'VD: Khám chuyên khoa Hô hấp / Chụp lại kiểm tra sau 3-6 tháng...'}
           className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50 focus:outline-none"
         />
       </div>
