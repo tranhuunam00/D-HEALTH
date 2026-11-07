@@ -10,7 +10,7 @@ export default defineConfig({
     passWithNoTests: true,
   },
   server: {
-    port: 3000,
+    port: 8686,
     host: '0.0.0.0',
     proxy: {
       '/api': {
