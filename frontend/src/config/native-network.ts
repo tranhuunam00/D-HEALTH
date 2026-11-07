@@ -35,6 +35,7 @@ export const formatAvatarUrl = (url?: string | null): string => {
 /**
  * Tự động chuyển tiếp các cuộc gọi fetch('/api/...') hoặc fetch('/s3/...') sang remote backend
  * khi ứng dụng được khởi chạy dưới dạng Mobile Native App.
+ * Xử lý toàn diện cả URL tương đối (/api/...) và URL tuyệt đối gắn localhost (https://localhost/api/...).
  */
 export const initNativeFetchInterceptor = (): void => {
   if (typeof window === 'undefined') return;
@@ -47,8 +48,13 @@ export const initNativeFetchInterceptor = (): void => {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     let url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 
-    if (url.startsWith('/api/') || url.startsWith('/s3/')) {
-      url = `${baseUrl}${url}`;
+    // Bắt và chuẩn hóa toàn bộ URL gọi tới /api/ hoặc /s3/
+    // (Bao gồm relative '/api/...', 'https://localhost/api/...', 'http://localhost:3000/api/...', v.v.)
+    const localhostApiRegex = /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?)?(\/(api|s3)(\/.*)?)$/i;
+    const match = url.match(localhostApiRegex);
+
+    if (match) {
+      url = `${baseUrl}${match[4]}`;
       if (typeof input === 'string' || input instanceof URL) {
         return originalFetch(url, init);
       } else {

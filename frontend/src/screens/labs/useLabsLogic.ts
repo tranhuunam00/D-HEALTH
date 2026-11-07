@@ -110,11 +110,6 @@ export function useLabsLogic(memberId = 'mem_145deb71') {
   const [reports, setReports] = useState<readonly LabReportItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const getBaseUrl = () => {
-    return typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-      ? window.location.origin
-      : 'http://localhost';
-  };
 
   const mapCategoryBadge = (cat?: string): 'SH' | 'HH' | 'VS' | 'PT' | 'DT' => {
     if (!cat) return 'SH';
@@ -129,10 +124,9 @@ export function useLabsLogic(memberId = 'mem_145deb71') {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const baseUrl = getBaseUrl();
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch(`${baseUrl}/api/clinical-reports/${memberId}?kind=lab`, { headers });
+      const res = await fetch(`/api/clinical-reports/${memberId}?kind=lab`, { headers });
       if (res.ok) {
         const json = await res.json();
         const apiRecords = Array.isArray(json.data) ? json.data : [];

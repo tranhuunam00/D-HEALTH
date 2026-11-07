@@ -105,19 +105,87 @@ export function useHomeLogic(initialMemberId = 'mem_145deb71', user?: any) {
 
   const handleRecordVitals = async (input: ManualVitalsInput) => {
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const promises: Promise<any>[] = [];
+
       if (input.systolic && input.diastolic) {
-        await fetch('/api/biometrics', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            memberId: activeMemberId,
-            biometricType: 'blood_pressure',
-            systolic: input.systolic,
-            diastolic: input.diastolic,
-            unit: 'mmHg',
-          }),
-        });
+        promises.push(
+          fetch('/api/biometrics', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              memberId: activeMemberId,
+              biometricType: 'bp',
+              systolic: input.systolic,
+              diastolic: input.diastolic,
+              unit: 'mmHg',
+            }),
+          })
+        );
       }
+      if (input.heartRate) {
+        promises.push(
+          fetch('/api/biometrics', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              memberId: activeMemberId,
+              biometricType: 'hr',
+              valueNumeric: input.heartRate,
+              unit: 'bpm',
+            }),
+          })
+        );
+      }
+      if (input.spo2) {
+        promises.push(
+          fetch('/api/biometrics', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              memberId: activeMemberId,
+              biometricType: 'spo2',
+              valueNumeric: input.spo2,
+              unit: '%',
+            }),
+          })
+        );
+      }
+      if (input.glucose) {
+        promises.push(
+          fetch('/api/biometrics', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              memberId: activeMemberId,
+              biometricType: 'glucose',
+              valueNumeric: input.glucose,
+              unit: 'mmol/L',
+            }),
+          })
+        );
+      }
+      if (input.temperature) {
+        promises.push(
+          fetch('/api/biometrics', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              memberId: activeMemberId,
+              biometricType: 'temp',
+              valueNumeric: input.temperature,
+              unit: '°C',
+            }),
+          })
+        );
+      }
+
+      await Promise.all(promises);
       setIsVitalsSheetOpen(false);
       await fetchHomeData();
     } catch (err) {

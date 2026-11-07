@@ -63,11 +63,7 @@ export const ScheduleAppointmentSheet: React.FC<ScheduleAppointmentSheetProps> =
     const fetchDoctors = async () => {
       setLoadingDocs(true);
       try {
-        const baseUrl =
-          typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-            ? window.location.origin
-            : 'http://localhost';
-        const res = await fetch(`${baseUrl}/api/doctors`);
+        const res = await fetch('/api/doctors');
         if (res.ok) {
           const json = await res.json();
           if (isMounted && Array.isArray(json?.data) && json.data.length > 0) {

@@ -31,19 +31,13 @@ export function useBiometricsLogic(memberId = 'mem_145deb71') {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const getBaseUrl = () => {
-    return typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-      ? window.location.origin
-      : 'http://localhost';
-  };
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const baseUrl = getBaseUrl();
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch(`${baseUrl}/api/biometrics/${memberId}`, { headers });
+      const res = await fetch(`/api/biometrics/${memberId}`, { headers });
       if (res.ok) {
         const json = await res.json();
         const records = Array.isArray(json.data) ? json.data : [];
@@ -78,8 +72,8 @@ export function useBiometricsLogic(memberId = 'mem_145deb71') {
     fetchHistory();
   }, [fetchHistory]);
 
-  const postBiometric = (baseUrl: string, headers: Record<string, string>, payload: any) => {
-    return fetch(`${baseUrl}/api/biometrics`, {
+  const postBiometric = (headers: Record<string, string>, payload: any) => {
+    return fetch('/api/biometrics', {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
@@ -88,7 +82,6 @@ export function useBiometricsLogic(memberId = 'mem_145deb71') {
 
   const handleSaveBiometrics = async (input: ManualVitalsInput) => {
     try {
-      const baseUrl = getBaseUrl();
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -97,22 +90,22 @@ export function useBiometricsLogic(memberId = 'mem_145deb71') {
 
       const promises: Promise<any>[] = [];
       if (input.systolic && input.diastolic) {
-        promises.push(postBiometric(baseUrl, headers, { memberId, biometricType: 'bp', systolic: input.systolic, diastolic: input.diastolic, unit: 'mmHg' }));
+        promises.push(postBiometric(headers, { memberId, biometricType: 'bp', systolic: input.systolic, diastolic: input.diastolic, unit: 'mmHg' }));
       }
       if (input.heartRate) {
-        promises.push(postBiometric(baseUrl, headers, { memberId, biometricType: 'hr', valueNumeric: input.heartRate, unit: 'bpm' }));
+        promises.push(postBiometric(headers, { memberId, biometricType: 'hr', valueNumeric: input.heartRate, unit: 'bpm' }));
       }
       if (input.spo2) {
-        promises.push(postBiometric(baseUrl, headers, { memberId, biometricType: 'spo2', valueNumeric: input.spo2, unit: '%' }));
+        promises.push(postBiometric(headers, { memberId, biometricType: 'spo2', valueNumeric: input.spo2, unit: '%' }));
       }
       if (input.glucose) {
-        promises.push(postBiometric(baseUrl, headers, { memberId, biometricType: 'glucose', valueNumeric: input.glucose, unit: 'mmol/L' }));
+        promises.push(postBiometric(headers, { memberId, biometricType: 'glucose', valueNumeric: input.glucose, unit: 'mmol/L' }));
       }
       if (input.temperature) {
-        promises.push(postBiometric(baseUrl, headers, { memberId, biometricType: 'temp', valueNumeric: input.temperature, unit: '°C' }));
+        promises.push(postBiometric(headers, { memberId, biometricType: 'temp', valueNumeric: input.temperature, unit: '°C' }));
       }
       if (input.weightKg) {
-        promises.push(postBiometric(baseUrl, headers, { memberId, biometricType: 'weight', valueNumeric: input.weightKg, unit: 'kg' }));
+        promises.push(postBiometric(headers, { memberId, biometricType: 'weight', valueNumeric: input.weightKg, unit: 'kg' }));
       }
 
       await Promise.all(promises);

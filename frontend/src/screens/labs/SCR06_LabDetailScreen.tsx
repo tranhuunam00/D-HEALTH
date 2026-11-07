@@ -25,16 +25,13 @@ export const SCR06_LabDetailScreen: React.FC<SCR06Props> = ({
     const fetchDetails = async () => {
       setLoading(true);
       try {
-        const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-          ? window.location.origin
-          : 'http://localhost';
         const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
         const targetId = reportId || 'rep_nam_01';
         const [repRes, resRes] = await Promise.all([
-          fetch(`${baseUrl}/api/clinical-reports/${activeMemberId}?kind=lab`, { headers }).catch(() => null),
-          fetch(`${baseUrl}/api/clinical-reports/results/${targetId}`, { headers }).catch(() => null),
+          fetch(`/api/clinical-reports/${activeMemberId}?kind=lab`, { headers }).catch(() => null),
+          fetch(`/api/clinical-reports/results/${targetId}`, { headers }).catch(() => null),
         ]);
 
         if (repRes?.ok) {

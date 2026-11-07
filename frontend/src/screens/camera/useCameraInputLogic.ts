@@ -132,11 +132,6 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
     setMarkers((prev) => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)));
   }, []);
 
-  const getBaseUrl = () => {
-    return typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-      ? window.location.origin
-      : 'http://localhost';
-  };
 
   const buildTitle = () => {
     if (kind === 'lab') return `Xét nghiệm ${curCode || 'SH'} (${testDate})`;
@@ -147,7 +142,6 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
   const handleSave = async (onSuccess: () => void) => {
     setIsSaving(true);
     try {
-      const baseUrl = getBaseUrl();
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -209,7 +203,7 @@ export function useCameraInputLogic(initialMemberId = 'nam', initialKind: Clinic
         organ: organ === 'other' ? organOther : organ,
       };
 
-      const res = await fetch(`${baseUrl}/api/clinical-reports`, {
+      const res = await fetch('/api/clinical-reports', {
         method: 'POST',
         headers,
         body: JSON.stringify(body),

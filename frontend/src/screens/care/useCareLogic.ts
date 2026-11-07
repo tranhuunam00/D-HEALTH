@@ -62,16 +62,12 @@ export function useCareLogic(memberId = 'mem_145deb71') {
   const fetchCareSummary = useCallback(async () => {
     setLoading(true);
     try {
-      const baseUrl =
-        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-          ? window.location.origin
-          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
       const [summaryRes, doctorsRes] = await Promise.all([
-        fetch(`${baseUrl}/api/care/${memberId}/care-summary`, { headers }),
-        fetch(`${baseUrl}/api/doctors`),
+        fetch(`/api/care/${memberId}/care-summary`, { headers }),
+        fetch('/api/doctors'),
       ]);
 
       if (summaryRes.ok) {
@@ -150,12 +146,8 @@ export function useCareLogic(memberId = 'mem_145deb71') {
 
   const handleSendPreExamDossier = async () => {
     try {
-      const baseUrl =
-        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-          ? window.location.origin
-          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
-      const res = await fetch(`${baseUrl}/api/care/${memberId}/send-pre-exam-dossier`, {
+      const res = await fetch(`/api/care/${memberId}/send-pre-exam-dossier`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,12 +174,8 @@ export function useCareLogic(memberId = 'mem_145deb71') {
     email: string;
   }) => {
     try {
-      const baseUrl =
-        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-          ? window.location.origin
-          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
-      const res = await fetch(`${baseUrl}/api/care/${memberId}/add-doctor`, {
+      const res = await fetch(`/api/care/${memberId}/add-doctor`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -223,12 +211,8 @@ export function useCareLogic(memberId = 'mem_145deb71') {
     purpose: string;
   }): Promise<boolean> => {
     try {
-      const baseUrl =
-        typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-          ? window.location.origin
-          : 'http://localhost';
       const token = typeof window !== 'undefined' ? localStorage.getItem('dhealth_token') : null;
-      const res = await fetch(`${baseUrl}/api/care/${memberId}/appointments`, {
+      const res = await fetch(`/api/care/${memberId}/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

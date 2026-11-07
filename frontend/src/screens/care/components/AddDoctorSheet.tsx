@@ -75,13 +75,9 @@ export const AddDoctorSheet: React.FC<AddDoctorSheetProps> = ({
     const fetchData = async () => {
       setLoading(true);
       try {
-        const baseUrl = typeof window !== 'undefined' && window.location?.origin && !window.location.origin.startsWith('null')
-          ? window.location.origin
-          : 'http://localhost';
-
         const [deptRes, docRes] = await Promise.all([
-          fetch(`${baseUrl}/api/departments`),
-          fetch(`${baseUrl}/api/doctors`),
+          fetch('/api/departments'),
+          fetch('/api/doctors'),
         ]);
 
         if (deptRes.ok) {
